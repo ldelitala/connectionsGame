@@ -1,0 +1,36 @@
+{
+  "testuser": {
+    "username": "testuser",
+    "password": "testpass\\nexit",
+    "puzzlesCompleted": 0,
+    "wins": 0,
+    "losses": 0,
+    "currentStreak": 0,
+    "maxStreak": 0,
+    "perfectPuzzles": 0,
+    "mistakeHistogram": {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0
+    }
+  },
+  "testuser2": {
+    "username": "testuser2",
+    "password": "testpass2",
+    "puzzlesCompleted": 0,
+    "wins": 0,
+    "losses": 0,
+    "currentStreak": 0,
+    "maxStreak": 0,
+    "perfectPuzzles": 0,
+    "mistakeHistogram": {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0
+    }
+  }
+}
