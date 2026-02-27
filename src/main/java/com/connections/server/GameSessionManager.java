@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  * Manages the active game session and player progress.
  */
 public class GameSessionManager {
-    private final GameManager gameManager;
+    private final GamesDAO gamesDAO;
     private final UserManager userManager;
     private final UdpNotifier udpNotifier;
     private Game currentGame;
@@ -26,38 +26,6 @@ public class GameSessionManager {
     private final Map<String, Integer> playerMistakes = new ConcurrentHashMap<>();
     // Tracks players who completed the game
     private final Set<String> completedPlayers = ConcurrentHashMap.newKeySet();
-
-    public GameSessionManager(GameManager gameManager, UserManager userManager, UdpNotifier udpNotifier) {
-        this.gameManager = gameManager;
-        this.userManager = userManager;
-        this.udpNotifier = udpNotifier;
-        startNewGame();
-    }
-
-    private void startNewGame() {
-        int numGames = gameManager.getNumGames();
-        int gameId = new Random().nextInt(numGames);
-        currentGame = gameManager.getGame(gameId);
-        gameEndTime = System.currentTimeMillis() + 300000; // 5 minutes per game
-        
-        playerProgress.clear();
-        playerMistakes.clear();
-        completedPlayers.clear();
-        
-        System.out.println("New game started: ID " + gameId);
-        
-        if (udpNotifier != null) {
-            Map<String, Object> msg = new HashMap<>();
-            msg.put("type", "new_game");
-            msg.put("gameId", gameId);
-            msg.put("words", currentGame.getAllWords());
-            udpNotifier.notifyAll(new com.google.gson.Gson().toJson(msg));
-        }
-        
-        // Schedule next game
-        scheduler.schedule(this::startNewGame, 5, TimeUnit.MINUTES);
-    }
-
     // History: gameId -> (username -> Result)
     private final Map<Integer, Map<String, PlayerResult>> gameHistory = new ConcurrentHashMap<>();
 
@@ -69,8 +37,8 @@ public class GameSessionManager {
         public boolean finished;
     }
 
-    public GameSessionManager(GameManager gameManager, UserManager userManager, UdpNotifier udpNotifier) {
-        this.gameManager = gameManager;
+    public GameSessionManager(GamesDAO gamesDAO, UserManager userManager, UdpNotifier udpNotifier) {
+        this.gamesDAO = gamesDAO;
         this.userManager = userManager;
         this.udpNotifier = udpNotifier;
         startNewGame();
@@ -98,7 +66,13 @@ public class GameSessionManager {
 
     private void startNewGame() {
         archiveCurrentGame();
-        currentGame = gameManager.getRandomGame();
+        
+        currentGame = gamesDAO.getRandomGame();
+        if (currentGame == null) {
+            System.err.println("No games available in GamesDAO!");
+            return;
+        }
+        
         int gameId = currentGame.getGameId();
         gameEndTime = System.currentTimeMillis() + 300000; // 5 minutes per game
         
@@ -109,8 +83,11 @@ public class GameSessionManager {
         System.out.println("New game started: ID " + gameId);
         
         if (udpNotifier != null) {
-            udpNotifier.notifyAll("A new game has started! ID: " + gameId);
-            // In a real implementation, we would send the 16 words too
+            Map<String, Object> msg = new HashMap<>();
+            msg.put("type", "new_game");
+            msg.put("gameId", gameId);
+            msg.put("words", currentGame.getAllWords());
+            udpNotifier.notifyAll(new com.google.gson.Gson().toJson(msg));
         }
         
         // Schedule next game

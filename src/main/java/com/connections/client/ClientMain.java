@@ -37,6 +37,8 @@ public class ClientMain {
             host = args[0];
             port = Integer.parseInt(args[1]);
         }
+        
+        try {
             client = new ConnectionClient(host, port);
             client.connect();
             System.out.println("Connected to server at " + host + ":" + port);

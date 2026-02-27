@@ -18,10 +18,10 @@ public class ServerMain {
         
         try {
             // Initialize Managers
-            GameManager gameManager = new GameManager(config.getGameDataPath());
+            GamesDAO gamesDAO = new GamesDAO(config.getGameDataPath());
             UserManager userManager = new UserManager(config.getUserDataPath());
             UdpNotifier udpNotifier = new UdpNotifier();
-            GameSessionManager sessionManager = new GameSessionManager(gameManager, userManager, udpNotifier);
+            GameSessionManager sessionManager = new GameSessionManager(gamesDAO, userManager, udpNotifier);
             
             // Initialize and start TCP Server
             ConnectionsServer server = new ConnectionsServer(config, userManager, sessionManager, udpNotifier);

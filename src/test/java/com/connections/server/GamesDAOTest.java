@@ -15,13 +15,13 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class GameManagerTest {
+public class GamesDAOTest {
 
     @TempDir
     Path tempDir;
 
     private String gameFile;
-    private GameManager gameManager;
+    private GamesDAO gamesDAO;
 
     @BeforeEach
     public void setup() throws IOException {
@@ -37,24 +37,24 @@ public class GameManagerTest {
             new Gson().toJson(games, writer);
         }
         
-        gameManager = new GameManager(gameFile);
+        gamesDAO = new GamesDAO(gameFile);
     }
 
     @Test
     public void testIndexing() {
-        assertEquals(2, gameManager.getNumGames());
-        assertTrue(gameManager.getAllGameIds().contains(101));
-        assertTrue(gameManager.getAllGameIds().contains(202));
+        assertEquals(2, gamesDAO.getNumGames());
+        assertTrue(gamesDAO.getAllGameIds().contains(101));
+        assertTrue(gamesDAO.getAllGameIds().contains(202));
     }
 
     @Test
     public void testOnDemandReading() {
-        Game g1 = gameManager.getGame(101);
+        Game g1 = gamesDAO.getGame(101);
         assertNotNull(g1);
         assertEquals(101, g1.getGameId());
         assertEquals("G1", g1.getGroups().get(0).getTheme());
         
-        Game g2 = gameManager.getGame(202);
+        Game g2 = gamesDAO.getGame(202);
         assertNotNull(g2);
         assertEquals(202, g2.getGameId());
         assertEquals("G2", g2.getGroups().get(0).getTheme());
@@ -62,7 +62,7 @@ public class GameManagerTest {
 
     @Test
     public void testRandomGame() {
-        Game random = gameManager.getRandomGame();
+        Game random = gamesDAO.getRandomGame();
         assertNotNull(random);
         assertTrue(random.getGameId() == 101 || random.getGameId() == 202);
     }

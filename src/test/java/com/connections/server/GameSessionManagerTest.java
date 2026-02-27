@@ -17,14 +17,14 @@ import static org.mockito.Mockito.*;
 
 public class GameSessionManagerTest {
 
-    private GameManager gameManager;
+    private GamesDAO gamesDAO;
     private UserManager userManager;
     private UdpNotifier udpNotifier;
     private GameSessionManager sessionManager;
 
     @BeforeEach
     public void setup() throws IOException {
-        gameManager = mock(GameManager.class);
+        gamesDAO = mock(GamesDAO.class);
         userManager = mock(UserManager.class);
         udpNotifier = mock(UdpNotifier.class);
 
@@ -35,11 +35,11 @@ public class GameSessionManagerTest {
         WordGroup group4 = new WordGroup("Foods", Arrays.asList("PIZZA", "PASTA", "BURGER", "SUSHI"));
         Game game = new Game(1, Arrays.asList(group1, group2, group3, group4));
 
-        when(gameManager.getNumGames()).thenReturn(1);
-        when(gameManager.getRandomGame()).thenReturn(game);
-        when(gameManager.getGame(anyInt())).thenReturn(game);
+        when(gamesDAO.getNumGames()).thenReturn(1);
+        when(gamesDAO.getRandomGame()).thenReturn(game);
+        when(gamesDAO.getGame(anyInt())).thenReturn(game);
 
-        sessionManager = new GameSessionManager(gameManager, userManager, udpNotifier);
+        sessionManager = new GameSessionManager(gamesDAO, userManager, udpNotifier);
     }
 
     @Test
