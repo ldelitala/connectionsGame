@@ -4,6 +4,10 @@ import java.io.IOException;
 
 /**
  * Main entry point for the Connections Server.
+ * 
+ * Possible command line arguments:
+ * - args[0]: (Optional) Path to the server configuration file. 
+ *            Defaults to "config/server.properties" if not provided.
  */
 public class ServerMain {
     public static void main(String[] args) {
