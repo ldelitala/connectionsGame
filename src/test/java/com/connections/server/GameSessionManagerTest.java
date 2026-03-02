@@ -39,7 +39,7 @@ public class GameSessionManagerTest {
         when(gamesDAO.getRandomGame()).thenReturn(game);
         when(gamesDAO.getGame(anyInt())).thenReturn(game);
 
-        sessionManager = new GameSessionManager(gamesDAO, userManager, udpNotifier);
+        sessionManager = new GameSessionManager(gamesDAO, userManager, udpNotifier, 300000);
     }
 
     @Test

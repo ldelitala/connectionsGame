@@ -16,10 +16,11 @@ public class GameSessionManager {
     private final GamesDAO gamesDAO;
     private final UserManager userManager;
     private final UdpNotifier udpNotifier;
+    private final long gameDurationMillis;
     private Game currentGame;
     private long gameEndTime;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    
+
     // Tracks player progress in the current game: username -> list of correct word groups
     private final Map<String, List<WordGroup>> playerProgress = new ConcurrentHashMap<>();
     // Tracks player mistakes: username -> count
@@ -37,20 +38,22 @@ public class GameSessionManager {
         public boolean finished;
     }
 
-    public GameSessionManager(GamesDAO gamesDAO, UserManager userManager, UdpNotifier udpNotifier) {
+    public GameSessionManager(GamesDAO gamesDAO, UserManager userManager, UdpNotifier udpNotifier, long gameDurationMillis) {
         this.gamesDAO = gamesDAO;
         this.userManager = userManager;
         this.udpNotifier = udpNotifier;
+        this.gameDurationMillis = gameDurationMillis;
         startNewGame();
     }
 
     private void archiveCurrentGame() {
-        if (currentGame == null) return;
+        if (currentGame == null)
+            return;
         Map<String, PlayerResult> results = new HashMap<>();
         // All players who participated in the current game
         Set<String> participants = new HashSet<>(playerProgress.keySet());
         participants.addAll(playerMistakes.keySet());
-        
+
         for (String user : participants) {
             PlayerResult res = new PlayerResult();
             res.mistakes = playerMistakes.getOrDefault(user, 0);
@@ -66,22 +69,22 @@ public class GameSessionManager {
 
     private void startNewGame() {
         archiveCurrentGame();
-        
+
         currentGame = gamesDAO.getRandomGame();
         if (currentGame == null) {
             System.err.println("No games available in GamesDAO!");
             return;
         }
-        
+
         int gameId = currentGame.getGameId();
-        gameEndTime = System.currentTimeMillis() + 300000; // 5 minutes per game
-        
+        gameEndTime = System.currentTimeMillis() + gameDurationMillis;
+
         playerProgress.clear();
         playerMistakes.clear();
         completedPlayers.clear();
-        
+
         System.out.println("New game started: ID " + gameId);
-        
+
         if (udpNotifier != null) {
             Map<String, Object> msg = new HashMap<>();
             msg.put("type", "new_game");
@@ -89,9 +92,9 @@ public class GameSessionManager {
             msg.put("words", currentGame.getAllWords());
             udpNotifier.notifyAll(new com.google.gson.Gson().toJson(msg));
         }
-        
+
         // Schedule next game
-        scheduler.schedule(this::startNewGame, 5, TimeUnit.MINUTES);
+        scheduler.schedule(this::startNewGame, gameDurationMillis, TimeUnit.MILLISECONDS);
     }
 
     public Game getCurrentGame() {
@@ -107,9 +110,13 @@ public class GameSessionManager {
         if (currentGame != null && gameId == currentGame.getGameId()) {
             status.put("gameId", gameId);
             status.put("remainingTime", getRemainingTime());
-            status.put("foundGroups", playerProgress.getOrDefault(username, Collections.emptyList()));
+            status.put("foundGroups",
+                    playerProgress.getOrDefault(username, Collections.emptyList()));
             status.put("mistakes", playerMistakes.getOrDefault(username, 0));
-            status.put("currentScore", calculatePoints(playerProgress.getOrDefault(username, Collections.emptyList()).size(), playerMistakes.getOrDefault(username, 0)));
+            status.put("currentScore",
+                    calculatePoints(
+                            playerProgress.getOrDefault(username, Collections.emptyList()).size(),
+                            playerMistakes.getOrDefault(username, 0)));
             status.put("finished", completedPlayers.contains(username));
             return status;
         } else {
@@ -131,32 +138,36 @@ public class GameSessionManager {
     public synchronized Map<String, Object> getGlobalGameStats(int gameId) {
         Map<String, PlayerResult> results;
         if (currentGame != null && gameId == currentGame.getGameId()) {
-             // Calculate on the fly for current game
-             results = new HashMap<>();
-             Set<String> participants = new HashSet<>(playerProgress.keySet());
-             participants.addAll(playerMistakes.keySet());
-             for (String user : participants) {
-                 PlayerResult res = new PlayerResult();
-                 res.mistakes = playerMistakes.getOrDefault(user, 0);
-                 res.correctGroups = playerProgress.getOrDefault(user, Collections.emptyList()).size();
-                 res.points = calculatePoints(res.correctGroups, res.mistakes);
-                 res.finished = completedPlayers.contains(user);
-                 res.won = (res.correctGroups == 3);
-                 results.put(user, res);
-             }
+            // Calculate on the fly for current game
+            results = new HashMap<>();
+            Set<String> participants = new HashSet<>(playerProgress.keySet());
+            participants.addAll(playerMistakes.keySet());
+            for (String user : participants) {
+                PlayerResult res = new PlayerResult();
+                res.mistakes = playerMistakes.getOrDefault(user, 0);
+                res.correctGroups =
+                        playerProgress.getOrDefault(user, Collections.emptyList()).size();
+                res.points = calculatePoints(res.correctGroups, res.mistakes);
+                res.finished = completedPlayers.contains(user);
+                res.won = (res.correctGroups == 3);
+                results.put(user, res);
+            }
         } else {
             results = gameHistory.get(gameId);
         }
 
-        if (results == null) return null;
+        if (results == null)
+            return null;
 
         int totalPlayers = results.size();
         int winners = 0;
         int losers = 0;
         int totalScore = 0;
         for (PlayerResult res : results.values()) {
-            if (res.won) winners++;
-            else if (res.finished) losers++; // If finished but not won, it's a loss
+            if (res.won)
+                winners++;
+            else if (res.finished)
+                losers++; // If finished but not won, it's a loss
             totalScore += res.points;
         }
 
@@ -176,7 +187,7 @@ public class GameSessionManager {
             err.put("message", "You already finished this game.");
             return err;
         }
-        
+
         if (getRemainingTime() <= 0) {
             Map<String, Object> err = new HashMap<>();
             err.put("status", "error");
@@ -187,10 +198,10 @@ public class GameSessionManager {
         // Validate words belong to the current game
         List<String> allWords = currentGame.getAllWords();
         if (!allWords.containsAll(words)) {
-             Map<String, Object> err = new HashMap<>();
-             err.put("status", "error");
-             err.put("message", "Words not in current game.");
-             return err;
+            Map<String, Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("message", "Words not in current game.");
+            return err;
         }
 
         // Find matching group
@@ -204,7 +215,8 @@ public class GameSessionManager {
 
         Map<String, Object> result = new HashMap<>();
         if (matchedGroup != null) {
-            List<WordGroup> progress = playerProgress.computeIfAbsent(username, k -> new ArrayList<>());
+            List<WordGroup> progress =
+                    playerProgress.computeIfAbsent(username, k -> new ArrayList<>());
             if (progress.contains(matchedGroup)) {
                 Map<String, Object> err = new HashMap<>();
                 err.put("status", "error");
@@ -215,7 +227,7 @@ public class GameSessionManager {
             result.put("status", "ok");
             result.put("message", "Correct! Group: " + matchedGroup.getTheme());
             result.put("foundGroups", progress.size());
-            
+
             if (progress.size() == 3) { // 4th is implicit
                 completedPlayers.add(username);
                 int mistakes = playerMistakes.getOrDefault(username, 0);
@@ -230,25 +242,30 @@ public class GameSessionManager {
             result.put("status", "wrong");
             result.put("message", "Incorrect proposal.");
             result.put("mistakes", mistakes);
-            
+
             if (mistakes >= 4) {
                 completedPlayers.add(username);
-                int points = calculatePoints(playerProgress.getOrDefault(username, Collections.emptyList()).size(), mistakes);
+                int points = calculatePoints(
+                        playerProgress.getOrDefault(username, Collections.emptyList()).size(),
+                        mistakes);
                 userManager.getUser(username).recordLoss(mistakes, points);
                 result.put("gameFinished", true);
                 result.put("finalPoints", points);
             }
         }
-        
+
         return result;
     }
 
     private int calculatePoints(int correctGroups, int mistakes) {
         int points = 0;
-        if (correctGroups == 1) points = 6;
-        else if (correctGroups == 2) points = 12;
-        else if (correctGroups == 3) points = 18;
-        
+        if (correctGroups == 1)
+            points = 6;
+        else if (correctGroups == 2)
+            points = 12;
+        else if (correctGroups == 3)
+            points = 18;
+
         points -= (mistakes * 4);
         return points;
     }
