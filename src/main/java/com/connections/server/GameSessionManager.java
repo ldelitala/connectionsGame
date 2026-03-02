@@ -142,9 +142,12 @@ public class GameSessionManager {
         }
     }
 
+    /**
+     * Submits a word proposal. Returns null if the request is invalid (game finished, time up).
+     */
     public synchronized ProposalResultDTO submitProposal(String username, List<String> words) {
-        if (completedPlayers.contains(username)) return ProposalResultDTO.error("Finished.");
-        if (getRemainingTime() <= 0) return ProposalResultDTO.error("Time up.");
+        if (completedPlayers.contains(username)) return null;
+        if (getRemainingTime() <= 0) return null;
         
         WordGroup matched = currentGame.getGroups().stream()
                 .filter(g -> new HashSet<>(g.getWords()).equals(new HashSet<>(words)))
@@ -152,19 +155,22 @@ public class GameSessionManager {
 
         if (matched != null) {
             List<WordGroup> progress = playerProgress.computeIfAbsent(username, k -> new ArrayList<>());
-            if (progress.contains(matched)) return ProposalResultDTO.error("Already found.");
+            if (progress.contains(matched)) return null; // Or return a "wrong" with 0 delta? User said "invalid request" cases
+            
             progress.add(matched);
             boolean win = (progress.size() == 3);
             if (win) finalizePlayerGame(username, true);
-            PlayerResult res = getPlayerSnapshot(username);
-            return ProposalResultDTO.ok("Correct!", progress.size(), win, win ? res.getPoints() : null);
+            
+            PlayerResult snapshot = getPlayerSnapshot(username);
+            return ProposalResultDTO.success(6.0f, snapshot.getPoints());
         } else {
             int m = playerMistakes.getOrDefault(username, 0) + 1;
             playerMistakes.put(username, m);
             boolean lose = (m >= 4);
             if (lose) finalizePlayerGame(username, false);
-            PlayerResult res = getPlayerSnapshot(username);
-            return ProposalResultDTO.wrong("Wrong!", m, lose, lose ? res.getPoints() : null);
+            
+            PlayerResult snapshot = getPlayerSnapshot(username);
+            return ProposalResultDTO.wrong(-4.0f, snapshot.getPoints());
         }
     }
 

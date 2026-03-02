@@ -14,6 +14,7 @@ public class PlayerStatsDTO {
     private final int perfectPuzzles;
     private final Map<Integer, Integer> mistakeHistogram;
     private final int totalScore;
+    private final double averageScore;
 
     private PlayerStatsDTO(int puzzlesCompleted, double winRate, double lossRate, int currentStreak, 
                          int maxStreak, int perfectPuzzles, Map<Integer, Integer> mistakeHistogram, int totalScore) {
@@ -25,6 +26,8 @@ public class PlayerStatsDTO {
         this.perfectPuzzles = perfectPuzzles;
         this.mistakeHistogram = mistakeHistogram;
         this.totalScore = totalScore;
+        // Automatically calculate average score
+        this.averageScore = (puzzlesCompleted > 0) ? (double) totalScore / puzzlesCompleted : 0.0;
     }
 
     /**
@@ -42,4 +45,5 @@ public class PlayerStatsDTO {
     public int getPerfectPuzzles() { return perfectPuzzles; }
     public Map<Integer, Integer> getMistakeHistogram() { return mistakeHistogram; }
     public int getTotalScore() { return totalScore; }
+    public double getAverageScore() { return averageScore; }
 }

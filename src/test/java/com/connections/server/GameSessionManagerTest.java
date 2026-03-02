@@ -50,7 +50,9 @@ public class GameSessionManagerTest {
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "BIRD");
         ProposalResultDTO result = sessionManager.submitProposal("test", words);
 
-        assertEquals("ok", result.getStatus());
+        assertNotNull(result);
+        assertEquals("success", result.getStatus());
+        assertEquals(6.0f, result.getPointsDelta());
         assertEquals(1, sessionManager.getPlayerProgress("test").size());
         assertEquals(0, sessionManager.getPlayerMistakes("test"));
     }
@@ -63,7 +65,9 @@ public class GameSessionManagerTest {
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "RED"); // Mixed
         ProposalResultDTO result = sessionManager.submitProposal("test", words);
 
+        assertNotNull(result);
         assertEquals("wrong", result.getStatus());
+        assertEquals(-4.0f, result.getPointsDelta());
         assertEquals(0, sessionManager.getPlayerProgress("test").size());
         assertEquals(1, sessionManager.getPlayerMistakes("test"));
     }
@@ -75,10 +79,13 @@ public class GameSessionManagerTest {
 
         sessionManager.submitProposal("test", Arrays.asList("CAT", "DOG", "FISH", "BIRD"));
         sessionManager.submitProposal("test", Arrays.asList("RED", "GREEN", "BLUE", "YELLOW"));
+        
         ProposalResultDTO result = sessionManager.submitProposal("test", Arrays.asList("LONDON", "PARIS", "ROME", "BERLIN"));
 
-        assertTrue(result.getGameFinished());
-        assertEquals(18, result.getFinalPoints());
+        assertNotNull(result);
+        assertEquals("success", result.getStatus());
+        // Final points: 3 groups (+18) - 0 mistakes (0) = 18
+        assertEquals(18, result.getTotalPoints());
         verify(user).recordWin(0, 18);
     }
 

@@ -170,7 +170,12 @@ public class ConnectionsServer {
     private Response handleSubmitProposal(SocketChannel channel, GameRequest req) {
         String username = activeSessions.get(channel);
         if (username == null) return Response.error("Not logged in.");
-        return Response.ok("Processed.", sessionManager.submitProposal(username, req.getWords()));
+        
+        ProposalResultDTO result = sessionManager.submitProposal(username, req.getWords());
+        if (result == null) {
+            return Response.error("Invalid proposal request (game finished, time up, or group already found).");
+        }
+        return Response.ok("Processed.", result);
     }
 
     private Response handleInfoOperation(SocketChannel channel, Operation op, InfoRequest req) {
