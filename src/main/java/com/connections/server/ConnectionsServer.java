@@ -3,6 +3,7 @@ package com.connections.server;
 import com.connections.common.Request;
 import com.connections.common.Response;
 import com.connections.common.User;
+import com.connections.common.dto.*;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -13,7 +14,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +33,6 @@ public class ConnectionsServer {
     private final ExecutorService threadPool;
     private final Gson gson = new Gson();
     
-    // Tracks active connections and their logged-in usernames
     private final Map<SocketChannel, String> activeSessions = new ConcurrentHashMap<>();
 
     public ConnectionsServer(ServerConfig config, UserManager userManager, GameSessionManager sessionManager, UdpNotifier udpNotifier) {
@@ -60,7 +59,6 @@ public class ConnectionsServer {
 
             while (iter.hasNext()) {
                 SelectionKey key = iter.next();
-
                 if (key.isAcceptable()) {
                     handleAccept(serverChannel, selector);
                 } else if (key.isReadable()) {
@@ -75,26 +73,20 @@ public class ConnectionsServer {
         SocketChannel clientChannel = serverChannel.accept();
         clientChannel.configureBlocking(false);
         clientChannel.register(selector, SelectionKey.OP_READ);
-        System.out.println("Accepted connection from " + clientChannel.getRemoteAddress());
     }
 
     private void handleRead(SelectionKey key) {
         SocketChannel clientChannel = (SocketChannel) key.channel();
         ByteBuffer buffer = ByteBuffer.allocate(4096);
-        
         try {
             int bytesRead = clientChannel.read(buffer);
             if (bytesRead == -1) {
                 closeConnection(clientChannel);
                 return;
             }
-
             String message = new String(buffer.array(), 0, bytesRead).trim();
             if (message.isEmpty()) return;
-
-            // Offload processing to thread pool
             threadPool.submit(() -> processRequest(clientChannel, message));
-
         } catch (IOException e) {
             closeConnection(clientChannel);
         }
@@ -136,9 +128,7 @@ public class ConnectionsServer {
                 default:
                     response = Response.error("Unknown operation: " + request.getOperation());
             }
-
             sendResponse(clientChannel, response);
-
         } catch (Exception e) {
             sendResponse(clientChannel, Response.error("Internal server error: " + e.getMessage()));
         }
@@ -147,14 +137,13 @@ public class ConnectionsServer {
     private Response handleUpdateCredentials(SocketChannel channel, Request req) {
         String username = activeSessions.get(channel);
         if (username == null) return Response.error("Not logged in.");
-        
         if (userManager.updateCredentials(username, req.getNewUsername(), req.getOldPassword(), req.getNewPassword())) {
             if (req.getNewUsername() != null && !req.getNewUsername().equals(username)) {
                 activeSessions.put(channel, req.getNewUsername());
             }
             return Response.ok("Credentials updated successfully.");
         } else {
-            return Response.error("Update failed. Check your current password or if username is taken.");
+            return Response.error("Update failed.");
         }
     }
 
@@ -171,17 +160,14 @@ public class ConnectionsServer {
         if (user != null) {
             String username = user.getUsername();
             activeSessions.put(channel, username);
-            
-            // Register UDP endpoint if provided
             if (req.getUdpPort() != null) {
                 try {
                     InetAddress address = ((InetSocketAddress) channel.getRemoteAddress()).getAddress();
                     udpNotifier.registerClient(username, address, req.getUdpPort());
                 } catch (IOException e) {
-                    System.err.println("Failed to get remote address for UDP registration: " + e.getMessage());
+                    System.err.println("Failed UDP registration.");
                 }
             }
-            
             return Response.ok("Login successful.");
         } else {
             return Response.error("Invalid credentials.");
@@ -199,35 +185,30 @@ public class ConnectionsServer {
     private Response handleSubmitProposal(SocketChannel channel, Request req) {
         String username = activeSessions.get(channel);
         if (username == null) return Response.error("Not logged in.");
-        
-        Map<String, Object> result = sessionManager.submitProposal(username, req.getWords());
+        ProposalResultDTO result = sessionManager.submitProposal(username, req.getWords());
         return Response.ok("Proposal processed.", result);
     }
 
     private Response handleRequestGameInfo(SocketChannel channel, Request req) {
         String username = activeSessions.get(channel);
         if (username == null) return Response.error("Not logged in.");
-        
         int gameId = (req.getGameId() != null) ? req.getGameId() : sessionManager.getCurrentGame().getGameId();
-        Map<String, Object> status = sessionManager.getPersonalGameStatus(username, gameId);
-        
+        GameStatusDTO status = sessionManager.getPersonalGameStatus(username, gameId);
         if (status != null) {
             return Response.ok("Game status for ID " + gameId, status);
         } else {
-            return Response.error("Game info not found for ID " + gameId);
+            return Response.error("Game info not found.");
         }
     }
 
     private Response handleRequestGameStats(SocketChannel channel, Request req) {
         if (!activeSessions.containsKey(channel)) return Response.error("Not logged in.");
-        
         int gameId = (req.getGameId() != null) ? req.getGameId() : sessionManager.getCurrentGame().getGameId();
-        Map<String, Object> stats = sessionManager.getGlobalGameStats(gameId);
-        
+        GameStatsDTO stats = sessionManager.getGlobalGameStats(gameId);
         if (stats != null) {
             return Response.ok("Global stats for ID " + gameId, stats);
         } else {
-            return Response.error("Game statistics not found for ID " + gameId);
+            return Response.error("Game statistics not found.");
         }
     }
 
@@ -235,23 +216,17 @@ public class ConnectionsServer {
         String username = activeSessions.get(channel);
         if (username == null) return Response.error("Not logged in.");
         User user = userManager.getUser(username);
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("puzzlesCompleted", user.getPuzzlesCompleted());
-        stats.put("winRate", user.getWinRate());
-        stats.put("lossRate", user.getLossRate());
-        stats.put("currentStreak", user.getCurrentStreak());
-        stats.put("maxStreak", user.getMaxStreak());
-        stats.put("perfectPuzzles", user.getPerfectPuzzles());
-        stats.put("mistakeHistogram", user.getMistakeHistogram());
-        stats.put("totalScore", user.getTotalScore());
+        PlayerStatsDTO stats = new PlayerStatsDTO(
+            user.getPuzzlesCompleted(), user.getWinRate(), user.getLossRate(),
+            user.getCurrentStreak(), user.getMaxStreak(), user.getPerfectPuzzles(),
+            user.getMistakeHistogram(), user.getTotalScore()
+        );
         return Response.ok("Player stats.", stats);
     }
 
     private Response handleRequestLeaderboard(SocketChannel channel, Request req) {
         if (!activeSessions.containsKey(channel)) return Response.error("Not logged in.");
-        
         if (req.getPlayerName() != null) {
-            // Position of a specific player
             List<User> all = userManager.getAllUsers();
             int rank = -1;
             for (int i = 0; i < all.size(); i++) {
@@ -260,11 +235,8 @@ public class ConnectionsServer {
                     break;
                 }
             }
-            if (rank != -1) {
-                return Response.ok("Player rank.", rank);
-            } else {
-                return Response.error("Player not found.");
-            }
+            if (rank != -1) return Response.ok("Player rank.", rank);
+            else return Response.error("Player not found.");
         } else {
             int k = (req.getTopPlayers() != null) ? req.getTopPlayers() : 10;
             return Response.ok("Leaderboard.", userManager.getTopK(k));
@@ -283,11 +255,8 @@ public class ConnectionsServer {
     private void closeConnection(SocketChannel channel) {
         try {
             String username = activeSessions.remove(channel);
-            if (username != null) {
-                udpNotifier.unregisterClient(username);
-            }
+            if (username != null) udpNotifier.unregisterClient(username);
             channel.close();
-            System.out.println("Closed connection.");
         } catch (IOException ignored) {}
     }
 }

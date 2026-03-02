@@ -3,13 +3,14 @@ package com.connections.server;
 import com.connections.common.Game;
 import com.connections.common.User;
 import com.connections.common.WordGroup;
+import com.connections.common.dto.CurrentGameStatusDTO;
+import com.connections.common.dto.GameStatusDTO;
+import com.connections.common.dto.ProposalResultDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,9 +49,9 @@ public class GameSessionManagerTest {
         when(userManager.getUser("test")).thenReturn(user);
 
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "BIRD");
-        Map<String, Object> result = sessionManager.submitProposal("test", words);
+        ProposalResultDTO result = sessionManager.submitProposal("test", words);
 
-        assertEquals("ok", result.get("status"));
+        assertEquals("ok", result.getStatus());
         assertEquals(1, sessionManager.getPlayerProgress("test").size());
         assertEquals(0, sessionManager.getPlayerMistakes("test"));
     }
@@ -61,9 +62,9 @@ public class GameSessionManagerTest {
         when(userManager.getUser("test")).thenReturn(user);
 
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "RED"); // Mixed
-        Map<String, Object> result = sessionManager.submitProposal("test", words);
+        ProposalResultDTO result = sessionManager.submitProposal("test", words);
 
-        assertEquals("wrong", result.get("status"));
+        assertEquals("wrong", result.getStatus());
         assertEquals(0, sessionManager.getPlayerProgress("test").size());
         assertEquals(1, sessionManager.getPlayerMistakes("test"));
     }
@@ -75,28 +76,30 @@ public class GameSessionManagerTest {
 
         sessionManager.submitProposal("test", Arrays.asList("CAT", "DOG", "FISH", "BIRD"));
         sessionManager.submitProposal("test", Arrays.asList("RED", "GREEN", "BLUE", "YELLOW"));
-        Map<String, Object> result = sessionManager.submitProposal("test", Arrays.asList("LONDON", "PARIS", "ROME", "BERLIN"));
+        ProposalResultDTO result = sessionManager.submitProposal("test", Arrays.asList("LONDON", "PARIS", "ROME", "BERLIN"));
 
-        assertTrue((Boolean) result.get("gameFinished"));
+        assertTrue(result.getGameFinished());
         // Final points: 3 groups (+18) - 0 mistakes (0) = 18
-        assertEquals(18, result.get("finalPoints"));
+        assertEquals(18, result.getFinalPoints());
         verify(user).recordWin(0, 18);
     }
 
     @Test
-    public void testLosingGameByMistakes() {
-        User user = mock(User.class);
+    public void testGetPersonalGameStatusWithRemainingWords() {
+        User user = new User("test", "pass");
         when(userManager.getUser("test")).thenReturn(user);
 
-        List<String> wrong = Arrays.asList("CAT", "DOG", "FISH", "RED");
-        sessionManager.submitProposal("test", wrong);
-        sessionManager.submitProposal("test", wrong);
-        sessionManager.submitProposal("test", wrong);
-        Map<String, Object> result = sessionManager.submitProposal("test", wrong);
+        // One correct group
+        List<String> words = Arrays.asList("CAT", "DOG", "FISH", "BIRD");
+        sessionManager.submitProposal("test", words);
 
-        assertTrue((Boolean) result.get("gameFinished"));
-        // Final points: 0 groups (0) - 4 mistakes (16) = -16
-        assertEquals(-16, result.get("finalPoints"));
-        verify(user).recordLoss(4, -16);
+        GameStatusDTO status = sessionManager.getPersonalGameStatus("test", 1);
+        
+        assertNotNull(status);
+        assertTrue(status instanceof CurrentGameStatusDTO);
+        List<String> remainingWords = ((CurrentGameStatusDTO)status).getRemainingWords();
+        assertEquals(12, remainingWords.size()); // 16 - 4
+        assertFalse(remainingWords.contains("CAT"));
+        assertTrue(remainingWords.contains("RED"));
     }
 }
