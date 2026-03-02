@@ -3,17 +3,34 @@ package com.connections.common;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Base abstract class for all client requests.
+ * Abstract base class for all client-server requests.
+ * <p>
+ * This class provides the foundational structure for requests sent from the client
+ * to the server, primarily ensuring that every request includes an {@link Operation}.
+ * Subclasses implement specific data fields required for different types of operations.
+ * </p>
  */
 public abstract class Request {
-    @SerializedName("operation")
-    private final String operationValue;
 
-    public Request(Operation operation) {
-        this.operationValue = (operation != null) ? operation.getValue() : null;
+    /** The operation requested by the client. */
+    @SerializedName("operation")
+    private final Operation operation;
+
+    /**
+     * Protected constructor for subclasses to initialize the operation.
+     * 
+     * @param operation the operation type for this request
+     */
+    protected Request(Operation operation) {
+        this.operation = operation;
     }
 
-    public String getOperation() {
-        return operationValue;
+    /**
+     * Gets the operation associated with this request.
+     * 
+     * @return the operation enum constant
+     */
+    public Operation getOperation() {
+        return operation;
     }
 }
