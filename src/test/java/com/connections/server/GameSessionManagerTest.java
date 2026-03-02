@@ -3,8 +3,8 @@ package com.connections.server;
 import com.connections.common.Game;
 import com.connections.common.User;
 import com.connections.common.WordGroup;
-import com.connections.common.dto.CurrentGameStatusDTO;
-import com.connections.common.dto.GameStatusDTO;
+import com.connections.common.dto.CurrentGameInfoDTO;
+import com.connections.common.dto.GameInfoDTO;
 import com.connections.common.dto.ProposalResultDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,7 +79,6 @@ public class GameSessionManagerTest {
         ProposalResultDTO result = sessionManager.submitProposal("test", Arrays.asList("LONDON", "PARIS", "ROME", "BERLIN"));
 
         assertTrue(result.getGameFinished());
-        // Final points: 3 groups (+18) - 0 mistakes (0) = 18
         assertEquals(18, result.getFinalPoints());
         verify(user).recordWin(0, 18);
     }
@@ -89,16 +88,15 @@ public class GameSessionManagerTest {
         User user = new User("test", "pass");
         when(userManager.getUser("test")).thenReturn(user);
 
-        // One correct group
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "BIRD");
         sessionManager.submitProposal("test", words);
 
-        GameStatusDTO status = sessionManager.getPersonalGameStatus("test", 1);
+        GameInfoDTO status = sessionManager.getPersonalGameStatus("test", 1);
         
         assertNotNull(status);
-        assertTrue(status instanceof CurrentGameStatusDTO);
-        List<String> remainingWords = ((CurrentGameStatusDTO)status).getRemainingWords();
-        assertEquals(12, remainingWords.size()); // 16 - 4
+        assertTrue(status instanceof CurrentGameInfoDTO);
+        List<String> remainingWords = ((CurrentGameInfoDTO)status).getRemainingWords();
+        assertEquals(12, remainingWords.size());
         assertFalse(remainingWords.contains("CAT"));
         assertTrue(remainingWords.contains("RED"));
     }

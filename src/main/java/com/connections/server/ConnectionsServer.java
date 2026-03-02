@@ -193,9 +193,9 @@ public class ConnectionsServer {
         String username = activeSessions.get(channel);
         if (username == null) return Response.error("Not logged in.");
         int gameId = (req.getGameId() != null) ? req.getGameId() : sessionManager.getCurrentGame().getGameId();
-        GameStatusDTO status = sessionManager.getPersonalGameStatus(username, gameId);
+        GameInfoDTO status = sessionManager.getPersonalGameStatus(username, gameId);
         if (status != null) {
-            return Response.ok("Game status for ID " + gameId, status);
+            return Response.ok("Game info for ID " + gameId, status);
         } else {
             return Response.error("Game info not found.");
         }
@@ -226,8 +226,10 @@ public class ConnectionsServer {
 
     private Response handleRequestLeaderboard(SocketChannel channel, Request req) {
         if (!activeSessions.containsKey(channel)) return Response.error("Not logged in.");
+        
+        List<User> all = userManager.getAllUsers();
+        
         if (req.getPlayerName() != null) {
-            List<User> all = userManager.getAllUsers();
             int rank = -1;
             for (int i = 0; i < all.size(); i++) {
                 if (all.get(i).getUsername().equals(req.getPlayerName())) {
@@ -238,8 +240,13 @@ public class ConnectionsServer {
             if (rank != -1) return Response.ok("Player rank.", rank);
             else return Response.error("Player not found.");
         } else {
-            int k = (req.getTopPlayers() != null) ? req.getTopPlayers() : 10;
-            return Response.ok("Leaderboard.", userManager.getTopK(k));
+            int k = (req.getTopPlayers() != null) ? req.getTopPlayers() : all.size();
+            List<LeaderboardEntryDTO> entries = new java.util.ArrayList<>();
+            for (int i = 0; i < Math.min(k, all.size()); i++) {
+                User u = all.get(i);
+                entries.add(new LeaderboardEntryDTO(i + 1, u.getUsername(), u.getTotalScore()));
+            }
+            return Response.ok("Leaderboard.", new LeaderboardDTO(entries));
         }
     }
 
