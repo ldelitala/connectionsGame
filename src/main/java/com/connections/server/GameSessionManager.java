@@ -2,7 +2,9 @@ package com.connections.server;
 
 import com.connections.common.Game;
 import com.connections.common.WordGroup;
-import com.connections.common.dto.*;
+import com.connections.common.requests.*;
+import com.connections.common.responses.*;
+import com.connections.common.responses.dto.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,11 +69,8 @@ public class GameSessionManager {
         completedPlayers.clear();
         System.out.println("New game started: ID " + currentGame.getGameId());
         if (udpNotifier != null) {
-            Map<String, Object> msg = new HashMap<>();
-            msg.put("type", "new_game");
-            msg.put("gameId", currentGame.getGameId());
-            msg.put("words", currentGame.getAllWords());
-            udpNotifier.notifyAll(new com.google.gson.Gson().toJson(msg));
+            NewGameNotificationDTO notification = NewGameNotificationDTO.create(currentGame.getGameId(), currentGame.getAllWords());
+            udpNotifier.notifyAll(new com.google.gson.Gson().toJson(notification));
         }
         scheduler.schedule(this::startNewGame, gameDurationMillis, TimeUnit.MILLISECONDS);
     }
@@ -113,11 +112,8 @@ public class GameSessionManager {
     public synchronized GameStatsDTO getGlobalGameStats(int gameId) {
         Map<String, PlayerResult> results;
         boolean isCurrent = false;
-        Long remainingTime = null;
-        Integer inProgressCount = null;
         if (currentGame != null && gameId == currentGame.getGameId()) {
             isCurrent = true;
-            remainingTime = getRemainingTime();
             results = new HashMap<>();
             Set<String> participants = new HashSet<>(playerProgress.keySet());
             participants.addAll(playerMistakes.keySet());
@@ -128,7 +124,6 @@ public class GameSessionManager {
             results = gameHistory.get(gameId);
         }
         if (results == null) return null;
-        int totalParticipants = results.size();
         int winners = 0;
         int finished = 0;
         int totalScore = 0;
@@ -137,38 +132,37 @@ public class GameSessionManager {
             if (res.isFinished()) finished++;
             totalScore += res.getPoints();
         }
-        Integer participantsCount = null;
-        Double averageScore = null;
         if (isCurrent) {
-            inProgressCount = results.size() - finished;
+            return GameStatsDTO.current(gameId, getRemainingTime(), results.size() - finished, finished, winners);
         } else {
-            participantsCount = results.size();
-            averageScore = participantsCount > 0 ? (double) totalScore / participantsCount : 0.0;
+            double avg = results.isEmpty() ? 0.0 : (double) totalScore / results.size();
+            return GameStatsDTO.past(gameId, results.size(), finished, winners, avg);
         }
-        return new GameStatsDTO(gameId, isCurrent, remainingTime, inProgressCount, finished, winners, participantsCount, averageScore);
     }
 
     public synchronized ProposalResultDTO submitProposal(String username, List<String> words) {
-        if (completedPlayers.contains(username)) return new ProposalResultDTO("error", "Finished.", null, null, null, null);
-        if (getRemainingTime() <= 0) return new ProposalResultDTO("error", "Time up.", null, null, null, null);
+        if (completedPlayers.contains(username)) return ProposalResultDTO.error("Finished.");
+        if (getRemainingTime() <= 0) return ProposalResultDTO.error("Time up.");
+        
         WordGroup matched = currentGame.getGroups().stream()
                 .filter(g -> new HashSet<>(g.getWords()).equals(new HashSet<>(words)))
                 .findFirst().orElse(null);
+
         if (matched != null) {
             List<WordGroup> progress = playerProgress.computeIfAbsent(username, k -> new ArrayList<>());
-            if (progress.contains(matched)) return new ProposalResultDTO("error", "Already found.", null, null, null, null);
+            if (progress.contains(matched)) return ProposalResultDTO.error("Already found.");
             progress.add(matched);
             boolean win = (progress.size() == 3);
             if (win) finalizePlayerGame(username, true);
             PlayerResult res = getPlayerSnapshot(username);
-            return new ProposalResultDTO("ok", "Correct!", progress.size(), null, win, win ? res.getPoints() : null);
+            return ProposalResultDTO.ok("Correct!", progress.size(), win, win ? res.getPoints() : null);
         } else {
             int m = playerMistakes.getOrDefault(username, 0) + 1;
             playerMistakes.put(username, m);
             boolean lose = (m >= 4);
             if (lose) finalizePlayerGame(username, false);
             PlayerResult res = getPlayerSnapshot(username);
-            return new ProposalResultDTO("wrong", "Wrong!", null, m, lose, lose ? res.getPoints() : null);
+            return ProposalResultDTO.wrong("Wrong!", m, lose, lose ? res.getPoints() : null);
         }
     }
 

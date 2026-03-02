@@ -1,7 +1,8 @@
 package com.connections.client;
 
-import com.connections.common.*;
-import com.connections.common.dto.*;
+import com.connections.common.requests.*;
+import com.connections.common.responses.*;
+import com.connections.common.responses.dto.*;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -13,7 +14,6 @@ import java.util.Scanner;
  */
 public class ClientMain {
     private static ConnectionClient client;
-    private static UdpNotificationListener udpListener;
     private static String currentUsername = null;
 
     public static void main(String[] args) {
@@ -97,7 +97,7 @@ public class ClientMain {
             pass = scanner.nextLine().trim();
         }
 
-        UserRequest req = new UserRequest(Operation.REGISTER, user, pass, null, null, null, null);
+        UserRequest req = UserRequest.register(user, pass);
         Response resp = client.sendRequest(req);
         System.out.println(resp.getMessage());
     }
@@ -115,17 +115,13 @@ public class ClientMain {
             pass = scanner.nextLine().trim();
         }
 
-        int udpPort = 0; // In a real app, find an available port
-        UserRequest req = new UserRequest(Operation.LOGIN, user, pass, null, null, null, udpPort);
+        int udpPort = 0; 
+        UserRequest req = UserRequest.login(user, pass, udpPort);
         Response resp = client.sendRequest(req);
         
-        if (resp.getStatus().equals("ok")) {
+        if (resp.getStatus() == Status.OK) {
             currentUsername = user;
             System.out.println("Logged in as " + user);
-            // Start UDP listener (simplified for CLI demo)
-            // if (udpListener != null) udpListener.stop();
-            // udpListener = new UdpNotificationListener(udpPort);
-            // new Thread(udpListener).start();
         } else {
             System.out.println("Login failed: " + resp.getMessage());
         }
@@ -133,8 +129,8 @@ public class ClientMain {
 
     private static void handleLogout() throws IOException {
         ensureConnected();
-        Response resp = client.sendRequest(new UserRequest(Operation.LOGOUT, null, null, null, null, null, null));
-        if (resp.getStatus().equals("ok")) {
+        Response resp = client.sendRequest(UserRequest.logout());
+        if (resp.getStatus() == Status.OK) {
             currentUsername = null;
         }
         System.out.println(resp.getMessage());
@@ -152,10 +148,10 @@ public class ClientMain {
         String newPass = scanner.nextLine().trim();
         if (newPass.isEmpty()) newPass = null;
 
-        UserRequest req = new UserRequest(Operation.UPDATE_CREDENTIALS, null, null, newUname, oldPass, newPass, null);
+        UserRequest req = UserRequest.updateCredentials(currentUsername, oldPass, newUname, newPass);
         Response resp = client.sendRequest(req);
         
-        if (resp.getStatus().equals("ok") && newUname != null) {
+        if (resp.getStatus() == Status.OK && newUname != null) {
             currentUsername = newUname;
         }
         System.out.println(resp.getMessage());
@@ -172,16 +168,15 @@ public class ClientMain {
             return;
         }
 
-        GameRequest req = new GameRequest(Operation.SUBMIT_PROPOSAL, words);
+        GameRequest req = GameRequest.submitProposal(words);
         Response resp = client.sendRequest(req);
         System.out.println(resp.getMessage());
-        // For droids/debugging: client serializes ProposalResultDTO into 'data' field
     }
 
     private static void handleRequestGameInfo(String[] tokens) throws IOException {
         ensureConnected();
         Integer gameId = (tokens.length > 1) ? Integer.parseInt(tokens[1]) : null;
-        InfoRequest req = new InfoRequest(Operation.REQUEST_GAME_INFO, gameId, null, null);
+        InfoRequest req = InfoRequest.requestGameInfo(gameId);
         Response resp = client.sendRequest(req);
         System.out.println(resp.getMessage());
         if (resp.getData() != null) {
@@ -191,7 +186,7 @@ public class ClientMain {
 
     private static void handleRequestPlayerStats() throws IOException {
         ensureConnected();
-        InfoRequest req = new InfoRequest(Operation.REQUEST_PLAYER_STATS, null, null, null);
+        InfoRequest req = InfoRequest.requestPlayerStats();
         Response resp = client.sendRequest(req);
         System.out.println(resp.getMessage());
         if (resp.getData() != null) {
@@ -202,7 +197,7 @@ public class ClientMain {
     private static void handleRequestLeaderboard(String[] tokens) throws IOException {
         ensureConnected();
         Integer top = (tokens.length > 1) ? Integer.parseInt(tokens[1]) : 10;
-        InfoRequest req = new InfoRequest(Operation.REQUEST_LEADERBOARD, null, null, top);
+        InfoRequest req = InfoRequest.requestLeaderboard(null, top);
         Response resp = client.sendRequest(req);
         System.out.println(resp.getMessage());
         if (resp.getData() != null) {

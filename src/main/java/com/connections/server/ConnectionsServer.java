@@ -1,10 +1,10 @@
 package com.connections.server;
 
 import com.connections.common.*;
-import com.connections.common.dto.*;
+import com.connections.common.requests.*;
+import com.connections.common.responses.*;
+import com.connections.common.responses.dto.*;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -94,12 +94,12 @@ public class ConnectionsServer {
 
     private void processRequest(SocketChannel clientChannel, String json) {
         try {
-            JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
-            String opValue = jsonObject.get("operation").getAsString();
-            Operation op = Operation.fromString(opValue);
+            class OperationPeek { Operation operation; }
+            OperationPeek peek = gson.fromJson(json, OperationPeek.class);
+            Operation op = (peek != null) ? peek.operation : null;
 
             if (op == null) {
-                sendResponse(clientChannel, Response.error("Unknown operation: " + opValue));
+                sendResponse(clientChannel, Response.error("Missing or unknown operation."));
                 return;
             }
 
@@ -188,7 +188,7 @@ public class ConnectionsServer {
                 return stats != null ? Response.ok("Stats for " + sgid, stats) : Response.error("Not found.");
             case REQUEST_PLAYER_STATS:
                 User u = userManager.getUser(username);
-                return Response.ok("Player stats.", new PlayerStatsDTO(
+                return Response.ok("Player stats.", PlayerStatsDTO.create(
                     u.getPuzzlesCompleted(), u.getWinRate(), u.getLossRate(),
                     u.getCurrentStreak(), u.getMaxStreak(), u.getPerfectPuzzles(),
                     u.getMistakeHistogram(), u.getTotalScore()));
@@ -205,9 +205,9 @@ public class ConnectionsServer {
                 List<LeaderboardEntryDTO> entries = new java.util.ArrayList<>();
                 for (int i = 0; i < Math.min(k, all.size()); i++) {
                     User lu = all.get(i);
-                    entries.add(new LeaderboardEntryDTO(i + 1, lu.getUsername(), lu.getTotalScore()));
+                    entries.add(LeaderboardEntryDTO.create(i + 1, lu.getUsername(), lu.getTotalScore()));
                 }
-                return Response.ok("Leaderboard.", new LeaderboardDTO(entries));
+                return Response.ok("Leaderboard.", LeaderboardDTO.create(entries));
             default:
                 return Response.error("Unsupported info operation.");
         }

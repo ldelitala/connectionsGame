@@ -1,7 +1,7 @@
 package com.connections.client;
 
-import com.connections.common.Request;
-import com.connections.common.Response;
+import com.connections.common.requests.Request;
+import com.connections.common.responses.Response;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;
@@ -11,25 +11,18 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
- * Handles TCP communication with the Connections Server.
+ * Handles the low-level TCP connection and JSON communication with the server.
  */
 public class ConnectionClient implements AutoCloseable {
-    private final String host;
-    private final int port;
-    private Socket socket;
-    private PrintWriter out;
-    private BufferedReader in;
+    private final Socket socket;
+    private final PrintWriter out;
+    private final BufferedReader in;
     private final Gson gson = new Gson();
 
-    public ConnectionClient(String host, int port) {
-        this.host = host;
-        this.port = port;
-    }
-
-    public void connect() throws IOException {
-        socket = new Socket(host, port);
-        out = new PrintWriter(socket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    public ConnectionClient(String host, int port) throws IOException {
+        this.socket = new Socket(host, port);
+        this.out = new PrintWriter(socket.getOutputStream(), true);
+        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
     public Response sendRequest(Request request) throws IOException {
