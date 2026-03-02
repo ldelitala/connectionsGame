@@ -1,4 +1,4 @@
-package com.connections.common;
+package com.connections.common.requests;
 
 import com.google.gson.annotations.SerializedName;
 

@@ -1,4 +1,4 @@
-package com.connections.common;
+package com.connections.common.requests;
 
 /**
  * specialized Request subclass for information-retrieval operations.
@@ -9,6 +9,8 @@ package com.connections.common;
  */
 public class InfoRequest extends Request {
 
+    /** The ID of the game being requested (null for current game). */
+    private Integer gameId;
     /** Username for specific player rank requests. */
     private String playerName;
     /** Number of top players to retrieve for leaderboard requests. */
@@ -24,6 +26,30 @@ public class InfoRequest extends Request {
     }
 
     // --- FACTORY METHODS ---
+
+    /**
+     * Creates a request for personal game info.
+     * 
+     * @param gameId the ID of the game (null for current game)
+     * @return a new InfoRequest for game info
+     */
+    public static InfoRequest requestGameInfo(Integer gameId) {
+        InfoRequest req = new InfoRequest(Operation.REQUEST_GAME_INFO);
+        req.gameId = gameId;
+        return req;
+    }
+
+    /**
+     * Creates a request for global game statistics.
+     * 
+     * @param gameId the ID of the game (null for current game)
+     * @return a new InfoRequest for game stats
+     */
+    public static InfoRequest requestGameStats(Integer gameId) {
+        InfoRequest req = new InfoRequest(Operation.REQUEST_GAME_STATS);
+        req.gameId = gameId;
+        return req;
+    }
 
     /**
      * Creates a request for the logged-in user's personal statistics.
@@ -49,6 +75,7 @@ public class InfoRequest extends Request {
     }
 
     // --- GETTERS ---
+    public Integer getGameId() { return gameId; }
     public String getPlayerName() { return playerName; }
     public Integer getTopPlayers() { return topPlayers; }
 }
