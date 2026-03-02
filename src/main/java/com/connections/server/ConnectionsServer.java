@@ -1,10 +1,10 @@
 package com.connections.server;
 
-import com.connections.common.Request;
-import com.connections.common.Response;
-import com.connections.common.User;
+import com.connections.common.*;
 import com.connections.common.dto.*;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -94,39 +94,37 @@ public class ConnectionsServer {
 
     private void processRequest(SocketChannel clientChannel, String json) {
         try {
-            Request request = gson.fromJson(json, Request.class);
-            Response response;
+            JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
+            String opValue = jsonObject.get("operation").getAsString();
+            Operation op = Operation.fromString(opValue);
 
-            switch (request.getOperation()) {
-                case "register":
-                    response = handleRegister(request);
+            if (op == null) {
+                sendResponse(clientChannel, Response.error("Unknown operation: " + opValue));
+                return;
+            }
+
+            Response response;
+            switch (op) {
+                case REGISTER:
+                case LOGIN:
+                case LOGOUT:
+                case UPDATE_CREDENTIALS:
+                    UserRequest userReq = gson.fromJson(json, UserRequest.class);
+                    response = handleUserOperation(clientChannel, op, userReq);
                     break;
-                case "login":
-                    response = handleLogin(clientChannel, request);
+                case SUBMIT_PROPOSAL:
+                    GameRequest gameReq = gson.fromJson(json, GameRequest.class);
+                    response = handleSubmitProposal(clientChannel, gameReq);
                     break;
-                case "logout":
-                    response = handleLogout(clientChannel);
-                    break;
-                case "submitProposal":
-                    response = handleSubmitProposal(clientChannel, request);
-                    break;
-                case "requestGameInfo":
-                    response = handleRequestGameInfo(clientChannel, request);
-                    break;
-                case "requestGameStats":
-                    response = handleRequestGameStats(clientChannel, request);
-                    break;
-                case "requestPlayerStats":
-                    response = handleRequestPlayerStats(clientChannel);
-                    break;
-                case "requestLeaderboard":
-                    response = handleRequestLeaderboard(clientChannel, request);
-                    break;
-                case "updateCredentials":
-                    response = handleUpdateCredentials(clientChannel, request);
+                case REQUEST_GAME_INFO:
+                case REQUEST_GAME_STATS:
+                case REQUEST_PLAYER_STATS:
+                case REQUEST_LEADERBOARD:
+                    InfoRequest infoReq = gson.fromJson(json, InfoRequest.class);
+                    response = handleInfoOperation(clientChannel, op, infoReq);
                     break;
                 default:
-                    response = Response.error("Unknown operation: " + request.getOperation());
+                    response = Response.error("Operation not implemented.");
             }
             sendResponse(clientChannel, response);
         } catch (Exception e) {
@@ -134,119 +132,84 @@ public class ConnectionsServer {
         }
     }
 
-    private Response handleUpdateCredentials(SocketChannel channel, Request req) {
-        String username = activeSessions.get(channel);
-        if (username == null) return Response.error("Not logged in.");
-        if (userManager.updateCredentials(username, req.getNewUsername(), req.getOldPassword(), req.getNewPassword())) {
-            if (req.getNewUsername() != null && !req.getNewUsername().equals(username)) {
-                activeSessions.put(channel, req.getNewUsername());
-            }
-            return Response.ok("Credentials updated successfully.");
-        } else {
-            return Response.error("Update failed.");
-        }
-    }
-
-    private Response handleRegister(Request req) {
-        if (userManager.register(req.getUsername(), req.getPassword())) {
-            return Response.ok("Registration successful.");
-        } else {
-            return Response.error("Username already exists.");
-        }
-    }
-
-    private Response handleLogin(SocketChannel channel, Request req) {
-        User user = userManager.authenticate(req.getUsername(), req.getPassword());
-        if (user != null) {
-            String username = user.getUsername();
-            activeSessions.put(channel, username);
-            if (req.getUdpPort() != null) {
-                try {
-                    InetAddress address = ((InetSocketAddress) channel.getRemoteAddress()).getAddress();
-                    udpNotifier.registerClient(username, address, req.getUdpPort());
-                } catch (IOException e) {
-                    System.err.println("Failed UDP registration.");
+    private Response handleUserOperation(SocketChannel channel, Operation op, UserRequest req) {
+        switch (op) {
+            case REGISTER:
+                return userManager.register(req.getUsername(), req.getPassword()) ? 
+                    Response.ok("Registration successful.") : Response.error("Username exists.");
+            case LOGIN:
+                User user = userManager.authenticate(req.getUsername(), req.getPassword());
+                if (user != null) {
+                    activeSessions.put(channel, user.getUsername());
+                    if (req.getUdpPort() != null) {
+                        try {
+                            InetAddress addr = ((InetSocketAddress) channel.getRemoteAddress()).getAddress();
+                            udpNotifier.registerClient(user.getUsername(), addr, req.getUdpPort());
+                        } catch (IOException ignored) {}
+                    }
+                    return Response.ok("Login successful.");
                 }
-            }
-            return Response.ok("Login successful.");
-        } else {
-            return Response.error("Invalid credentials.");
-        }
-    }
-
-    private Response handleLogout(SocketChannel channel) {
-        String username = activeSessions.remove(channel);
-        if (username != null) {
-            udpNotifier.unregisterClient(username);
-        }
-        return Response.ok("Logged out.");
-    }
-
-    private Response handleSubmitProposal(SocketChannel channel, Request req) {
-        String username = activeSessions.get(channel);
-        if (username == null) return Response.error("Not logged in.");
-        ProposalResultDTO result = sessionManager.submitProposal(username, req.getWords());
-        return Response.ok("Proposal processed.", result);
-    }
-
-    private Response handleRequestGameInfo(SocketChannel channel, Request req) {
-        String username = activeSessions.get(channel);
-        if (username == null) return Response.error("Not logged in.");
-        int gameId = (req.getGameId() != null) ? req.getGameId() : sessionManager.getCurrentGame().getGameId();
-        GameInfoDTO status = sessionManager.getPersonalGameStatus(username, gameId);
-        if (status != null) {
-            return Response.ok("Game info for ID " + gameId, status);
-        } else {
-            return Response.error("Game info not found.");
-        }
-    }
-
-    private Response handleRequestGameStats(SocketChannel channel, Request req) {
-        if (!activeSessions.containsKey(channel)) return Response.error("Not logged in.");
-        int gameId = (req.getGameId() != null) ? req.getGameId() : sessionManager.getCurrentGame().getGameId();
-        GameStatsDTO stats = sessionManager.getGlobalGameStats(gameId);
-        if (stats != null) {
-            return Response.ok("Global stats for ID " + gameId, stats);
-        } else {
-            return Response.error("Game statistics not found.");
-        }
-    }
-
-    private Response handleRequestPlayerStats(SocketChannel channel) {
-        String username = activeSessions.get(channel);
-        if (username == null) return Response.error("Not logged in.");
-        User user = userManager.getUser(username);
-        PlayerStatsDTO stats = new PlayerStatsDTO(
-            user.getPuzzlesCompleted(), user.getWinRate(), user.getLossRate(),
-            user.getCurrentStreak(), user.getMaxStreak(), user.getPerfectPuzzles(),
-            user.getMistakeHistogram(), user.getTotalScore()
-        );
-        return Response.ok("Player stats.", stats);
-    }
-
-    private Response handleRequestLeaderboard(SocketChannel channel, Request req) {
-        if (!activeSessions.containsKey(channel)) return Response.error("Not logged in.");
-        
-        List<User> all = userManager.getAllUsers();
-        
-        if (req.getPlayerName() != null) {
-            int rank = -1;
-            for (int i = 0; i < all.size(); i++) {
-                if (all.get(i).getUsername().equals(req.getPlayerName())) {
-                    rank = i + 1;
-                    break;
+                return Response.error("Invalid credentials.");
+            case LOGOUT:
+                String uname = activeSessions.remove(channel);
+                if (uname != null) udpNotifier.unregisterClient(uname);
+                return Response.ok("Logged out.");
+            case UPDATE_CREDENTIALS:
+                String currentUname = activeSessions.get(channel);
+                if (currentUname == null) return Response.error("Not logged in.");
+                if (userManager.updateCredentials(currentUname, req.getNewName(), req.getOldPsw(), req.getNewPsw())) {
+                    if (req.getNewName() != null) activeSessions.put(channel, req.getNewName());
+                    return Response.ok("Updated.");
                 }
-            }
-            if (rank != -1) return Response.ok("Player rank.", rank);
-            else return Response.error("Player not found.");
-        } else {
-            int k = (req.getTopPlayers() != null) ? req.getTopPlayers() : all.size();
-            List<LeaderboardEntryDTO> entries = new java.util.ArrayList<>();
-            for (int i = 0; i < Math.min(k, all.size()); i++) {
-                User u = all.get(i);
-                entries.add(new LeaderboardEntryDTO(i + 1, u.getUsername(), u.getTotalScore()));
-            }
-            return Response.ok("Leaderboard.", new LeaderboardDTO(entries));
+                return Response.error("Update failed.");
+            default:
+                return Response.error("Unsupported user operation.");
+        }
+    }
+
+    private Response handleSubmitProposal(SocketChannel channel, GameRequest req) {
+        String username = activeSessions.get(channel);
+        if (username == null) return Response.error("Not logged in.");
+        return Response.ok("Processed.", sessionManager.submitProposal(username, req.getWords()));
+    }
+
+    private Response handleInfoOperation(SocketChannel channel, Operation op, InfoRequest req) {
+        String username = activeSessions.get(channel);
+        if (username == null) return Response.error("Not logged in.");
+
+        switch (op) {
+            case REQUEST_GAME_INFO:
+                int gid = (req.getGameId() != null) ? req.getGameId() : sessionManager.getCurrentGame().getGameId();
+                GameInfoDTO info = sessionManager.getPersonalGameStatus(username, gid);
+                return info != null ? Response.ok("Info for " + gid, info) : Response.error("Not found.");
+            case REQUEST_GAME_STATS:
+                int sgid = (req.getGameId() != null) ? req.getGameId() : sessionManager.getCurrentGame().getGameId();
+                GameStatsDTO stats = sessionManager.getGlobalGameStats(sgid);
+                return stats != null ? Response.ok("Stats for " + sgid, stats) : Response.error("Not found.");
+            case REQUEST_PLAYER_STATS:
+                User u = userManager.getUser(username);
+                return Response.ok("Player stats.", new PlayerStatsDTO(
+                    u.getPuzzlesCompleted(), u.getWinRate(), u.getLossRate(),
+                    u.getCurrentStreak(), u.getMaxStreak(), u.getPerfectPuzzles(),
+                    u.getMistakeHistogram(), u.getTotalScore()));
+            case REQUEST_LEADERBOARD:
+                List<User> all = userManager.getAllUsers();
+                if (req.getPlayerName() != null) {
+                    for (int i = 0; i < all.size(); i++) {
+                        if (all.get(i).getUsername().equals(req.getPlayerName())) 
+                            return Response.ok("Rank.", i + 1);
+                    }
+                    return Response.error("Not found.");
+                }
+                int k = (req.getTopPlayers() != null) ? req.getTopPlayers() : all.size();
+                List<LeaderboardEntryDTO> entries = new java.util.ArrayList<>();
+                for (int i = 0; i < Math.min(k, all.size()); i++) {
+                    User lu = all.get(i);
+                    entries.add(new LeaderboardEntryDTO(i + 1, lu.getUsername(), lu.getTotalScore()));
+                }
+                return Response.ok("Leaderboard.", new LeaderboardDTO(entries));
+            default:
+                return Response.error("Unsupported info operation.");
         }
     }
 
