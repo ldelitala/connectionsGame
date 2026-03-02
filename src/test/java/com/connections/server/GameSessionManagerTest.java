@@ -3,7 +3,6 @@ package com.connections.server;
 import com.connections.common.Game;
 import com.connections.common.User;
 import com.connections.common.WordGroup;
-import com.connections.common.responses.dto.CurrentGameInfoDTO;
 import com.connections.common.responses.dto.GameInfoDTO;
 import com.connections.common.responses.dto.ProposalResultDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -94,8 +93,8 @@ public class GameSessionManagerTest {
         GameInfoDTO status = sessionManager.getPersonalGameStatus("test", 1);
         
         assertNotNull(status);
-        assertTrue(status instanceof CurrentGameInfoDTO);
-        List<String> remainingWords = ((CurrentGameInfoDTO)status).getRemainingWords();
+        assertTrue(status.isCurrent());
+        List<String> remainingWords = status.getRemainingWords();
         assertEquals(12, remainingWords.size());
         assertFalse(remainingWords.contains("CAT"));
         assertTrue(remainingWords.contains("RED"));

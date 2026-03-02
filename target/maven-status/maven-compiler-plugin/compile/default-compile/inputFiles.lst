@@ -5,12 +5,10 @@
 /home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/common/requests/GameRequest.java
 /home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/common/responses/dto/GameInfoDTO.java
 /home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/common/responses/Status.java
-/home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/common/responses/dto/PastGameInfoDTO.java
 /home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/common/responses/dto/PlayerStatsDTO.java
 /home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/client/ConnectionClient.java
 /home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/client/UdpNotificationListener.java
 /home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/client/ClientMain.java
-/home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/common/responses/dto/CurrentGameInfoDTO.java
 /home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/common/responses/dto/LeaderboardDTO.java
 /home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/common/responses/dto/LeaderboardEntryDTO.java
 /home/deli/Dropbox/my_vault/1 - UNIPI/R&LIII/Laboratorio di Reti/Progetto2026/src/main/java/com/connections/common/requests/InfoRequest.java

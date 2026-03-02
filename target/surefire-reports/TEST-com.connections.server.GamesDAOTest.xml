@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.connections.server.GamesDAOTest" time="0.232" tests="3" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.connections.server.GamesDAOTest" time="0.236" tests="3" errors="0" skipped="0" failures="0">
   <properties>
     <property name="sun.desktop" value="gnome"/>
     <property name="awt.toolkit" value="sun.awt.X11.XToolkit"/>
@@ -17,7 +17,7 @@
     <property name="user.country" value="US"/>
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="sun.boot.library.path" value="/home/linuxbrew/.linuxbrew/Cellar/openjdk@8/1.8.0-482/libexec/jre/lib/amd64"/>
-    <property name="sun.java.command" value="/home/deli/Dropbox/my_vault/1 - UNIPI/R&amp;LIII/Laboratorio di Reti/Progetto2026/target/surefire/surefirebooter-20260302221040189_3.jar /home/deli/Dropbox/my_vault/1 - UNIPI/R&amp;LIII/Laboratorio di Reti/Progetto2026/target/surefire 2026-03-02T22-10-39_914-jvmRun1 surefire-20260302221040189_1tmp surefire_0-20260302221040189_2tmp"/>
+    <property name="sun.java.command" value="/home/deli/Dropbox/my_vault/1 - UNIPI/R&amp;LIII/Laboratorio di Reti/Progetto2026/target/surefire/surefirebooter-20260302221923213_3.jar /home/deli/Dropbox/my_vault/1 - UNIPI/R&amp;LIII/Laboratorio di Reti/Progetto2026/target/surefire 2026-03-02T22-19-23_006-jvmRun1 surefire-20260302221923213_1tmp surefire_0-20260302221923213_2tmp"/>
     <property name="surefire.test.class.path" value="/home/deli/Dropbox/my_vault/1 - UNIPI/R&amp;LIII/Laboratorio di Reti/Progetto2026/target/test-classes:/home/deli/Dropbox/my_vault/1 - UNIPI/R&amp;LIII/Laboratorio di Reti/Progetto2026/target/classes:/home/deli/.m2/repository/com/google/code/gson/gson/2.10.1/gson-2.10.1.jar:/home/deli/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.9.2/junit-jupiter-api-5.9.2.jar:/home/deli/.m2/repository/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar:/home/deli/.m2/repository/org/junit/platform/junit-platform-commons/1.9.2/junit-platform-commons-1.9.2.jar:/home/deli/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/home/deli/.m2/repository/org/mockito/mockito-core/4.11.0/mockito-core-4.11.0.jar:/home/deli/.m2/repository/net/bytebuddy/byte-buddy/1.12.19/byte-buddy-1.12.19.jar:/home/deli/.m2/repository/net/bytebuddy/byte-buddy-agent/1.12.19/byte-buddy-agent-1.12.19.jar:/home/deli/.m2/repository/org/objenesis/objenesis/3.3/objenesis-3.3.jar:/home/deli/.m2/repository/org/mockito/mockito-junit-jupiter/4.11.0/mockito-junit-jupiter-4.11.0.jar:"/>
     <property name="sun.cpu.endian" value="little"/>
     <property name="user.home" value="/home/deli"/>
@@ -30,7 +30,7 @@
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/>
-    <property name="surefire.real.class.path" value="/home/deli/Dropbox/my_vault/1 - UNIPI/R&amp;LIII/Laboratorio di Reti/Progetto2026/target/surefire/surefirebooter-20260302221040189_3.jar"/>
+    <property name="surefire.real.class.path" value="/home/deli/Dropbox/my_vault/1 - UNIPI/R&amp;LIII/Laboratorio di Reti/Progetto2026/target/surefire/surefirebooter-20260302221923213_3.jar"/>
     <property name="sun.boot.class.path" value="/home/linuxbrew/.linuxbrew/Cellar/openjdk@8/1.8.0-482/libexec/jre/lib/resources.jar:/home/linuxbrew/.linuxbrew/Cellar/openjdk@8/1.8.0-482/libexec/jre/lib/rt.jar:/home/linuxbrew/.linuxbrew/Cellar/openjdk@8/1.8.0-482/libexec/jre/lib/sunrsasign.jar:/home/linuxbrew/.linuxbrew/Cellar/openjdk@8/1.8.0-482/libexec/jre/lib/jsse.jar:/home/linuxbrew/.linuxbrew/Cellar/openjdk@8/1.8.0-482/libexec/jre/lib/jce.jar:/home/linuxbrew/.linuxbrew/Cellar/openjdk@8/1.8.0-482/libexec/jre/lib/charsets.jar:/home/linuxbrew/.linuxbrew/Cellar/openjdk@8/1.8.0-482/libexec/jre/lib/jfr.jar:/home/linuxbrew/.linuxbrew/Cellar/openjdk@8/1.8.0-482/libexec/jre/classes"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="1.8.0_482-b08"/>
@@ -59,19 +59,19 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="52.0"/>
   </properties>
-  <testcase name="testIndexing" classname="com.connections.server.GamesDAOTest" time="0.184">
-    <system-out><![CDATA[Building game index from /tmp/junit1755284174383609126/games.json...
+  <testcase name="testIndexing" classname="com.connections.server.GamesDAOTest" time="0.171">
+    <system-out><![CDATA[Building game index from /tmp/junit7038173770929038943/games.json...
 Indexed 2 games.
 ]]></system-out>
   </testcase>
-  <testcase name="testSequentialGame" classname="com.connections.server.GamesDAOTest" time="0.018">
-    <system-out><![CDATA[Building game index from /tmp/junit2175314550968191688/games.json...
+  <testcase name="testSequentialGame" classname="com.connections.server.GamesDAOTest" time="0.022">
+    <system-out><![CDATA[Building game index from /tmp/junit5747281066126084258/games.json...
 Indexed 2 games.
 All games have been played. Restarting from the first game and overwriting data.
 ]]></system-out>
   </testcase>
-  <testcase name="testOnDemandReading" classname="com.connections.server.GamesDAOTest" time="0.01">
-    <system-out><![CDATA[Building game index from /tmp/junit8042299074739153736/games.json...
+  <testcase name="testOnDemandReading" classname="com.connections.server.GamesDAOTest" time="0.011">
+    <system-out><![CDATA[Building game index from /tmp/junit2429818644016971747/games.json...
 Indexed 2 games.
 ]]></system-out>
   </testcase>

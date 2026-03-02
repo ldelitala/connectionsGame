@@ -93,7 +93,8 @@ public class GameSessionManager {
             List<String> remainingWords = currentGame.getAllWords().stream()
                     .filter(w -> !foundWords.contains(w))
                     .collect(Collectors.toList());
-            return new CurrentGameInfoDTO(
+            
+            return GameInfoDTO.current(
                 gameId, res.getMistakes(), res.getPoints(), res.isFinished(),
                 getRemainingTime(), foundGroups, remainingWords
             );
@@ -104,7 +105,8 @@ public class GameSessionManager {
             List<WordGroup> allGroups = null;
             Game oldGame = gamesDAO.getGame(gameId);
             if (oldGame != null) allGroups = oldGame.getGroups();
-            return new PastGameInfoDTO(gameId, res.getMistakes(), res.getPoints(), res.isFinished(), res.isWon(), allGroups);
+            
+            return GameInfoDTO.past(gameId, res.getMistakes(), res.getPoints(), res.isFinished(), res.isWon(), allGroups);
         }
         return null;
     }
