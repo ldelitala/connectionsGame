@@ -61,9 +61,14 @@ public class GamesDAOTest {
     }
 
     @Test
-    public void testRandomGame() {
-        Game random = gamesDAO.getRandomGame();
-        assertNotNull(random);
-        assertTrue(random.getGameId() == 101 || random.getGameId() == 202);
+    public void testSequentialGame() {
+        Game g1 = gamesDAO.getNextGame();
+        assertEquals(101, g1.getGameId());
+        
+        Game g2 = gamesDAO.getNextGame();
+        assertEquals(202, g2.getGameId());
+        
+        Game g3 = gamesDAO.getNextGame(); // Wraps around
+        assertEquals(101, g3.getGameId());
     }
 }

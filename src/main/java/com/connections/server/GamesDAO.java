@@ -113,10 +113,19 @@ public class GamesDAO {
         return Collections.unmodifiableList(gameIds);
     }
 
-    public Game getRandomGame() {
+    private int currentIndex = -1;
+
+    public Game getNextGame() {
         if (gameIds.isEmpty())
             return null;
-        int randomId = gameIds.get(new java.util.Random().nextInt(gameIds.size()));
-        return getGame(randomId);
+
+        currentIndex++;
+        if (currentIndex >= gameIds.size()) {
+            currentIndex = 0;
+            System.out.println("All games have been played. Restarting from the first game and overwriting data.");
+        }
+
+        int gameId = gameIds.get(currentIndex);
+        return getGame(gameId);
     }
 }

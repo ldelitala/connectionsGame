@@ -36,7 +36,7 @@ public class GameSessionManagerTest {
         Game game = new Game(1, Arrays.asList(group1, group2, group3, group4));
 
         when(gamesDAO.getNumGames()).thenReturn(1);
-        when(gamesDAO.getRandomGame()).thenReturn(game);
+        when(gamesDAO.getNextGame()).thenReturn(game);
         when(gamesDAO.getGame(anyInt())).thenReturn(game);
 
         sessionManager = new GameSessionManager(gamesDAO, userManager, udpNotifier, 300000);

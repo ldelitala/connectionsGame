@@ -70,7 +70,7 @@ public class GameSessionManager {
     private void startNewGame() {
         archiveCurrentGame();
 
-        currentGame = gamesDAO.getRandomGame();
+        currentGame = gamesDAO.getNextGame();
         if (currentGame == null) {
             System.err.println("No games available in GamesDAO!");
             return;
