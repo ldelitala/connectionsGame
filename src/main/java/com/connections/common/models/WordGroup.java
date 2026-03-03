@@ -3,23 +3,25 @@ package com.connections.common.models;
 import java.util.List;
 
 /**
- * Represents a group of 4 words with a common theme.
+ * Represents a group of words with a common theme.
  */
 public class WordGroup {
 
+    /** The common theme that connects the words. */
     private String theme;
+    /** The list of words belonging to this group. */
     private List<String> words;
 
     /**
-     * Constructs a WordGroup with a theme and exactly 4 words.
+     * Constructs a WordGroup with a theme and a list of words.
      * 
      * @param theme the theme of the group
-     * @param words the list of 4 words
-     * @throws IllegalArgumentException if words is null or does not contain exactly 4 elements
+     * @param words the list of words
+     * @throws IllegalArgumentException if words is null or empty
      */
     public WordGroup(String theme, List<String> words) {
-        if (words == null || words.size() != 4) {
-            throw new IllegalArgumentException("A word group must contain exactly 4 words.");
+        if (words == null || words.isEmpty()) {
+            throw new IllegalArgumentException("A word group must contain at least one word.");
         }
         this.theme = theme;
         this.words = words;
@@ -37,7 +39,7 @@ public class WordGroup {
     /**
      * Gets the list of words in this group.
      * 
-     * @return the list of 4 words
+     * @return the list of words
      */
     public List<String> getWords() {
         return words;
