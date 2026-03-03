@@ -45,8 +45,8 @@ public class ClientMain {
                     case "update":
                         handleUpdateCredentials(scanner);
                         break;
-                    case "play":
-                        handlePlay(scanner);
+                    case "submit":
+                        handleSubmitProposal(tokens);
                         break;
                     case "game":
                         handleRequestGameInfo(tokens);
@@ -157,17 +157,15 @@ public class ClientMain {
         System.out.println(resp.getMessage());
     }
 
-    private static void handlePlay(Scanner scanner) throws IOException {
+    private static void handleSubmitProposal(String[] tokens) throws IOException {
         ensureConnected();
-        System.out.println("Enter 4 words separated by spaces:");
-        String input = scanner.nextLine().trim();
-        List<String> words = Arrays.asList(input.split("\\s+"));
-        
-        if (words.size() != 4) {
-            System.out.println("Error: exactly 4 words required.");
+        if (tokens.length < 2) {
+            System.out.println("Error: please provide the words for your proposal.");
+            System.out.println("Usage: submit word1 word2 word3 word4");
             return;
         }
 
+        List<String> words = Arrays.asList(Arrays.copyOfRange(tokens, 1, tokens.length));
         GameRequest req = GameRequest.submitProposal(words);
         Response resp = client.sendRequest(req);
         System.out.println(resp.getMessage());
@@ -212,7 +210,7 @@ public class ClientMain {
         System.out.println("  login [user] [pass]     - Log in to your account");
         System.out.println("  logout                  - Log out of your account");
         System.out.println("  update                  - Update your username or password");
-        System.out.println("  submit [word1] [word2] [word3] [word4] - Submit a group proposal");
+        System.out.println("  submit [word1] [word2] ... - Submit a group proposal");
         System.out.println("  game [id]               - View info about a game (yours or global)");
         System.out.println("  stats                   - View your personal statistics");
         System.out.println("  rank [k]                - View top K players");

@@ -181,6 +181,7 @@ public class GameSessionManager {
     public synchronized ProposalResultDTO submitProposal(String username, List<String> words) {
         if (completedPlayers.contains(username)) return null;
         if (getRemainingTime() <= 0) return null;
+        if (words == null || words.size() != 4) return null;
         
         WordGroup matched = currentGame.getGroups().stream()
                 .filter(g -> new HashSet<>(g.getWords()).equals(new HashSet<>(words)))
