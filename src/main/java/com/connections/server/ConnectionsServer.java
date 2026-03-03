@@ -203,8 +203,9 @@ public class ConnectionsServer {
                 List<User> all = userManager.getAllUsers();
                 if (req.getPlayerName() != null) {
                     for (int i = 0; i < all.size(); i++) {
-                        if (all.get(i).getUsername().equals(req.getPlayerName())) 
-                            return Response.ok("Rank.", RankDTO.create(i + 1));
+                        User pu = all.get(i);
+                        if (pu.getUsername().equals(req.getPlayerName())) 
+                            return Response.ok("Rank.", LeaderboardEntryDTO.create(i + 1, pu.getUsername(), pu.getTotalScore()));
                     }
                     return Response.error("Not found.");
                 }
