@@ -26,8 +26,8 @@ public class GameInfoDTO implements DTO {
     private GameInfoDTO(int gameId, int mistakes, int score, boolean finished, boolean isCurrent,
                        Long remainingTime, List<WordGroup> foundGroups, List<String> remainingWords,
                        Boolean won, List<WordGroup> allGroups) {
-        if (mistakes < 0 || mistakes > 4) {
-            throw new IllegalArgumentException("Mistakes must be between 0 and 4.");
+        if (mistakes < 0) {
+            throw new IllegalArgumentException("Mistakes cannot be negative.");
         }
         this.gameId = gameId;
         this.mistakes = mistakes;
@@ -43,22 +43,19 @@ public class GameInfoDTO implements DTO {
 
     /**
      * Factory method for current game info.
-     * <p>
-     * The 'finished' and 'won' statuses are deduced from mistakes and foundGroups.
-     * </p>
      * 
      * @param gameId current game ID
-     * @param mistakes number of mistakes (max 4)
+     * @param mistakes current number of mistakes
      * @param score current player score
+     * @param finished whether the game is considered finished by the server
+     * @param won whether the game has been won
      * @param remainingTime time left in milliseconds
-     * @param foundGroups list of groups already found (3 means victory)
+     * @param foundGroups list of groups already found
      * @param remainingWords list of words not yet grouped
      * @return a new GameInfoDTO for the current session
      */
-    public static GameInfoDTO current(int gameId, int mistakes, int score,
+    public static GameInfoDTO current(int gameId, int mistakes, int score, boolean finished, boolean won,
                                      long remainingTime, List<WordGroup> foundGroups, List<String> remainingWords) {
-        boolean won = (foundGroups != null && foundGroups.size() >= 3);
-        boolean finished = won || mistakes >= 4;
         return new GameInfoDTO(gameId, mistakes, score, finished, true, remainingTime, foundGroups, remainingWords, won, null);
     }
 
