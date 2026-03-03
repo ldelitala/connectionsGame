@@ -10,6 +10,9 @@ public class WordGroup {
     private List<String> words;
 
     public WordGroup(String theme, List<String> words) {
+        if (words == null || words.size() != 4) {
+            throw new IllegalArgumentException("A word group must contain exactly 4 words.");
+        }
         this.theme = theme;
         this.words = words;
     }
