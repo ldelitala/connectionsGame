@@ -1,4 +1,4 @@
-package com.connections.common.protocol.responses.dto;
+package com.connections.common.dto;
 
 /**
  * DTO for the result of a word proposal.

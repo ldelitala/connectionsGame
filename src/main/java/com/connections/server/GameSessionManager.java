@@ -1,11 +1,13 @@
 package com.connections.server;
 
 import com.connections.server.models.Game;
+import com.connections.server.models.User;
 import com.connections.common.models.WordGroup;
-import com.connections.common.notifications.NewGameNotification;
+import com.connections.common.notifications.*;
 import com.connections.common.protocol.requests.*;
 import com.connections.common.protocol.responses.*;
-import com.connections.common.protocol.responses.dto.*;
+import com.connections.common.dto.*;
+import com.google.gson.Gson;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,13 +50,43 @@ public class GameSessionManager {
 
     private void archiveCurrentGame() {
         if (currentGame == null) return;
+        int gameId = currentGame.getGameId();
         Map<String, PlayerResult> results = new HashMap<>();
         Set<String> participants = new HashSet<>(playerProgress.keySet());
         participants.addAll(playerMistakes.keySet());
+        
         for (String user : participants) {
             results.put(user, getPlayerSnapshot(user));
         }
-        gameHistory.put(currentGame.getGameId(), results);
+        gameHistory.put(gameId, results);
+
+        // Notify participants about game end
+        if (udpNotifier != null) {
+            Gson gson = new Gson();
+            // 1. Global stats & leaderboard
+            GameStatsDTO stats = getGlobalGameStats(gameId);
+            
+            // Create leaderboard entries
+            List<User> allUsers = userManager.getAllUsers();
+            List<LeaderboardEntryDTO> leaderboardEntries = new java.util.ArrayList<>();
+            for (int i = 0; i < Math.min(10, allUsers.size()); i++) {
+                User u = allUsers.get(i);
+                leaderboardEntries.add(LeaderboardEntryDTO.create(i + 1, u.getUsername(), u.getTotalScore()));
+            }
+            LeaderboardDTO leaderboard = LeaderboardDTO.create(leaderboardEntries);
+            
+            String globalMsg = gson.toJson(GameEndNotification.create(leaderboard, stats));
+            udpNotifier.notifyAll(globalMsg);
+
+            // 2. Personal summaries for each participant
+            for (String user : participants) {
+                GameInfoDTO personal = getPersonalGameStatus(user, gameId);
+                if (personal != null) {
+                    String personalMsg = gson.toJson(PlayerGameSummaryNotification.create(personal));
+                    udpNotifier.notifyUser(user, personalMsg);
+                }
+            }
+        }
     }
 
     private void startNewGame() {

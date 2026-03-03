@@ -1,4 +1,4 @@
-package com.connections.common.protocol.responses.dto;
+package com.connections.common.dto;
 
 public class LeaderboardEntryDTO implements DTO {
     private final int rank;

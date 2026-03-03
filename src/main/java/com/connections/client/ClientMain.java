@@ -2,7 +2,7 @@ package com.connections.client;
 
 import com.connections.common.protocol.requests.*;
 import com.connections.common.protocol.responses.*;
-import com.connections.common.protocol.responses.dto.*;
+import com.connections.common.dto.*;
 
 import java.io.IOException;
 import java.util.Arrays;

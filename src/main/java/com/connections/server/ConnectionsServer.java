@@ -5,7 +5,7 @@ import com.connections.server.models.User;
 import com.connections.server.models.Game;
 import com.connections.common.protocol.requests.*;
 import com.connections.common.protocol.responses.*;
-import com.connections.common.protocol.responses.dto.*;
+import com.connections.common.dto.*;
 import com.google.gson.Gson;
 
 import java.io.IOException;

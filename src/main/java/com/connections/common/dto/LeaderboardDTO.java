@@ -1,8 +1,12 @@
-package com.connections.common.protocol.responses.dto;
+package com.connections.common.dto;
 
 import java.util.List;
 
+/**
+ * Data Transfer Object (DTO) representing a leaderboard containing multiple entries.
+ */
 public class LeaderboardDTO implements DTO {
+
     private final List<LeaderboardEntryDTO> entries;
 
     private LeaderboardDTO(List<LeaderboardEntryDTO> entries) {

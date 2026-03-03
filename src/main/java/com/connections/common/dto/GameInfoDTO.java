@@ -1,4 +1,4 @@
-package com.connections.common.protocol.responses.dto;
+package com.connections.common.dto;
 
 import com.connections.common.models.WordGroup;
 import java.util.List;
