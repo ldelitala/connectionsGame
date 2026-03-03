@@ -1,6 +1,6 @@
-package com.connections.common.responses;
+package com.connections.common.protocol.responses;
 
-import com.connections.common.responses.dto.DTO;
+import com.connections.common.protocol.responses.dto.DTO;
 
 /**
  * Standard JSON response format from server to client.

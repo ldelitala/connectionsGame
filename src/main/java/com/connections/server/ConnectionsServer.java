@@ -3,9 +3,9 @@ package com.connections.server;
 import com.connections.common.models.WordGroup;
 import com.connections.server.models.User;
 import com.connections.server.models.Game;
-import com.connections.common.requests.*;
-import com.connections.common.responses.*;
-import com.connections.common.responses.dto.*;
+import com.connections.common.protocol.requests.*;
+import com.connections.common.protocol.responses.*;
+import com.connections.common.protocol.responses.dto.*;
 import com.google.gson.Gson;
 
 import java.io.IOException;

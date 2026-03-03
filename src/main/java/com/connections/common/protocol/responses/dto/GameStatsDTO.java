@@ -1,4 +1,4 @@
-package com.connections.common.responses.dto;
+package com.connections.common.protocol.responses.dto;
 
 /**
  * DTO for global game statistics (both active and concluded).

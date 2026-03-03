@@ -1,8 +1,8 @@
 package com.connections.client;
 
-import com.connections.common.requests.*;
-import com.connections.common.responses.*;
-import com.connections.common.responses.dto.*;
+import com.connections.common.protocol.requests.*;
+import com.connections.common.protocol.responses.*;
+import com.connections.common.protocol.responses.dto.*;
 
 import java.io.IOException;
 import java.util.Arrays;

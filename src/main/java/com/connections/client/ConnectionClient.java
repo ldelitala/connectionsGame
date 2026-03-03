@@ -1,7 +1,7 @@
 package com.connections.client;
 
-import com.connections.common.requests.Request;
-import com.connections.common.responses.Response;
+import com.connections.common.protocol.requests.Request;
+import com.connections.common.protocol.responses.Response;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;

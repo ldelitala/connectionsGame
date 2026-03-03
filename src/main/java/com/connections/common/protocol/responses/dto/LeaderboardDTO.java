@@ -1,4 +1,4 @@
-package com.connections.common.responses.dto;
+package com.connections.common.protocol.responses.dto;
 
 import java.util.List;
 

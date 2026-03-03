@@ -1,4 +1,4 @@
-package com.connections.common.responses.dto;
+package com.connections.common.protocol.responses.dto;
 
 import com.connections.common.models.WordGroup;
 import java.util.List;
@@ -24,11 +24,9 @@ public class GameInfoDTO implements DTO {
     private final List<WordGroup> allGroups;
 
     private GameInfoDTO(int gameId, int mistakes, int score, boolean finished, boolean isCurrent,
-                       Long remainingTime, List<WordGroup> foundGroups, List<String> remainingWords,
-                       Boolean won, List<WordGroup> allGroups) {
-        if (mistakes < 0) {
-            throw new IllegalArgumentException("Mistakes cannot be negative.");
-        }
+            Long remainingTime, List<WordGroup> foundGroups, List<String> remainingWords,
+            Boolean won, List<WordGroup> allGroups) {
+
         this.gameId = gameId;
         this.mistakes = mistakes;
         this.score = score;
@@ -54,9 +52,11 @@ public class GameInfoDTO implements DTO {
      * @param remainingWords list of words not yet grouped
      * @return a new GameInfoDTO for the current session
      */
-    public static GameInfoDTO current(int gameId, int mistakes, int score, boolean finished, boolean won,
-                                     long remainingTime, List<WordGroup> foundGroups, List<String> remainingWords) {
-        return new GameInfoDTO(gameId, mistakes, score, finished, true, remainingTime, foundGroups, remainingWords, won, null);
+    public static GameInfoDTO current(int gameId, int mistakes, int score, boolean finished,
+            boolean won, long remainingTime, List<WordGroup> foundGroups,
+            List<String> remainingWords) {
+        return new GameInfoDTO(gameId, mistakes, score, finished, true, remainingTime, foundGroups,
+                remainingWords, won, null);
     }
 
     /**
@@ -70,19 +70,50 @@ public class GameInfoDTO implements DTO {
      * @param allGroups all word groups in that game
      * @return a new GameInfoDTO for a historical game
      */
-    public static GameInfoDTO past(int gameId, int mistakes, int score, boolean finished, boolean won, List<WordGroup> allGroups) {
-        return new GameInfoDTO(gameId, mistakes, score, finished, false, null, null, null, won, allGroups);
+    public static GameInfoDTO past(int gameId, int mistakes, int score, boolean finished,
+            boolean won, List<WordGroup> allGroups) {
+        return new GameInfoDTO(gameId, mistakes, score, finished, false, null, null, null, won,
+                allGroups);
     }
 
     // --- GETTERS ---
-    public int getGameId() { return gameId; }
-    public int getMistakes() { return mistakes; }
-    public int getScore() { return score; }
-    public boolean isFinished() { return finished; }
-    public boolean isCurrent() { return isCurrent; }
-    public Long getRemainingTime() { return remainingTime; }
-    public List<WordGroup> getFoundGroups() { return foundGroups; }
-    public List<String> getRemainingWords() { return remainingWords; }
-    public Boolean isWon() { return won; }
-    public List<WordGroup> getAllGroups() { return allGroups; }
+    public int getGameId() {
+        return gameId;
+    }
+
+    public int getMistakes() {
+        return mistakes;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public boolean isCurrent() {
+        return isCurrent;
+    }
+
+    public Long getRemainingTime() {
+        return remainingTime;
+    }
+
+    public List<WordGroup> getFoundGroups() {
+        return foundGroups;
+    }
+
+    public List<String> getRemainingWords() {
+        return remainingWords;
+    }
+
+    public Boolean isWon() {
+        return won;
+    }
+
+    public List<WordGroup> getAllGroups() {
+        return allGroups;
+    }
 }

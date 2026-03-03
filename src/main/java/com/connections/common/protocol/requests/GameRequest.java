@@ -1,4 +1,4 @@
-package com.connections.common.requests;
+package com.connections.common.protocol.requests;
 
 import java.util.List;
 
