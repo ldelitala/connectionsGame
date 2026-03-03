@@ -26,6 +26,9 @@ public class GameInfoDTO implements DTO {
     private GameInfoDTO(int gameId, int mistakes, int score, boolean finished, boolean isCurrent,
                        Long remainingTime, List<WordGroup> foundGroups, List<String> remainingWords,
                        Boolean won, List<WordGroup> allGroups) {
+        if (mistakes < 0 || mistakes > 4) {
+            throw new IllegalArgumentException("Mistakes must be between 0 and 4.");
+        }
         this.gameId = gameId;
         this.mistakes = mistakes;
         this.score = score;
@@ -40,14 +43,35 @@ public class GameInfoDTO implements DTO {
 
     /**
      * Factory method for current game info.
+     * <p>
+     * The 'finished' and 'won' statuses are deduced from mistakes and foundGroups.
+     * </p>
+     * 
+     * @param gameId current game ID
+     * @param mistakes number of mistakes (max 4)
+     * @param score current player score
+     * @param remainingTime time left in milliseconds
+     * @param foundGroups list of groups already found (3 means victory)
+     * @param remainingWords list of words not yet grouped
+     * @return a new GameInfoDTO for the current session
      */
-    public static GameInfoDTO current(int gameId, int mistakes, int score, boolean finished,
+    public static GameInfoDTO current(int gameId, int mistakes, int score,
                                      long remainingTime, List<WordGroup> foundGroups, List<String> remainingWords) {
-        return new GameInfoDTO(gameId, mistakes, score, finished, true, remainingTime, foundGroups, remainingWords, null, null);
+        boolean won = (foundGroups != null && foundGroups.size() >= 3);
+        boolean finished = won || mistakes >= 4;
+        return new GameInfoDTO(gameId, mistakes, score, finished, true, remainingTime, foundGroups, remainingWords, won, null);
     }
 
     /**
      * Factory method for past game info.
+     * 
+     * @param gameId past game ID
+     * @param mistakes final mistakes
+     * @param score final score
+     * @param finished whether the game was completed
+     * @param won whether the game was won
+     * @param allGroups all word groups in that game
+     * @return a new GameInfoDTO for a historical game
      */
     public static GameInfoDTO past(int gameId, int mistakes, int score, boolean finished, boolean won, List<WordGroup> allGroups) {
         return new GameInfoDTO(gameId, mistakes, score, finished, false, null, null, null, won, allGroups);

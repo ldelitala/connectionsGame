@@ -95,7 +95,7 @@ public class GameSessionManager {
                     .collect(Collectors.toList());
             
             return GameInfoDTO.current(
-                gameId, res.getMistakes(), res.getPoints(), res.isFinished(),
+                gameId, res.getMistakes(), res.getPoints(),
                 getRemainingTime(), foundGroups, remainingWords
             );
         } 
