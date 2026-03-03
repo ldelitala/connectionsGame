@@ -35,3 +35,4 @@ com/connections/common/dto/LeaderboardDTO.class
 com/connections/client/UdpNotificationListener.class
 com/connections/common/protocol/requests/InfoRequest.class
 com/connections/server/ConnectionsServer$1.class
+com/connections/client/ClientCommandHandler.class

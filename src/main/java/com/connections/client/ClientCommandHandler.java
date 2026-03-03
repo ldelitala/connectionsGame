@@ -1,0 +1,213 @@
+package com.connections.client;
+
+import com.connections.common.protocol.requests.*;
+import com.connections.common.protocol.responses.*;
+import com.connections.common.dto.*;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+
+/**
+ * Handles the execution of client commands and manages session state.
+ */
+public class ClientCommandHandler {
+    private final ConnectionClient client;
+    private String currentUsername = null;
+
+    public ClientCommandHandler(ConnectionClient client) {
+        this.client = client;
+    }
+
+    /**
+     * Executes a command based on the provided tokens.
+     * 
+     * @param tokens the command and its arguments
+     * @param scanner the input scanner for interactive prompts
+     * @return true if the application should continue, false if it should exit
+     * @throws IOException if a network error occurs
+     */
+    public boolean execute(String[] tokens, Scanner scanner) throws IOException {
+        String command = tokens[0].toLowerCase();
+
+        switch (command) {
+            case "register":
+                handleRegister(tokens, scanner);
+                break;
+            case "login":
+                handleLogin(tokens, scanner);
+                break;
+            case "logout":
+                handleLogout();
+                break;
+            case "update":
+                handleUpdateCredentials(scanner);
+                break;
+            case "submit":
+                handleSubmitProposal(tokens);
+                break;
+            case "game":
+                handleRequestGameInfo(tokens);
+                break;
+            case "stats":
+                handleRequestPlayerStats();
+                break;
+            case "rank":
+                handleRequestLeaderboard(tokens);
+                break;
+            case "help":
+                printHelp();
+                break;
+            case "exit":
+                System.out.println("Goodbye!");
+                return false;
+            default:
+                System.out.println("Unknown command. Type 'help' for available commands.");
+        }
+        return true;
+    }
+
+    private void ensureConnected() throws IOException {
+        if (client == null) {
+            throw new IOException("Client is not connected to server. Please check your configuration and restart.");
+        }
+    }
+
+    private void handleRegister(String[] tokens, Scanner scanner) throws IOException {
+        ensureConnected();
+        String user, pass;
+        if (tokens.length >= 3) {
+            user = tokens[1];
+            pass = tokens[2];
+        } else {
+            System.out.print("Username: ");
+            user = scanner.nextLine().trim();
+            System.out.print("Password: ");
+            pass = scanner.nextLine().trim();
+        }
+
+        UserRequest req = UserRequest.register(user, pass);
+        Response<?> resp = client.sendRequest(req);
+        System.out.println(resp.getMessage());
+    }
+
+    private void handleLogin(String[] tokens, Scanner scanner) throws IOException {
+        ensureConnected();
+        String user, pass;
+        if (tokens.length >= 3) {
+            user = tokens[1];
+            pass = tokens[2];
+        } else {
+            System.out.print("Username: ");
+            user = scanner.nextLine().trim();
+            System.out.print("Password: ");
+            pass = scanner.nextLine().trim();
+        }
+
+        // TODO: Get UDP port from configuration or dynamic allocation
+        int udpPort = 0; 
+        UserRequest req = UserRequest.login(user, pass, udpPort);
+        Response<?> resp = client.sendRequest(req);
+        
+        if (resp.getStatus() == Status.OK) {
+            currentUsername = user;
+            System.out.println("Logged in as " + user);
+        } else {
+            System.out.println("Login failed: " + resp.getMessage());
+        }
+    }
+
+    private void handleLogout() throws IOException {
+        ensureConnected();
+        Response<?> resp = client.sendRequest(UserRequest.logout());
+        if (resp.getStatus() == Status.OK) {
+            currentUsername = null;
+        }
+        System.out.println(resp.getMessage());
+    }
+
+    private void handleUpdateCredentials(Scanner scanner) throws IOException {
+        ensureConnected();
+        System.out.print("New username (leave empty to keep current): ");
+        String newUname = scanner.nextLine().trim();
+        if (newUname.isEmpty()) newUname = null;
+        
+        System.out.print("Current password: ");
+        String oldPass = scanner.nextLine().trim();
+        System.out.print("New password (leave empty to keep current): ");
+        String newPass = scanner.nextLine().trim();
+        if (newPass.isEmpty()) newPass = null;
+
+        UserRequest req = UserRequest.updateCredentials(currentUsername, oldPass, newUname, newPass);
+        Response<?> resp = client.sendRequest(req);
+        
+        if (resp.getStatus() == Status.OK && newUname != null) {
+            currentUsername = newUname;
+        }
+        System.out.println(resp.getMessage());
+    }
+
+    private void handleSubmitProposal(String[] tokens) throws IOException {
+        ensureConnected();
+        if (tokens.length < 2) {
+            System.out.println("Error: please provide the words for your proposal.");
+            System.out.println("Usage: submit word1 word2 word3 word4");
+            return;
+        }
+
+        List<String> words = Arrays.asList(Arrays.copyOfRange(tokens, 1, tokens.length));
+        GameRequest req = GameRequest.submitProposal(words);
+        Response<?> resp = client.sendRequest(req);
+        System.out.println(resp.getMessage());
+    }
+
+    private void handleRequestGameInfo(String[] tokens) throws IOException {
+        ensureConnected();
+        Integer gameId = (tokens.length > 1) ? Integer.parseInt(tokens[1]) : null;
+        InfoRequest req = InfoRequest.requestGameInfo(gameId);
+        Response<?> resp = client.sendRequest(req);
+        System.out.println(resp.getMessage());
+        if (resp.getData() != null) {
+            System.out.println("Data: " + resp.getData());
+        }
+    }
+
+    private void handleRequestPlayerStats() throws IOException {
+        ensureConnected();
+        InfoRequest req = InfoRequest.requestPlayerStats();
+        Response<?> resp = client.sendRequest(req);
+        System.out.println(resp.getMessage());
+        if (resp.getData() != null) {
+            System.out.println("Stats: " + resp.getData());
+        }
+    }
+
+    private void handleRequestLeaderboard(String[] tokens) throws IOException {
+        ensureConnected();
+        Integer top = (tokens.length > 1) ? Integer.parseInt(tokens[1]) : 10;
+        InfoRequest req = InfoRequest.requestLeaderboard(null, top);
+        Response<?> resp = client.sendRequest(req);
+        System.out.println(resp.getMessage());
+        if (resp.getData() != null) {
+            System.out.println("Leaderboard: " + resp.getData());
+        }
+    }
+
+    public void printHelp() {
+        System.out.println("Available commands:");
+        System.out.println("  register [user] [pass]  - Register a new account");
+        System.out.println("  login [user] [pass]     - Log in to your account");
+        System.out.println("  logout                  - Log out of your account");
+        System.out.println("  update                  - Update your username or password");
+        System.out.println("  submit [word1] [word2] ... - Submit a group proposal");
+        System.out.println("  game [id]               - View info about a game (yours or global)");
+        System.out.println("  stats                   - View your personal statistics");
+        System.out.println("  rank [k]                - View top K players");
+        System.out.println("  exit                    - Exit the application");
+    }
+
+    public String getCurrentUsername() {
+        return currentUsername;
+    }
+}
