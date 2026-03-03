@@ -5,7 +5,7 @@ import java.util.Map;
 /**
  * DTO for personal player statistics.
  */
-public class PlayerStatsDTO {
+public class PlayerStatsDTO implements DTO {
     private final int puzzlesCompleted;
     private final double winRate;
     private final double lossRate;

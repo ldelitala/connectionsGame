@@ -103,7 +103,7 @@ public class ConnectionsServer {
                 return;
             }
 
-            Response response;
+            Response<?> response;
             switch (op) {
                 case REGISTER:
                 case LOGIN:
@@ -132,7 +132,7 @@ public class ConnectionsServer {
         }
     }
 
-    private Response handleUserOperation(SocketChannel channel, Operation op, UserRequest req) {
+    private Response<?> handleUserOperation(SocketChannel channel, Operation op, UserRequest req) {
         switch (op) {
             case REGISTER:
                 return userManager.register(req.getUsername(), req.getPassword()) ? 
@@ -167,7 +167,7 @@ public class ConnectionsServer {
         }
     }
 
-    private Response handleSubmitProposal(SocketChannel channel, GameRequest req) {
+    private Response<?> handleSubmitProposal(SocketChannel channel, GameRequest req) {
         String username = activeSessions.get(channel);
         if (username == null) return Response.error("Not logged in.");
         
@@ -178,7 +178,7 @@ public class ConnectionsServer {
         return Response.ok("Processed.", result);
     }
 
-    private Response handleInfoOperation(SocketChannel channel, Operation op, InfoRequest req) {
+    private Response<?> handleInfoOperation(SocketChannel channel, Operation op, InfoRequest req) {
         String username = activeSessions.get(channel);
         if (username == null) return Response.error("Not logged in.");
 
@@ -202,7 +202,7 @@ public class ConnectionsServer {
                 if (req.getPlayerName() != null) {
                     for (int i = 0; i < all.size(); i++) {
                         if (all.get(i).getUsername().equals(req.getPlayerName())) 
-                            return Response.ok("Rank.", i + 1);
+                            return Response.ok("Rank.", RankDTO.create(i + 1));
                     }
                     return Response.error("Not found.");
                 }
@@ -218,7 +218,7 @@ public class ConnectionsServer {
         }
     }
 
-    private void sendResponse(SocketChannel channel, Response response) {
+    private void sendResponse(SocketChannel channel, Response<?> response) {
         try {
             String json = gson.toJson(response);
             channel.write(ByteBuffer.wrap((json + "\n").getBytes()));

@@ -1,6 +1,6 @@
 package com.connections.common.responses.dto;
 
-public class LeaderboardEntryDTO {
+public class LeaderboardEntryDTO implements DTO {
     private final int rank;
     private final String username;
     private final int score;

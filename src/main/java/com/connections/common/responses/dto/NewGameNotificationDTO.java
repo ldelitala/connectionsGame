@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * DTO for UDP notifications sent when a new game starts.
  */
-public class NewGameNotificationDTO {
+public class NewGameNotificationDTO implements DTO {
     private final String type = "new_game";
     private final int gameId;
     private final List<String> words;

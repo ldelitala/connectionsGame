@@ -3,7 +3,7 @@ package com.connections.common.responses.dto;
 /**
  * DTO for global game statistics (both active and concluded).
  */
-public class GameStatsDTO {
+public class GameStatsDTO implements DTO {
     // Common fields
     private final int gameId;
     private final boolean isCurrent;

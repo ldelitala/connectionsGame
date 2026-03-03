@@ -2,7 +2,7 @@ package com.connections.common.responses.dto;
 
 import java.util.List;
 
-public class LeaderboardDTO {
+public class LeaderboardDTO implements DTO {
     private final List<LeaderboardEntryDTO> entries;
 
     private LeaderboardDTO(List<LeaderboardEntryDTO> entries) {

@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * DTO for personal game information (both current and past).
  */
-public class GameInfoDTO {
+public class GameInfoDTO implements DTO {
     // Common fields
     private final int gameId;
     private final int mistakes;

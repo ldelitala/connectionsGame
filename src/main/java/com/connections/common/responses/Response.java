@@ -1,17 +1,21 @@
 package com.connections.common.responses;
 
+import com.connections.common.responses.dto.DTO;
+
 /**
  * Standard JSON response format from server to client.
+ * 
+ * @param <T> the type of data payload, which must implement DTO
  */
-public class Response {
+public class Response<T extends DTO> {
     private final Status status;
     private final String message;
-    private final Object data;
+    private final T data;
 
     /**
      * Private constructor to force use of static factory methods.
      */
-    private Response(Status status, String message, Object data) {
+    private Response(Status status, String message, T data) {
         this.status = status;
         this.message = message;
         this.data = data;
@@ -22,12 +26,13 @@ public class Response {
     /**
      * Creates a successful response with data.
      * 
+     * @param <T> the type of the data
      * @param message success message
-     * @param data payload object (usually a DTO)
+     * @param data payload object (must implement DTO)
      * @return a success Response
      */
-    public static Response ok(String message, Object data) {
-        return new Response(Status.OK, message, data);
+    public static <T extends DTO> Response<T> ok(String message, T data) {
+        return new Response<>(Status.OK, message, data);
     }
 
     /**
@@ -36,8 +41,8 @@ public class Response {
      * @param message success message
      * @return a success Response
      */
-    public static Response ok(String message) {
-        return new Response(Status.OK, message, null);
+    public static Response<DTO> ok(String message) {
+        return new Response<>(Status.OK, message, null);
     }
 
     /**
@@ -46,12 +51,12 @@ public class Response {
      * @param message error message
      * @return an error Response
      */
-    public static Response error(String message) {
-        return new Response(Status.ERROR, message, null);
+    public static Response<DTO> error(String message) {
+        return new Response<>(Status.ERROR, message, null);
     }
 
     // --- GETTERS ---
     public Status getStatus() { return status; }
     public String getMessage() { return message; }
-    public Object getData() { return data; }
+    public T getData() { return data; }
 }
