@@ -28,6 +28,7 @@ com/connections/server/UdpNotifier.class
 com/connections/server/models/User.class
 com/connections/common/protocol/requests/UserRequest.class
 com/connections/server/ConnectionsServer$1OperationPeek.class
+com/connections/client/ClientConfig.class
 com/connections/server/UserManager.class
 com/connections/common/protocol/requests/Operation.class
 com/connections/common/dto/LeaderboardDTO.class

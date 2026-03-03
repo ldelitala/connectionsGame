@@ -15,10 +15,21 @@ import java.util.Scanner;
 public class ClientMain {
     private static ConnectionClient client;
     private static String currentUsername = null;
+    private static ClientConfig config;
 
     public static void main(String[] args) {
+        config = new ClientConfig();
         Scanner scanner = new Scanner(System.in);
         System.out.println("Welcome to Connections Game!");
+
+        // Automatic connection on startup
+        try {
+            client = new ConnectionClient(config.getServerHost(), config.getServerPort());
+            System.out.println("Connected to server at " + config.getServerHost() + ":" + config.getServerPort());
+        } catch (IOException e) {
+            System.err.println("Failed to connect to server: " + e.getMessage());
+            System.err.println("Please check your config/client.properties and restart.");
+        }
 
         while (true) {
             System.out.print(currentUsername != null ? "[" + currentUsername + "] > " : "> ");
@@ -30,9 +41,6 @@ public class ClientMain {
 
             try {
                 switch (command) {
-                    case "connect":
-                        handleConnect(tokens);
-                        break;
                     case "register":
                         handleRegister(tokens, scanner);
                         break;
@@ -73,15 +81,8 @@ public class ClientMain {
         }
     }
 
-    private static void handleConnect(String[] tokens) throws IOException {
-        String host = (tokens.length > 1) ? tokens[1] : "localhost";
-        int port = (tokens.length > 2) ? Integer.parseInt(tokens[2]) : 8080;
-        client = new ConnectionClient(host, port);
-        System.out.println("Connected to " + host + ":" + port);
-    }
-
     private static void ensureConnected() throws IOException {
-        if (client == null) throw new IOException("Not connected. Use 'connect' first.");
+        if (client == null) throw new IOException("Client is not connected to server. Please check your configuration and restart.");
     }
 
     private static void handleRegister(String[] tokens, Scanner scanner) throws IOException {
@@ -205,7 +206,6 @@ public class ClientMain {
 
     private static void printHelp() {
         System.out.println("Available commands:");
-        System.out.println("  connect [host] [port]             - Connect to the server");
         System.out.println("  register [user] [pass]  - Register a new account");
         System.out.println("  login [user] [pass]     - Log in to your account");
         System.out.println("  logout                  - Log out of your account");
