@@ -2,6 +2,7 @@ package com.connections.server;
 
 import com.connections.server.models.Game;
 import com.connections.common.models.WordGroup;
+import com.connections.common.notifications.NewGameNotification;
 import com.connections.common.requests.*;
 import com.connections.common.responses.*;
 import com.connections.common.responses.dto.*;
@@ -69,7 +70,7 @@ public class GameSessionManager {
         completedPlayers.clear();
         System.out.println("New game started: ID " + currentGame.getGameId());
         if (udpNotifier != null) {
-            NewGameNotificationDTO notification = NewGameNotificationDTO.create(currentGame.getGameId(), currentGame.getAllWords());
+            NewGameNotification notification = NewGameNotification.create(currentGame.getGameId(), currentGame.getAllWords());
             udpNotifier.notifyAll(new com.google.gson.Gson().toJson(notification));
         }
         scheduler.schedule(this::startNewGame, gameDurationMillis, TimeUnit.MILLISECONDS);
