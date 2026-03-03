@@ -14,30 +14,37 @@
 
 ## Project Structure
 - `src/main/java/com/connections/`
-  - `server/`: Server logic (NIO, Thread Pool, UDP Notifications).
+  - `server/`: Server logic (NIO, Thread Pool).
+    - `models/`: Private domain entities (User, Game).
   - `client/`: CLI Client logic (TCP connection, UDP listener).
-  - `common/`: Shared models (User, Game, WordGroup, Message).
-  - `utils/`: Networking and JSON utilities.
+  - `common/`: Shared resources.
+    - `models/`: Shared data structures (WordGroup).
+    - `dto/`: Data Transfer Objects used in both TCP and UDP.
+    - `protocol/`: TCP Request/Response structure.
+    - `notifications/`: UDP asynchronous message structure.
 
 ## Progress
 - [x] Project initialization (Maven, directory structure).
-- [x] `pom.xml` with dependencies (Gson, JUnit).
-- [x] Basic `ServerMain` and `ClientMain` skeletons.
-- [x] Define shared models (`common` package).
+- [x] `pom.xml` with dependencies (Gson, JUnit, Mockito).
+- [x] Architectural Refactoring: Separation of Domain Models, DTOs, and Protocols.
+- [x] Implement Type-Safe Generic Response system.
 - [x] Implement Server configuration and Game data loading.
 - [x] Implement TCP request/response handling (NIO).
 - [x] Implement User registration/login (Persistence).
 - [x] Implement Game logic (Session management).
-- [x] Implement UDP notifications.
+- [x] Implement UDP notifications (New game, Game end summaries).
 - [x] Implement CLI Client with input/output handlers.
 - [x] Testing and validation (Comprehensive suite: 17/17 passed).
 - [x] Optimization: High-performance Game indexing (Offsets + Buffered I/O).
 
 ## Recent Improvements
-- **GamesDAO Refactoring**: Migrated from low-level manual parsing to high-level JSON management while retaining byte-offset efficiency.
-- **Indexing Optimization**: Implemented `BufferedInputStream` and Regex-based ID extraction for rapid indexing of multi-GB files (~200k games/sec).
-- **Stability**: Fixed compilation issues in `ClientMain` and `ConnectionsServer`, ensuring a clean build and full test coverage.
+- **Clean Architecture**: Moved sensitive entities (`User`, `Game`) to server-private packages.
+- **Protocol Type Safety**: Implemented `Response<T extends DTO>` to ensure only DTOs are sent over TCP.
+- **Flexible Rules**: Refactored `WordGroup` and `GameRequest` to be agnostic of specific word counts, moving validation logic to the server.
+- **Advanced Notifications**: Added `GameEndNotification` (global) and `PlayerGameSummaryNotification` (individual) via UDP.
+- **DTO Centralization**: Moved all DTOs to `common.dto` for better reuse across TCP and UDP.
 
 ## Communication Protocol (JSON)
 - Requests: `{ "operation": "register", "name": "user", "psw": "pass" }`
-- Responses: `{ "status": "ok", "message": "registered successfully" }` (or errors).
+- Responses: `{ "status": "ok", "message": "registered successfully", "data": { ... } }`
+- Notifications: `{ "type": "new_game", ... }`

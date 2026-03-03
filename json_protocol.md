@@ -6,44 +6,6 @@ This document describes all JSON messages exchanged between the Client and the S
 
 All requests must contain an `"operation"` field.
 
-### Register
-```json
-{
-  "operation": "register",
-  "username": "user123",
-  "psw": "password123"
-}
-```
-
-### Login
-```json
-{
-  "operation": "login",
-  "username": "user123",
-  "psw": "password123",
-  "udpPort": 12345
-}
-```
-*Note: `udpPort` is optional but required to receive asynchronous notifications.*
-
-### Logout
-```json
-{
-  "operation": "logout"
-}
-```
-
-### Update Credentials
-```json
-{
-  "operation": "updateCredentials",
-  "newName": "new_user123",
-  "oldPsw": "old_password",
-  "newPsw": "new_password"
-}
-```
-*Note: Both `newName` and `newPsw` are optional (at least one should be present).*
-
 ### Submit Proposal
 ```json
 {
@@ -51,53 +13,23 @@ All requests must contain an `"operation"` field.
   "words": ["CAT", "DOG", "FISH", "BIRD"]
 }
 ```
-
-### Request Game Info (Personal Status)
-```json
-{
-  "operation": "requestGameInfo",
-  "gameId": 101
-}
-```
-*Note: `gameId` is optional; if omitted, the server returns info for the current game.*
-
-### Request Game Statistics (Global)
-```json
-{
-  "operation": "requestGameStats",
-  "gameId": 101
-}
-```
-*Note: `gameId` is optional.*
-
-### Request Player Statistics (Personal)
-```json
-{
-  "operation": "requestPlayerStats"
-}
-```
+*Note: Words are sent as a list. Server validates that length is exactly 4.*
 
 ### Request Leaderboard
 **Option A: Top K players**
 ```json
-{
-  "operation": "requestLeaderboard",
-  "topPlayers": 10
-}
+{ "operation": "requestLeaderboard", "topPlayers": 10 }
 ```
 **Option B: Specific player rank**
 ```json
-{
-  "operation": "requestLeaderboard",
-  "playerName": "user123"
-}
+{ "operation": "requestLeaderboard", "playerName": "user123" }
 ```
 
 ---
 
 ## 2. TCP Responses (Server -> Client)
 
-All responses follow a standard format:
+All responses follow a standard generic format:
 
 ```json
 {
@@ -106,57 +38,17 @@ All responses follow a standard format:
   "data": { ... }
 }
 ```
-*In case of error, `status` will be `"error"` and `data` may be null.*
 
-### Response Example: Request Game Info
+### Response: Leaderboard / Rank
+When requesting a rank for a specific player, the `data` field contains a single entry:
 ```json
 {
   "status": "ok",
-  "message": "Game status for ID 1",
+  "message": "Rank.",
   "data": {
-    "gameId": 1,
-    "remainingTime": 245000,
-    "foundGroups": [
-      {
-        "theme": "Animals",
-        "words": ["CAT", "DOG", "FISH", "BIRD"]
-      }
-    ],
-    "mistakes": 1,
-    "currentScore": 2,
-    "finished": false,
-    "remainingWords": ["RED", "BLUE", "GREEN", "YELLOW", "LONDON", "PARIS", "ROME", "BERLIN", "PIZZA", "PASTA", "BURGER", "SUSHI"]
-  }
-}
-```
-
-### Response Example: Submit Proposal (Correct)
-```json
-{
-  "status": "ok",
-  "message": "Proposal processed.",
-  "data": {
-    "status": "ok",
-    "message": "Correct! Group: Colors",
-    "foundGroups": 2
-  }
-}
-```
-
-### Response Example: Player Stats
-```json
-{
-  "status": "ok",
-  "message": "Player stats.",
-  "data": {
-    "puzzlesCompleted": 5,
-    "winRate": 80.0,
-    "lossRate": 20.0,
-    "currentStreak": 2,
-    "maxStreak": 3,
-    "perfectPuzzles": 1,
-    "mistakeHistogram": [2, 1, 0, 1, 1],
-    "totalScore": 54
+    "rank": 5,
+    "username": "user123",
+    "score": 120
   }
 }
 ```
@@ -165,12 +57,40 @@ All responses follow a standard format:
 
 ## 3. UDP Notifications (Server -> Client)
 
-Sent asynchronously when a new game starts.
+Sent asynchronously via UDP.
 
+### New Game Started
 ```json
 {
   "type": "new_game",
   "gameId": 2,
   "words": ["WORD1", "WORD2", ..., "WORD16"]
+}
+```
+
+### Game Ended (Global Summary)
+Broadcast to all clients when a game concluded.
+```json
+{
+  "type": "game_end",
+  "leaderboard": { "entries": [...] },
+  "stats": { "gameId": 1, "winnersCount": 5, ... }
+}
+```
+
+### Personal Game Summary
+Sent privately to each participant when their game (or the global game) ends.
+```json
+{
+  "type": "player_summary",
+  "personalInfo": {
+    "gameId": 1,
+    "mistakes": 2,
+    "score": 12,
+    "finished": true,
+    "won": true,
+    "foundGroups": [...],
+    "remainingWords": []
+  }
 }
 ```

@@ -207,12 +207,12 @@ public class ClientMain {
 
     private static void printHelp() {
         System.out.println("Available commands:");
-        System.out.println("  connect [host] [port]   - Connect to the server");
+        System.out.println("  connect [host] [port]             - Connect to the server");
         System.out.println("  register [user] [pass]  - Register a new account");
         System.out.println("  login [user] [pass]     - Log in to your account");
         System.out.println("  logout                  - Log out of your account");
         System.out.println("  update                  - Update your username or password");
-        System.out.println("  play                    - Submit a group proposal");
+        System.out.println("  submit [word1] [word2] [word3] [word4] - Submit a group proposal");
         System.out.println("  game [id]               - View info about a game (yours or global)");
         System.out.println("  stats                   - View your personal statistics");
         System.out.println("  rank [k]                - View top K players");
