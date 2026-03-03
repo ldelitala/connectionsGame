@@ -1,7 +1,7 @@
 package com.connections.server;
 
-import com.connections.common.Game;
-import com.connections.common.WordGroup;
+import com.connections.server.models.Game;
+import com.connections.common.models.WordGroup;
 import com.connections.common.requests.*;
 import com.connections.common.responses.*;
 import com.connections.common.responses.dto.*;

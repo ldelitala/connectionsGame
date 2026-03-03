@@ -1,7 +1,7 @@
 package com.connections.server;
 
-import com.connections.common.Game;
-import com.connections.common.WordGroup;
+import com.connections.server.models.Game;
+import com.connections.common.models.WordGroup;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

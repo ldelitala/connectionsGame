@@ -1,4 +1,4 @@
-package com.connections.common;
+package com.connections.server.models;
 
 import java.util.HashMap;
 import java.util.Map;

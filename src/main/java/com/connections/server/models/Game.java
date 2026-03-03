@@ -1,5 +1,6 @@
-package com.connections.common;
+package com.connections.server.models;
 
+import com.connections.common.models.WordGroup;
 import java.util.ArrayList;
 import java.util.List;
 

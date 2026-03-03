@@ -1,6 +1,6 @@
 package com.connections.server;
 
-import com.connections.common.User;
+import com.connections.server.models.User;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;

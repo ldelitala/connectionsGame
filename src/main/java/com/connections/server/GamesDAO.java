@@ -1,6 +1,6 @@
 package com.connections.server;
 
-import com.connections.common.Game;
+import com.connections.server.models.Game;
 import com.google.gson.Gson;
 import java.io.*;
 import java.util.ArrayList;

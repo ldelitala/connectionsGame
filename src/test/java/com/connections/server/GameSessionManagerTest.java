@@ -1,8 +1,8 @@
 package com.connections.server;
 
-import com.connections.common.Game;
-import com.connections.common.User;
-import com.connections.common.WordGroup;
+import com.connections.server.models.Game;
+import com.connections.server.models.User;
+import com.connections.common.models.WordGroup;
 import com.connections.common.responses.dto.GameInfoDTO;
 import com.connections.common.responses.dto.ProposalResultDTO;
 import org.junit.jupiter.api.BeforeEach;

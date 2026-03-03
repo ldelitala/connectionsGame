@@ -1,4 +1,4 @@
-package com.connections.common;
+package com.connections.common.models;
 
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package com.connections.common.responses.dto;
 
-import com.connections.common.WordGroup;
+import com.connections.common.models.WordGroup;
 import java.util.List;
 
 /**
