@@ -5,20 +5,15 @@ import com.connections.common.protocol.server_responses.*;
 import java.util.Scanner;
 
 /**
- * Handles account-related requests and responses (register, login, logout, update).
+ * Handles account-related request creation and response display.
  */
 public class UserModule {
     private final Scanner scanner;
     private final int udpPort;
-    private String currentUser;
 
     public UserModule(Scanner scanner, int udpPort) {
         this.scanner = scanner;
         this.udpPort = udpPort;
-    }
-
-    public void setCurrentUser(String user) {
-        this.currentUser = user;
     }
 
     public ClientRequest prepareRegister(String[] tokens) {
@@ -53,11 +48,7 @@ public class UserModule {
         return UserRequest.logout();
     }
 
-    public ClientRequest prepareUpdate() {
-        if (currentUser == null) {
-            System.out.println("Devi essere loggato per cambiare le credenziali.");
-            return null;
-        }
+    public ClientRequest prepareUpdate(String currentUser) {
         System.out.print("Nuovo username (vuoto per mantenere [" + currentUser + "]): ");
         String newUname = scanner.nextLine().trim();
         if (newUname.isEmpty()) newUname = null;
