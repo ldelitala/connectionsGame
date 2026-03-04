@@ -38,10 +38,15 @@
 - [x] Optimization: High-performance Game indexing (Offsets + Buffered I/O).
 - [ ] Refactoring Modulare: Separazione delle logiche Client (User, Game, History) in moduli indipendenti.
 - [ ] Raffinamento Protocollo: Specializzazione di GameInfo/Stats DTO per aderenza rigorosa alle specifiche (Corrente vs Passato).
+- [x] Allineamento Specifiche (Allegato 1): Correzione dei nomi dei campi JSON (`name` vs `username`, `psw`) e ripristino dei nomi operazione originali (`requestGameInfo`, `requestLeaderboard`, etc.) per garantire la piena conformità.
 
 ## Recent Improvements
 - **Clean Architecture**: Moved sensitive entities (`User`, `Game`) to server-private packages.
 - **Protocol Type Safety**: Implemented `Response<T extends DTO>` to ensure only DTOs are sent over TCP.
+- **Strict Spec Compliance (Allegato 1)**: Refactored `UserRequest`, `HistoryRequest` and `Operation` to match the exact JSON structure required by the project documentation, including:
+    - Support for optional `playerName` and `topPlayers` in leaderboard requests.
+    - Differentiation between `name` (registration) and `username` (login).
+    - Use of exact operation strings required by the evaluation criteria.
 - **Flexible Rules**: Refactored `WordGroup` and `GameRequest` to be agnostic of specific word counts, moving validation logic to the server.
 - **Advanced Notifications**: Added `GameEndNotification` (global) and `PlayerGameSummaryNotification` (individual) via UDP.
 - **Planned Modular Client**: Introduction of `ClientController` and three specialized modules:

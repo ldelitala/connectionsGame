@@ -5,50 +5,45 @@ import java.util.Scanner;
 
 /**
  * Main entry point for the CLI client.
+ * Orchestrates configuration, network setup, and starts the command controller.
  */
 public class ClientMain {
-    private static ConnectionClient client;
-    private static ClientConfig config;
-    private static ClientCommandHandler commandHandler;
-
+    
     public static void main(String[] args) {
-        config = new ClientConfig();
+        ClientConfig config = new ClientConfig();
         Scanner scanner = new Scanner(System.in);
+        ConnectionClient tcpClient = null;
+        UdpNotificationListener udpListener = null;
+
         System.out.println("Welcome to Connections Game!");
 
-        // Automatic connection on startup
         try {
-            client = new ConnectionClient(config.getServerHost(), config.getServerPort());
+            // 1. Setup TCP connection
+            tcpClient = new ConnectionClient(config.getServerHost(), config.getServerPort());
             System.out.println("Connected to server at " + config.getServerHost() + ":" + config.getServerPort());
+
+            // 2. Setup UDP listener (port from config or ephemeral)
+            // For now we use the one from config, but could be dynamic
+            int udpPort = 0; // Default or ephemeral
+            udpListener = new UdpNotificationListener(udpPort);
+            new Thread(udpListener).start();
+            // Get the actual port if 0 was used
+            udpPort = udpListener.getLocalPort();
+            System.out.println("UDP Notification listener started on port " + udpPort);
+
+            // 3. Start the Controller
+            ClientController controller = new ClientController(tcpClient, scanner, udpPort);
+            controller.start(scanner);
+
         } catch (IOException e) {
-            System.err.println("Failed to connect to server: " + e.getMessage());
-            System.err.println("Please check your config/client.properties and restart.");
-        }
-
-        commandHandler = new ClientCommandHandler(client);
-
-        while (true) {
-            String currentUsername = commandHandler.getCurrentUsername();
-            System.out.print(currentUsername != null ? "[" + currentUsername + "] > " : "> ");
-            
-            String input = scanner.nextLine().trim();
-            if (input.isEmpty()) continue;
-
-            String[] tokens = input.split("\\s+");
-
+            System.err.println("Fatal Error: " + e.getMessage());
+        } finally {
+            // Cleanup
             try {
-                boolean continueLoop = commandHandler.execute(tokens, scanner);
-                if (!continueLoop) {
-                    break;
-                }
-            } catch (Exception e) {
-                System.err.println("Error: " + e.getMessage());
-            }
+                if (tcpClient != null) tcpClient.close();
+                if (udpListener != null) udpListener.stop();
+            } catch (IOException ignored) {}
+            scanner.close();
         }
-
-        // Cleanup
-        try {
-            if (client != null) client.close();
-        } catch (IOException ignored) {}
     }
 }

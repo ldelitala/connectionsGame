@@ -1,12 +1,18 @@
 package com.connections.common.protocol.requests;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Request subclass for historical and global statistics operations.
  * Handles past game info/stats, player statistics, and leaderboard.
  */
 public class HistoryRequest extends Request {
     private final Integer gameId;
+    
+    @SerializedName("playerName")
     private final String playerName;
+    
+    @SerializedName("topPlayers")
     private final Integer topPlayers;
 
     private HistoryRequest(Operation op, Integer gameId, String playerName, Integer topPlayers) {
@@ -39,9 +45,12 @@ public class HistoryRequest extends Request {
 
     /**
      * Creates a request for the global leaderboard.
+     * 
+     * @param playerName optional player name to get rank for
+     * @param topPlayers optional number of top players to retrieve
      */
-    public static HistoryRequest getLeaderboard(Integer topPlayers) {
-        return new HistoryRequest(Operation.GET_LEADERBOARD, null, null, topPlayers);
+    public static HistoryRequest getLeaderboard(String playerName, Integer topPlayers) {
+        return new HistoryRequest(Operation.GET_LEADERBOARD, null, playerName, topPlayers);
     }
 
     public Integer getGameId() { return gameId; }

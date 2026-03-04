@@ -32,18 +32,18 @@ public enum Operation {
     SUBMIT_PROPOSAL,
 
     /** Request detailed information about a specific game or the current game. */
-    @SerializedName("getGameInfo")
+    @SerializedName("requestGameInfo")
     GET_GAME_INFO,
 
     /** Request global statistics for a specific game. */
-    @SerializedName("getGameStats")
+    @SerializedName("requestGameStats")
     GET_GAME_STATS,
 
     /** Request personal statistics for the logged-in user. */
-    @SerializedName("getPlayerStats")
+    @SerializedName("requestPlayerStats")
     GET_PLAYER_STATS,
 
     /** Request the global leaderboard or a specific player's rank. */
-    @SerializedName("getLeaderboard")
+    @SerializedName("requestLeaderboard")
     GET_LEADERBOARD;
 }
