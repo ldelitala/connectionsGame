@@ -18,8 +18,8 @@ public class UdpNotificationListener extends Thread {
         setDaemon(true);
     }
 
-    public int getPort() {
-        return port;
+    public int getLocalPort() {
+        return socket.getLocalPort();
     }
 
     @Override

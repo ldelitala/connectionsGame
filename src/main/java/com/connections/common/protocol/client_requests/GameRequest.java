@@ -1,4 +1,4 @@
-package com.connections.common.protocol.requests;
+package com.connections.common.protocol.client_requests;
 
 import java.util.List;
 
@@ -7,7 +7,7 @@ import java.util.List;
  * Handles proposals, current game info, and current game stats.
  * The game context is implicit (current game for the user).
  */
-public class GameRequest extends Request {
+public class GameRequest extends ClientRequest {
     private final List<String> words;
 
     private GameRequest(Operation op, List<String> words) {

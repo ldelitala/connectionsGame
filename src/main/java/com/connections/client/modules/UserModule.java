@@ -1,7 +1,7 @@
 package com.connections.client.modules;
 
-import com.connections.common.protocol.requests.*;
-import com.connections.common.protocol.responses.*;
+import com.connections.common.protocol.client_requests.*;
+import com.connections.common.protocol.server_responses.*;
 import java.util.Scanner;
 
 /**
@@ -21,7 +21,7 @@ public class UserModule {
         this.currentUser = user;
     }
 
-    public Request prepareRegister(String[] tokens) {
+    public ClientRequest prepareRegister(String[] tokens) {
         String user, pass;
         if (tokens.length >= 3) {
             user = tokens[1];
@@ -35,7 +35,7 @@ public class UserModule {
         return (user.isEmpty() || pass.isEmpty()) ? null : UserRequest.register(user, pass);
     }
 
-    public Request prepareLogin(String[] tokens) {
+    public ClientRequest prepareLogin(String[] tokens) {
         String user, pass;
         if (tokens.length >= 3) {
             user = tokens[1];
@@ -49,11 +49,11 @@ public class UserModule {
         return (user.isEmpty() || pass.isEmpty()) ? null : UserRequest.login(user, pass, udpPort);
     }
 
-    public Request prepareLogout() {
+    public ClientRequest prepareLogout() {
         return UserRequest.logout();
     }
 
-    public Request prepareUpdate() {
+    public ClientRequest prepareUpdate() {
         if (currentUser == null) {
             System.out.println("Devi essere loggato per cambiare le credenziali.");
             return null;
@@ -71,7 +71,7 @@ public class UserModule {
         return UserRequest.updateCredentials(currentUser, oldPass, newUname, newPass);
     }
 
-    public void displayResponse(Response<?> response) {
+    public void displayResponse(ServerResponse<?> response) {
         System.out.println(response.getMessage());
     }
 }

@@ -1,7 +1,7 @@
 package com.connections.client.modules;
 
-import com.connections.common.protocol.requests.*;
-import com.connections.common.protocol.responses.*;
+import com.connections.common.protocol.client_requests.*;
+import com.connections.common.protocol.server_responses.*;
 import com.connections.common.dto.*;
 import com.connections.common.models.WordGroup;
 import java.util.Arrays;
@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class GameModule {
 
-    public Request prepareSubmit(String[] tokens) {
+    public ClientRequest prepareSubmit(String[] tokens) {
         if (tokens.length < 2) {
             System.out.println("Uso: submit parola1 parola2 parola3 parola4");
             return null;
@@ -21,15 +21,15 @@ public class GameModule {
         return GameRequest.submitProposal(words);
     }
 
-    public Request prepareStatus() {
+    public ClientRequest prepareStatus() {
         return GameRequest.getCurrentInfo();
     }
 
-    public Request prepareStats() {
+    public ClientRequest prepareStats() {
         return GameRequest.getCurrentStats();
     }
 
-    public void displayResponse(Response<?> response) {
+    public void displayResponse(ServerResponse<?> response) {
         System.out.println(response.getMessage());
         Object data = response.getData();
         if (data == null) return;
@@ -51,7 +51,7 @@ public class GameModule {
         System.out.println("Errori: " + info.getMistakes() + "/4");
         System.out.println("Gruppi trovati:");
         for (WordGroup group : info.getFoundGroups()) {
-            System.out.println("  - " + group.getCategory() + ": " + String.join(", ", group.getWords()));
+            System.out.println("  - " + group.getTheme() + ": " + String.join(", ", group.getWords()));
         }
         System.out.println("Parole rimaste: " + String.join(", ", info.getRemainingWords()));
         System.out.println("Punteggio attuale: " + info.getScore());

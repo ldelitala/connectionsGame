@@ -1,10 +1,8 @@
 package com.connections.server;
 
-import com.connections.common.models.WordGroup;
 import com.connections.server.models.User;
-import com.connections.server.models.Game;
-import com.connections.common.protocol.requests.*;
-import com.connections.common.protocol.responses.*;
+import com.connections.common.protocol.client_requests.*;
+import com.connections.common.protocol.server_responses.*;
 import com.connections.common.dto.*;
 import com.google.gson.Gson;
 
@@ -26,6 +24,7 @@ import java.util.concurrent.Executors;
 
 /**
  * NIO-based TCP server for Connections Game.
+ * Handles ClientRequests and sends ServerResponses.
  */
 public class ConnectionsServer {
     private final ServerConfig config;
@@ -79,7 +78,7 @@ public class ConnectionsServer {
 
     private void handleRead(SelectionKey key) {
         SocketChannel clientChannel = (SocketChannel) key.channel();
-        ByteBuffer buffer = ByteBuffer.allocate(4096);
+        ByteBuffer buffer = ByteBuffer.allocate(8192); // Increased buffer size for larger requests
         try {
             int bytesRead = clientChannel.read(buffer);
             if (bytesRead == -1) {
@@ -96,16 +95,17 @@ public class ConnectionsServer {
 
     private void processRequest(SocketChannel clientChannel, String json) {
         try {
+            // Peek operation using a simple class
             class OperationPeek { Operation operation; }
             OperationPeek peek = gson.fromJson(json, OperationPeek.class);
             Operation op = (peek != null) ? peek.operation : null;
 
             if (op == null) {
-                sendResponse(clientChannel, Response.error("Missing or unknown operation."));
+                sendResponse(clientChannel, ServerResponse.error("Operazione mancante o sconosciuta."));
                 return;
             }
 
-            Response<?> response;
+            ServerResponse<?> response;
             switch (op) {
                 case REGISTER:
                 case LOGIN:
@@ -118,27 +118,28 @@ public class ConnectionsServer {
                     GameRequest gameReq = gson.fromJson(json, GameRequest.class);
                     response = handleSubmitProposal(clientChannel, gameReq);
                     break;
-                case REQUEST_GAME_INFO:
-                case REQUEST_GAME_STATS:
-                case REQUEST_PLAYER_STATS:
-                case REQUEST_LEADERBOARD:
-                    InfoRequest infoReq = gson.fromJson(json, InfoRequest.class);
-                    response = handleInfoOperation(clientChannel, op, infoReq);
+                case GET_GAME_INFO:
+                case GET_GAME_STATS:
+                case GET_PLAYER_STATS:
+                case GET_LEADERBOARD:
+                    HistoryRequest historyReq = gson.fromJson(json, HistoryRequest.class);
+                    response = handleHistoryOperation(clientChannel, op, historyReq);
                     break;
                 default:
-                    response = Response.error("Operation not implemented.");
+                    response = ServerResponse.error("Operazione non implementata.");
             }
             sendResponse(clientChannel, response);
         } catch (Exception e) {
-            sendResponse(clientChannel, Response.error("Internal server error: " + e.getMessage()));
+            sendResponse(clientChannel, ServerResponse.error("Errore interno del server: " + e.getMessage()));
         }
     }
 
-    private Response<?> handleUserOperation(SocketChannel channel, Operation op, UserRequest req) {
+    private ServerResponse<?> handleUserOperation(SocketChannel channel, Operation op, UserRequest req) {
         switch (op) {
             case REGISTER:
                 return userManager.register(req.getUsername(), req.getPassword()) ? 
-                    Response.ok("Registration successful.") : Response.error("Username exists.");
+                    ServerResponse.ok("Registrazione avvenuta con successo.") : 
+                    ServerResponse.error("Username già esistente.");
             case LOGIN:
                 User user = userManager.authenticate(req.getUsername(), req.getPassword());
                 if (user != null) {
@@ -149,79 +150,84 @@ public class ConnectionsServer {
                             udpNotifier.registerClient(user.getUsername(), addr, req.getUdpPort());
                         } catch (IOException ignored) {}
                     }
-                    return Response.ok("Login successful.");
+                    return ServerResponse.ok("Login effettuato con successo.");
                 }
-                return Response.error("Invalid credentials.");
+                return ServerResponse.error("Credenziali non valide.");
             case LOGOUT:
                 String uname = activeSessions.remove(channel);
                 if (uname != null) udpNotifier.unregisterClient(uname);
-                return Response.ok("Logged out.");
+                return ServerResponse.ok("Logout effettuato.");
             case UPDATE_CREDENTIALS:
                 String currentUname = activeSessions.get(channel);
-                if (currentUname == null) return Response.error("Not logged in.");
+                if (currentUname == null) return ServerResponse.error("Non sei loggato.");
                 if (userManager.updateCredentials(currentUname, req.getNewName(), req.getOldPsw(), req.getNewPsw())) {
                     if (req.getNewName() != null) activeSessions.put(channel, req.getNewName());
-                    return Response.ok("Updated.");
+                    return ServerResponse.ok("Credenziali aggiornate.");
                 }
-                return Response.error("Update failed.");
+                return ServerResponse.error("Aggiornamento fallito (password errata o nuovo username occupato).");
             default:
-                return Response.error("Unsupported user operation.");
+                return ServerResponse.error("Operazione utente non supportata.");
         }
     }
 
-    private Response<?> handleSubmitProposal(SocketChannel channel, GameRequest req) {
+    private ServerResponse<?> handleSubmitProposal(SocketChannel channel, GameRequest req) {
         String username = activeSessions.get(channel);
-        if (username == null) return Response.error("Not logged in.");
+        if (username == null) return ServerResponse.error("Non sei loggato.");
         
         ProposalResultDTO result = sessionManager.submitProposal(username, req.getWords());
         if (result == null) {
-            return Response.error("Invalid proposal request (game finished, time up, or group already found).");
+            return ServerResponse.error("Proposta non valida (partita finita o gruppo già trovato).");
         }
-        return Response.ok("Processed.", result);
+        return ServerResponse.ok("Proposta elaborata.", result);
     }
 
-    private Response<?> handleInfoOperation(SocketChannel channel, Operation op, InfoRequest req) {
+    private ServerResponse<?> handleHistoryOperation(SocketChannel channel, Operation op, HistoryRequest req) {
         String username = activeSessions.get(channel);
-        if (username == null) return Response.error("Not logged in.");
+        if (username == null) return ServerResponse.error("Non sei loggato.");
 
         switch (op) {
-            case REQUEST_GAME_INFO:
-                int gid = (req.getGameId() != null) ? req.getGameId() : sessionManager.getCurrentGame().getGameId();
+            case GET_GAME_INFO:
+                // If gameId is null, use current game
+                int gid = (req.getGameId() != null && req.getGameId() != -1) ? 
+                          req.getGameId() : sessionManager.getCurrentGame().getGameId();
                 GameInfoDTO info = sessionManager.getPersonalGameStatus(username, gid);
-                return info != null ? Response.ok("Info for " + gid, info) : Response.error("Not found.");
-            case REQUEST_GAME_STATS:
-                int sgid = (req.getGameId() != null) ? req.getGameId() : sessionManager.getCurrentGame().getGameId();
+                return info != null ? ServerResponse.ok("Info partita " + gid, info) : 
+                                     ServerResponse.error("Partita non trovata.");
+            case GET_GAME_STATS:
+                int sgid = (req.getGameId() != null && req.getGameId() != -1) ? 
+                           req.getGameId() : sessionManager.getCurrentGame().getGameId();
                 GameStatsDTO stats = sessionManager.getGlobalGameStats(sgid);
-                return stats != null ? Response.ok("Stats for " + sgid, stats) : Response.error("Not found.");
-            case REQUEST_PLAYER_STATS:
+                return stats != null ? ServerResponse.ok("Statistiche partita " + sgid, stats) : 
+                                      ServerResponse.error("Partita non trovata.");
+            case GET_PLAYER_STATS:
                 User u = userManager.getUser(username);
-                return Response.ok("Player stats.", PlayerStatsDTO.create(
+                return ServerResponse.ok("Le tue statistiche.", PlayerStatsDTO.create(
                     u.getPuzzlesCompleted(), u.getWinRate(), u.getLossRate(),
                     u.getCurrentStreak(), u.getMaxStreak(), u.getPerfectPuzzles(),
                     u.getMistakeHistogram(), u.getTotalScore()));
-            case REQUEST_LEADERBOARD:
+            case GET_LEADERBOARD:
                 List<User> all = userManager.getAllUsers();
                 if (req.getPlayerName() != null) {
                     for (int i = 0; i < all.size(); i++) {
                         User pu = all.get(i);
                         if (pu.getUsername().equals(req.getPlayerName())) 
-                            return Response.ok("Rank.", LeaderboardEntryDTO.create(i + 1, pu.getUsername(), pu.getTotalScore()));
+                            return ServerResponse.ok("Posizione in classifica.", LeaderboardEntryDTO.create(i + 1, pu.getUsername(), pu.getTotalScore()));
                     }
-                    return Response.error("Not found.");
+                    return ServerResponse.error("Giocatore non trovato.");
                 }
-                int k = (req.getTopPlayers() != null) ? req.getTopPlayers() : all.size();
+                int k = (req.getTopPlayers() != null) ? req.getTopPlayers() : 10;
                 List<LeaderboardEntryDTO> entries = new java.util.ArrayList<>();
                 for (int i = 0; i < Math.min(k, all.size()); i++) {
                     User lu = all.get(i);
                     entries.add(LeaderboardEntryDTO.create(i + 1, lu.getUsername(), lu.getTotalScore()));
                 }
-                return Response.ok("Leaderboard.", LeaderboardDTO.create(entries));
+                return ServerResponse.ok("Classifica globale.", LeaderboardDTO.create(entries));
             default:
-                return Response.error("Unsupported info operation.");
+                return ServerResponse.error("Operazione di recupero dati non supportata.");
         }
     }
 
-    private void sendResponse(SocketChannel channel, Response<?> response) {
+    private void sendResponse(SocketChannel channel, ServerResponse<?> response) {
         try {
             String json = gson.toJson(response);
             channel.write(ByteBuffer.wrap((json + "\n").getBytes()));

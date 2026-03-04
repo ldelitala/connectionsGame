@@ -1,4 +1,4 @@
-package com.connections.common.protocol.requests;
+package com.connections.common.protocol.client_requests;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName;
  * Request subclass for historical and global statistics operations.
  * Handles past game info/stats, player statistics, and leaderboard.
  */
-public class HistoryRequest extends Request {
+public class HistoryRequest extends ClientRequest {
     private final Integer gameId;
     
     @SerializedName("playerName")

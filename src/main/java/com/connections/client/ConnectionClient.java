@@ -1,7 +1,7 @@
 package com.connections.client;
 
-import com.connections.common.protocol.requests.Request;
-import com.connections.common.protocol.responses.Response;
+import com.connections.common.protocol.client_requests.ClientRequest;
+import com.connections.common.protocol.server_responses.ServerResponse;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;
@@ -25,14 +25,14 @@ public class ConnectionClient implements AutoCloseable {
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
-    public Response sendRequest(Request request) throws IOException {
+    public ServerResponse sendRequest(ClientRequest request) throws IOException {
         String json = gson.toJson(request);
         out.println(json);
         String responseJson = in.readLine();
         if (responseJson == null) {
             throw new IOException("Server closed connection.");
         }
-        return gson.fromJson(responseJson, Response.class);
+        return gson.fromJson(responseJson, ServerResponse.class);
     }
 
     @Override

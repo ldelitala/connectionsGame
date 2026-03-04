@@ -1,7 +1,7 @@
 package com.connections.client.modules;
 
-import com.connections.common.protocol.requests.*;
-import com.connections.common.protocol.responses.*;
+import com.connections.common.protocol.client_requests.*;
+import com.connections.common.protocol.server_responses.*;
 import com.connections.common.dto.*;
 import com.connections.common.models.WordGroup;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class HistoryModule {
 
-    public Request preparePastInfo(String[] tokens) {
+    public ClientRequest preparePastInfo(String[] tokens) {
         if (tokens.length < 2) {
             System.out.println("Uso: info [id]");
             return null;
@@ -19,7 +19,7 @@ public class HistoryModule {
         return HistoryRequest.getGameInfo(Integer.parseInt(tokens[1]));
     }
 
-    public Request prepareGlobalStats(String[] tokens) {
+    public ClientRequest prepareGlobalStats(String[] tokens) {
         if (tokens.length < 2) {
             System.out.println("Uso: global [id]");
             return null;
@@ -27,17 +27,17 @@ public class HistoryModule {
         return HistoryRequest.getGameStats(Integer.parseInt(tokens[1]));
     }
 
-    public Request prepareRanking(String[] tokens) {
+    public ClientRequest prepareRanking(String[] tokens) {
         Integer top = (tokens.length > 1) ? Integer.parseInt(tokens[1]) : 10;
         String player = (tokens.length > 2) ? tokens[2] : null;
         return HistoryRequest.getLeaderboard(player, top);
     }
 
-    public Request prepareHistory() {
+    public ClientRequest prepareHistory() {
         return HistoryRequest.getPlayerStats();
     }
 
-    public void displayResponse(Response<?> response) {
+    public void displayResponse(ServerResponse<?> response) {
         System.out.println(response.getMessage());
         Object data = response.getData();
         if (data == null) return;
@@ -60,7 +60,7 @@ public class HistoryModule {
         System.out.println("Gruppi indovinati: " + info.getCorrectGroupsCount() + "/4");
         System.out.println("Assegnazioni ufficiali:");
         for (WordGroup group : info.getAllGroups()) {
-            System.out.println("  - " + group.getCategory() + ": " + String.join(", ", group.getWords()));
+            System.out.println("  - " + group.getTheme() + ": " + String.join(", ", group.getWords()));
         }
     }
 
@@ -74,10 +74,10 @@ public class HistoryModule {
 
     private void displayPlayerStats(PlayerStatsDTO stats) {
         System.out.println("--- Le Tue Statistiche Globali ---");
-        System.out.println("Puzzles completati: " + stats.getGamesFinished());
-        System.out.println("Puzzles vinti: " + stats.getGamesWon());
+        System.out.println("Puzzles completati: " + stats.getPuzzlesCompleted());
+        System.out.println("Puzzles vinti: " + (int)(stats.getWinRate() * stats.getPuzzlesCompleted() / 100));
         System.out.println("Punteggio totale: " + stats.getTotalScore());
-        System.out.println("Media errori: " + stats.getAverageMistakes());
+        System.out.println("Media punteggio: " + stats.getAverageScore());
     }
 
     private void displayLeaderboard(LeaderboardDTO leaderboard) {

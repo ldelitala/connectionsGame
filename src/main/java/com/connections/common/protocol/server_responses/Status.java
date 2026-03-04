@@ -1,4 +1,4 @@
-package com.connections.common.protocol.responses;
+package com.connections.common.protocol.server_responses;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -12,5 +12,9 @@ public enum Status {
 
     /** Indicates the operation failed or an error occurred. */
     @SerializedName("error")
-    ERROR;
+    ERROR,
+
+    /** Indicates the operation is forbidden. */
+    @SerializedName("forbidden")
+    FORBIDDEN;
 }

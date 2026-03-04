@@ -1,4 +1,4 @@
-package com.connections.common.protocol.requests;
+package com.connections.common.protocol.client_requests;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName;
  * specialized Request subclass for user management operations.
  * Handles registration, login, logout, and credential updates.
  */
-public class UserRequest extends Request {
+public class UserRequest extends ClientRequest {
 
     // register uses "name", login uses "username". 
     // gson will serialize based on the factory method's settings.

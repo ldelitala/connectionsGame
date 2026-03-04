@@ -1,8 +1,8 @@
 package com.connections.client;
 
 import com.connections.client.modules.*;
-import com.connections.common.protocol.requests.*;
-import com.connections.common.protocol.responses.*;
+import com.connections.common.protocol.client_requests.*;
+import com.connections.common.protocol.server_responses.*;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -46,11 +46,11 @@ public class ClientController {
             // ESECUZIONE
             if (result != null && result.request != null) {
                 try {
-                    Response<?> response = tcpClient.sendRequest(result.request);
+                    ServerResponse<?> response = tcpClient.sendRequest(result.request);
                     updateSessionState(result.request, response, tokens);
                     
                     // Delega la visualizzazione al modulo corretto
-                    result.targetModule.displayResponse(response);
+                    result.displayResponse(response);
 
                 } catch (IOException e) {
                     System.err.println("Errore di connessione: " + e.getMessage());
@@ -90,7 +90,7 @@ public class ClientController {
         }
     }
 
-    private void updateSessionState(Request request, Response<?> response, String[] tokens) {
+    private void updateSessionState(ClientRequest request, ServerResponse<?> response, String[] tokens) {
         if (response.getStatus() != Status.OK) return;
         Operation op = request.getOperation();
         if (op == Operation.LOGIN && tokens.length >= 2) {
@@ -130,19 +130,18 @@ public class ClientController {
      * Classe di supporto interna per accoppiare una Request al modulo che deve gestirne la risposta.
      */
     private static class CommandResult {
-        final Request request;
+        final ClientRequest request;
         final Object targetModule; // UserModule, GameModule o HistoryModule
 
-        CommandResult(Request request, Object targetModule) {
+        CommandResult(ClientRequest request, Object targetModule) {
             this.request = request;
             this.targetModule = targetModule;
         }
 
-        // Metodo helper per chiamare displayResponse in modo type-safe (se non vogliamo usare reflection o troppi cast)
-        void displayResponse(Response<?> response) {
+        void displayResponse(ServerResponse<?> response) {
             if (targetModule instanceof UserModule) ((UserModule) targetModule).displayResponse(response);
             else if (targetModule instanceof GameModule) ((GameModule) targetModule).displayResponse(response);
-            else if (targetModule instanceof HistoryModule) ((HistoryModule) targetModule).displayModuleResponse(response);
+            else if (targetModule instanceof HistoryModule) ((HistoryModule) targetModule).displayResponse(response);
         }
     }
 }

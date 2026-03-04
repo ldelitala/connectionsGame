@@ -58,4 +58,5 @@ public class ClientConfig {
 
     public String getServerHost() { return props.getProperty(KEY_SERVER_HOST); }
     public int getServerPort() { return Integer.parseInt(props.getProperty(KEY_SERVER_PORT)); }
+    public int getUdpPort() { return Integer.parseInt(props.getProperty("client.udp_port", "0")); }
 }
