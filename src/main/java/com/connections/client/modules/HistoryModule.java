@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class HistoryModule {
 
-    public Request prepareGameInfo(String[] tokens) {
+    public Request preparePastInfo(String[] tokens) {
         if (tokens.length < 2) {
             System.out.println("Uso: info [id]");
             return null;
@@ -19,9 +19,9 @@ public class HistoryModule {
         return HistoryRequest.getGameInfo(Integer.parseInt(tokens[1]));
     }
 
-    public Request prepareGameStats(String[] tokens) {
+    public Request prepareGlobalStats(String[] tokens) {
         if (tokens.length < 2) {
-            System.out.println("Uso: stats [id]");
+            System.out.println("Uso: global [id]");
             return null;
         }
         return HistoryRequest.getGameStats(Integer.parseInt(tokens[1]));
@@ -54,10 +54,6 @@ public class HistoryModule {
     }
 
     private void displayConcludedGameInfo(GameInfoDTO info) {
-        if (!info.isFinished()) {
-            System.out.println("Questa partita è ancora attiva. Usa 'info' senza ID per lo stato live.");
-            return;
-        }
         System.out.println("--- Dettagli Partita Conclusa (ID: " + info.getGameId() + ") ---");
         System.out.println("Punteggio finale: " + info.getScore());
         System.out.println("Errori commessi: " + info.getMistakes());
@@ -69,7 +65,7 @@ public class HistoryModule {
     }
 
     private void displayConcludedGameStats(GameStatsDTO stats) {
-        System.out.println("--- Statistiche Partita Passata ---");
+        System.out.println("--- Statistiche Partita Passata (ID: " + stats.getGameId() + ") ---");
         System.out.println("Partecipanti totali: " + stats.getTotalParticipants());
         System.out.println("Hanno concluso: " + stats.getFinishedPlayers());
         System.out.println("Vincitori totali: " + stats.getWonPlayers());
@@ -85,7 +81,7 @@ public class HistoryModule {
     }
 
     private void displayLeaderboard(LeaderboardDTO leaderboard) {
-        System.out.println("--- Classifica ---");
+        System.out.println("--- Classifica Globale ---");
         List<LeaderboardEntryDTO> entries = leaderboard.getEntries();
         for (int i = 0; i < entries.size(); i++) {
             LeaderboardEntryDTO entry = entries.get(i);

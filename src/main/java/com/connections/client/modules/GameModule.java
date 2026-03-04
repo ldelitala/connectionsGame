@@ -21,7 +21,7 @@ public class GameModule {
         return GameRequest.submitProposal(words);
     }
 
-    public Request prepareInfo() {
+    public Request prepareStatus() {
         return GameRequest.getCurrentInfo();
     }
 

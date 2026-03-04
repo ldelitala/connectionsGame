@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 /**
  * Main handler for client commands.
- * It parses the input and delegates the request creation and display to specific modules.
+ * Orchestrates parsing and delegates execution to specialized modules.
  */
 public class ClientController {
     private final ConnectionClient tcpClient;
@@ -32,10 +32,7 @@ public class ClientController {
             
             String line = scanner.nextLine().trim();
             if (line.isEmpty()) continue;
-            
-            if (line.equalsIgnoreCase("exit")) {
-                break;
-            }
+            if (line.equalsIgnoreCase("exit")) break;
             if (line.equalsIgnoreCase("help")) {
                 printHelp();
                 continue;
@@ -47,79 +44,42 @@ public class ClientController {
             Request request = null;
             Object activeModule = null;
 
-            // PARSING UNIFICATO NEL CONTROLLER
+            // PARSING LINEARE E DISACCOPPIATO
             switch (command) {
-                // USER MODULE
-                case "register":
-                    request = userModule.prepareRegister(tokens);
-                    activeModule = userModule;
-                    break;
-                case "login":
-                    request = userModule.prepareLogin(tokens);
-                    activeModule = userModule;
-                    break;
-                case "logout":
-                    request = userModule.prepareLogout();
-                    activeModule = userModule;
-                    break;
-                case "update":
-                    request = userModule.prepareUpdate();
-                    activeModule = userModule;
-                    break;
+                // ACCOUNT
+                case "register": request = userModule.prepareRegister(tokens); activeModule = userModule; break;
+                case "login":    request = userModule.prepareLogin(tokens);    activeModule = userModule; break;
+                case "logout":   request = userModule.prepareLogout();         activeModule = userModule; break;
+                case "update":   request = userModule.prepareUpdate();         activeModule = userModule; break;
 
-                // GAME MODULE
-                case "submit":
-                    request = gameModule.prepareSubmit(tokens);
-                    activeModule = gameModule;
-                    break;
-                
-                // INFO & STATS (Routing condizionale)
-                case "info":
-                    if (tokens.length > 1) {
-                        request = historyModule.prepareGameInfo(tokens);
-                        activeModule = historyModule;
-                    } else {
-                        request = gameModule.prepareInfo();
-                        activeModule = gameModule;
-                    }
-                    break;
-                case "stats":
-                    if (tokens.length > 1) {
-                        request = historyModule.prepareGameStats(tokens);
-                        activeModule = historyModule;
-                    } else {
-                        request = gameModule.prepareStats();
-                        activeModule = gameModule;
-                    }
-                    break;
+                // GIOCO ATTIVO (Sulla partita corrente)
+                case "submit":   request = gameModule.prepareSubmit(tokens); activeModule = gameModule; break;
+                case "status":   request = gameModule.prepareStatus();       activeModule = gameModule; break;
+                case "stats":    request = gameModule.prepareStats();        activeModule = gameModule; break;
 
-                // HISTORY MODULE
-                case "ranking":
-                    request = historyModule.prepareRanking(tokens);
-                    activeModule = historyModule;
-                    break;
-                case "history":
-                    request = historyModule.prepareHistory();
-                    activeModule = historyModule;
-                    break;
+                // STORICO E GLOBALE (Su partite specifiche o classifiche)
+                case "info":     request = historyModule.preparePastInfo(tokens);   activeModule = historyModule; break;
+                case "global":   request = historyModule.prepareGlobalStats(tokens); activeModule = historyModule; break;
+                case "ranking":  request = historyModule.prepareRanking(tokens);     activeModule = historyModule; break;
+                case "history":  request = historyModule.prepareHistory();           activeModule = historyModule; break;
 
                 default:
-                    System.out.println("Comando sconosciuto. Digita 'help' per la lista comandi.");
+                    System.out.println("Comando non riconosciuto. Scrivi 'help' per vedere la lista dei comandi.");
             }
 
-            // ESECUZIONE E VISUALIZZAZIONE
+            // ESECUZIONE
             if (request != null) {
                 try {
                     Response<?> response = tcpClient.sendRequest(request);
                     updateSessionState(request, response, tokens);
                     
-                    // Delega la visualizzazione al modulo che ha preparato la richiesta
+                    // Delega la visualizzazione
                     if (activeModule instanceof UserModule) ((UserModule) activeModule).displayResponse(response);
                     else if (activeModule instanceof GameModule) ((GameModule) activeModule).displayResponse(response);
                     else if (activeModule instanceof HistoryModule) ((HistoryModule) activeModule).displayResponse(response);
 
                 } catch (IOException e) {
-                    System.err.println("Errore di rete: " + e.getMessage());
+                    System.err.println("Errore di connessione: " + e.getMessage());
                 }
             }
         }
@@ -127,13 +87,10 @@ public class ClientController {
 
     private void updateSessionState(Request request, Response<?> response, String[] tokens) {
         if (response.getStatus() != Status.OK) return;
-
         Operation op = request.getOperation();
-        if (op == Operation.LOGIN) {
-            if (tokens.length >= 2) {
-                this.loggedUser = tokens[1];
-                this.userModule.setCurrentUser(this.loggedUser);
-            }
+        if (op == Operation.LOGIN && tokens.length >= 2) {
+            this.loggedUser = tokens[1];
+            this.userModule.setCurrentUser(this.loggedUser);
         } else if (op == Operation.LOGOUT) {
             this.loggedUser = null;
             this.userModule.setCurrentUser(null);
@@ -141,11 +98,26 @@ public class ClientController {
     }
 
     private void printHelp() {
-        System.out.println("--- Account ---");
-        System.out.println("  register [user] [pass]  / login [user] [pass] / logout / update");
-        System.out.println("--- Gioco ---");
-        System.out.println("  submit [w1] [w2] [w3] [w4] / info / stats");
-        System.out.println("--- Storico ---");
-        System.out.println("  info [id] / stats [id] / ranking [k] [user] / history");
+        System.out.println("\n--- COMANDI DISPONIBILI ---");
+        System.out.println("Gestione Account:");
+        System.out.println("  register [u] [p]  : Registra un nuovo account");
+        System.out.println("  login [u] [p]     : Accedi al gioco");
+        System.out.println("  logout            : Esci dal tuo account");
+        System.out.println("  update            : Cambia le tue credenziali (username/password)");
+        
+        System.out.println("\nPartita Corrente (In Corso):");
+        System.out.println("  submit [w1-w4]    : Invia una proposta di 4 parole");
+        System.out.println("  status            : Visualizza il tuo stato attuale (errori, parole, tempo)");
+        System.out.println("  stats             : Statistiche globali sulla partita in corso");
+        
+        System.out.println("\nStorico e Classifiche:");
+        System.out.println("  info [id]         : Guarda la soluzione e i tuoi dettagli di una partita passata");
+        System.out.println("  global [id]       : Guarda le statistiche di partecipazione di una partita passata");
+        System.out.println("  ranking [k] [u]   : Mostra i primi K giocatori o la posizione di un utente");
+        System.out.println("  history           : Visualizza il riepilogo delle tue statistiche personali");
+        
+        System.out.println("\nSistema:");
+        System.out.println("  help              : Mostra questo elenco");
+        System.out.println("  exit              : Chiudi l'applicazione\n");
     }
 }
