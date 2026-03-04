@@ -39,49 +39,54 @@ public class ClientController {
             }
 
             String[] tokens = line.split("\\s+");
-            String command = tokens[0].toLowerCase();
-
-            Request request = null;
-            Object activeModule = null;
-
-            // PARSING LINEARE E DISACCOPPIATO
-            switch (command) {
-                // ACCOUNT
-                case "register": request = userModule.prepareRegister(tokens); activeModule = userModule; break;
-                case "login":    request = userModule.prepareLogin(tokens);    activeModule = userModule; break;
-                case "logout":   request = userModule.prepareLogout();         activeModule = userModule; break;
-                case "update":   request = userModule.prepareUpdate();         activeModule = userModule; break;
-
-                // GIOCO ATTIVO (Sulla partita corrente)
-                case "submit":   request = gameModule.prepareSubmit(tokens); activeModule = gameModule; break;
-                case "status":   request = gameModule.prepareStatus();       activeModule = gameModule; break;
-                case "stats":    request = gameModule.prepareStats();        activeModule = gameModule; break;
-
-                // STORICO E GLOBALE (Su partite specifiche o classifiche)
-                case "info":     request = historyModule.preparePastInfo(tokens);   activeModule = historyModule; break;
-                case "global":   request = historyModule.prepareGlobalStats(tokens); activeModule = historyModule; break;
-                case "ranking":  request = historyModule.prepareRanking(tokens);     activeModule = historyModule; break;
-                case "history":  request = historyModule.prepareHistory();           activeModule = historyModule; break;
-
-                default:
-                    System.out.println("Comando non riconosciuto. Scrivi 'help' per vedere la lista dei comandi.");
-            }
+            
+            // Logica estratta in una funzione a parte
+            CommandResult result = processCommand(tokens);
 
             // ESECUZIONE
-            if (request != null) {
+            if (result != null && result.request != null) {
                 try {
-                    Response<?> response = tcpClient.sendRequest(request);
-                    updateSessionState(request, response, tokens);
+                    Response<?> response = tcpClient.sendRequest(result.request);
+                    updateSessionState(result.request, response, tokens);
                     
-                    // Delega la visualizzazione
-                    if (activeModule instanceof UserModule) ((UserModule) activeModule).displayResponse(response);
-                    else if (activeModule instanceof GameModule) ((GameModule) activeModule).displayResponse(response);
-                    else if (activeModule instanceof HistoryModule) ((HistoryModule) activeModule).displayResponse(response);
+                    // Delega la visualizzazione al modulo corretto
+                    result.targetModule.displayResponse(response);
 
                 } catch (IOException e) {
                     System.err.println("Errore di connessione: " + e.getMessage());
                 }
             }
+        }
+    }
+
+    /**
+     * Analizza il comando e lo smista al modulo corretto.
+     * Restituisce un oggetto contenente la richiesta e il modulo di riferimento.
+     */
+    private CommandResult processCommand(String[] tokens) {
+        String command = tokens[0].toLowerCase();
+        
+        switch (command) {
+            // ACCOUNT
+            case "register": return new CommandResult(userModule.prepareRegister(tokens), userModule);
+            case "login":    return new CommandResult(userModule.prepareLogin(tokens), userModule);
+            case "logout":   return new CommandResult(userModule.prepareLogout(), userModule);
+            case "update":   return new CommandResult(userModule.prepareUpdate(), userModule);
+
+            // GIOCO ATTIVO
+            case "submit":   return new CommandResult(gameModule.prepareSubmit(tokens), gameModule);
+            case "status":   return new CommandResult(gameModule.prepareStatus(), gameModule);
+            case "stats":    return new CommandResult(gameModule.prepareStats(), gameModule);
+
+            // STORICO E GLOBALE
+            case "info":     return new CommandResult(historyModule.preparePastInfo(tokens), historyModule);
+            case "global":   return new CommandResult(historyModule.prepareGlobalStats(tokens), historyModule);
+            case "ranking":  return new CommandResult(historyModule.prepareRanking(tokens), historyModule);
+            case "history":  return new CommandResult(historyModule.prepareHistory(), historyModule);
+
+            default:
+                System.out.println("Comando non riconosciuto. Scrivi 'help' per vedere la lista dei comandi.");
+                return null;
         }
     }
 
@@ -119,5 +124,25 @@ public class ClientController {
         System.out.println("\nSistema:");
         System.out.println("  help              : Mostra questo elenco");
         System.out.println("  exit              : Chiudi l'applicazione\n");
+    }
+
+    /**
+     * Classe di supporto interna per accoppiare una Request al modulo che deve gestirne la risposta.
+     */
+    private static class CommandResult {
+        final Request request;
+        final Object targetModule; // UserModule, GameModule o HistoryModule
+
+        CommandResult(Request request, Object targetModule) {
+            this.request = request;
+            this.targetModule = targetModule;
+        }
+
+        // Metodo helper per chiamare displayResponse in modo type-safe (se non vogliamo usare reflection o troppi cast)
+        void displayResponse(Response<?> response) {
+            if (targetModule instanceof UserModule) ((UserModule) targetModule).displayResponse(response);
+            else if (targetModule instanceof GameModule) ((GameModule) targetModule).displayResponse(response);
+            else if (targetModule instanceof HistoryModule) ((HistoryModule) targetModule).displayModuleResponse(response);
+        }
     }
 }
