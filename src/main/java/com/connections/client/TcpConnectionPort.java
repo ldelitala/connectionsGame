@@ -12,25 +12,29 @@ import java.net.Socket;
 
 /**
  * Handles the low-level TCP connection and JSON communication with the server.
+ * Acting as the "port" for all client-server requests and responses.
  */
-public class ConnectionClient implements AutoCloseable {
+public class TcpConnectionPort implements AutoCloseable {
     private final Socket socket;
     private final PrintWriter out;
     private final BufferedReader in;
     private final Gson gson = new Gson();
 
-    public ConnectionClient(String host, int port) throws IOException {
+    public TcpConnectionPort(String host, int port) throws IOException {
         this.socket = new Socket(host, port);
         this.out = new PrintWriter(socket.getOutputStream(), true);
         this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
+    /**
+     * Sends a request to the server and waits for the corresponding response.
+     */
     public ServerResponse sendRequest(ClientRequest request) throws IOException {
         String json = gson.toJson(request);
         out.println(json);
         String responseJson = in.readLine();
         if (responseJson == null) {
-            throw new IOException("Server closed connection.");
+            throw new IOException("Il server ha chiuso la connessione.");
         }
         return gson.fromJson(responseJson, ServerResponse.class);
     }

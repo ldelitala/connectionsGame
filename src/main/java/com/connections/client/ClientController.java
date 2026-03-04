@@ -11,15 +11,15 @@ import java.util.Scanner;
  * Orchestrates parsing and delegates execution to specialized modules.
  */
 public class ClientController {
-    private final ConnectionClient tcpClient;
+    private final TcpConnectionPort tcpPort;
     private final UserModule userModule;
     private final GameModule gameModule;
     private final HistoryModule historyModule;
     
     private String loggedUser = null;
 
-    public ClientController(ConnectionClient tcpClient, Scanner scanner, int udpPort) {
-        this.tcpClient = tcpClient;
+    public ClientController(TcpConnectionPort tcpPort, Scanner scanner, int udpPort) {
+        this.tcpPort = tcpPort;
         this.userModule = new UserModule(scanner, udpPort);
         this.gameModule = new GameModule();
         this.historyModule = new HistoryModule();
@@ -46,7 +46,7 @@ public class ClientController {
             // ESECUZIONE
             if (result != null && result.request != null) {
                 try {
-                    ServerResponse<?> response = tcpClient.sendRequest(result.request);
+                    ServerResponse<?> response = tcpPort.sendRequest(result.request);
                     updateSessionState(result.request, response, tokens);
                     
                     // Delega la visualizzazione al modulo corretto
