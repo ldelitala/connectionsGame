@@ -2,14 +2,23 @@
 
 Elenco dei miglioramenti da implementare per completare il progetto.
 
-## 1. Persistenza Avanzata
+## 1. Refactoring Modulare (Client & Protocollo)
+- [ ] **Riorganizzazione Protocollo (Common)**:
+    - [ ] Rinominare `Operation.java` per coerenza (`GET_GAME_INFO`, `GET_GAME_STATS`, ecc.).
+    - [ ] Aggiornare `GameInfoDTO` e `GameStatsDTO` per gestire rigorosamente le differenze tra partita "in corso" e "conclusa" come da specifica.
+    - [ ] Dividere le classi `Request` in `UserRequest`, `GameRequest` e `HistoryRequest`.
+- [ ] **Nuova Architettura Client**:
+    - [ ] Implementare `ClientController` (orchestratore centrale del loop di comando).
+    - [ ] Implementare `UserModule`: gestione `register`, `login`, `logout`.
+    - [ ] Implementare `GameModule`: gestione `submit` (proposta), `info` (corrente), `stats` (corrente).
+    - [ ] Implementare `HistoryModule`: gestione `info <id>`, `stats <id>`, `ranking`, `history`.
+- [ ] **Miglioramento CLI**:
+    - [ ] Spostare la logica di visualizzazione (formattazione DTO) all'interno dei rispettivi Moduli.
+    - [ ] Gestire la visualizzazione asincrona delle notifiche UDP nel `ClientController`.
+
+## 2. Persistenza Avanzata
 - [ ] Creare un file `data/games_history.json` per salvare i risultati delle partite passate.
 - [ ] Implementare il caricamento della cronologia all'avvio del server per rendere le statistiche globali persistenti ai riavvii.
-
-## 2. Miglioramento CLI Client
-- [ ] Separare la **Logica di Input** dalla **Logica di Visualizzazione** in `ClientMain`.
-- [ ] Implementare una gestione elegante delle notifiche asincrone che arrivano mentre l'utente scrive (es. ristampare il prompt).
-- [ ] Formattare i DTO ricevuti (es. tabelle per la classifica, colori per i gruppi di parole).
 
 ## 3. Ottimizzazioni di Rete
 - [ ] Valutare l'uso di un `ExecutorService` dedicato per l'invio delle notifiche UDP in `GameSessionManager` per evitare blocchi nel thread di gestione sessione.

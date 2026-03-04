@@ -15,14 +15,83 @@ All requests must contain an `"operation"` field.
 ```
 *Note: Words are sent as a list. Server validates that length is exactly 4.*
 
-### Request Leaderboard
-**Option A: Top K players**
+### Get Game Info
+**Request**
 ```json
-{ "operation": "requestLeaderboard", "topPlayers": 10 }
+{ "operation": "getGameInfo", "gameId": 123 }
 ```
-**Option B: Specific player rank**
+*Note: gameId can be null or -1 for the current game.*
+
+**Response (Active Game)**
 ```json
-{ "operation": "requestLeaderboard", "playerName": "user123" }
+{
+  "status": "ok",
+  "data": {
+    "gameId": 123,
+    "finished": false,
+    "remainingTime": 30000,
+    "foundGroups": [...],
+    "remainingWords": ["W1", "W2", ...],
+    "mistakes": 1,
+    "score": 4
+  }
+}
+```
+
+**Response (Concluded Game)**
+```json
+{
+  "status": "ok",
+  "data": {
+    "gameId": 123,
+    "finished": true,
+    "allGroups": [...],
+    "correctGroupsCount": 4,
+    "mistakes": 2,
+    "score": 12
+  }
+}
+```
+
+### Get Game Stats
+**Request**
+```json
+{ "operation": "getGameStats", "gameId": 123 }
+```
+
+**Response (Active Game)**
+```json
+{
+  "status": "ok",
+  "data": {
+    "gameId": 123,
+    "finished": false,
+    "remainingTime": 30000,
+    "activePlayers": 10,
+    "finishedPlayers": 2,
+    "wonPlayers": 1
+  }
+}
+```
+
+**Response (Concluded Game)**
+```json
+{
+  "status": "ok",
+  "data": {
+    "gameId": 123,
+    "finished": true,
+    "totalParticipants": 25,
+    "finishedPlayers": 20,
+    "wonPlayers": 15,
+    "averageScore": 8.5
+  }
+}
+```
+
+### Get Leaderboard
+```json
+{ "operation": "getLeaderboard", "topPlayers": 10 }
 ```
 
 ---

@@ -5,80 +5,78 @@ import java.util.List;
 
 /**
  * DTO for personal game information (both current and past).
+ * Follows the project's specific requirements for what info to return for active vs finished games.
  */
 public class GameInfoDTO implements DTO {
-    // Common fields
     private final int gameId;
+    private final boolean finished;
     private final int mistakes;
     private final int score;
-    private final boolean finished;
-    private final boolean isCurrent;
 
-    // Current game fields
+    // Fields used in ACTIVE game
     private final Long remainingTime;
     private final List<WordGroup> foundGroups;
     private final List<String> remainingWords;
 
-    // Past game fields
-    private final Boolean won;
-    private final List<WordGroup> allGroups;
+    // Fields used in FINISHED game
+    private final List<WordGroup> allGroups; // All 16 words assigned to 4 groups
+    private final Integer correctGroupsCount;
 
-    private GameInfoDTO(int gameId, int mistakes, int score, boolean finished, boolean isCurrent,
+    private GameInfoDTO(int gameId, boolean finished, int mistakes, int score,
             Long remainingTime, List<WordGroup> foundGroups, List<String> remainingWords,
-            Boolean won, List<WordGroup> allGroups) {
+            List<WordGroup> allGroups, Integer correctGroupsCount) {
 
         this.gameId = gameId;
+        this.finished = finished;
         this.mistakes = mistakes;
         this.score = score;
-        this.finished = finished;
-        this.isCurrent = isCurrent;
         this.remainingTime = remainingTime;
         this.foundGroups = foundGroups;
         this.remainingWords = remainingWords;
-        this.won = won;
         this.allGroups = allGroups;
+        this.correctGroupsCount = correctGroupsCount;
     }
 
     /**
-     * Factory method for current game info.
+     * Factory method for active (in progress) game info.
      * 
-     * @param gameId current game ID
-     * @param mistakes current number of mistakes
-     * @param score current player score
-     * @param finished whether the game is considered finished by the server
-     * @param won whether the game has been won
+     * @param gameId game ID
      * @param remainingTime time left in milliseconds
      * @param foundGroups list of groups already found
      * @param remainingWords list of words not yet grouped
-     * @return a new GameInfoDTO for the current session
+     * @param mistakes current number of mistakes
+     * @param score current player score
+     * @return a new GameInfoDTO for the active session
      */
-    public static GameInfoDTO current(int gameId, int mistakes, int score, boolean finished,
-            boolean won, long remainingTime, List<WordGroup> foundGroups,
-            List<String> remainingWords) {
-        return new GameInfoDTO(gameId, mistakes, score, finished, true, remainingTime, foundGroups,
-                remainingWords, won, null);
+    public static GameInfoDTO active(int gameId, long remainingTime, List<WordGroup> foundGroups,
+            List<String> remainingWords, int mistakes, int score) {
+        return new GameInfoDTO(gameId, false, mistakes, score, remainingTime, foundGroups,
+                remainingWords, null, null);
     }
 
     /**
-     * Factory method for past game info.
+     * Factory method for concluded (past) game info.
      * 
      * @param gameId past game ID
+     * @param allGroups all 16 words assigned to their 4 groups
+     * @param correctGroupsCount number of groups correctly guessed
      * @param mistakes final mistakes
      * @param score final score
-     * @param finished whether the game was completed
-     * @param won whether the game was won
-     * @param allGroups all word groups in that game
      * @return a new GameInfoDTO for a historical game
      */
-    public static GameInfoDTO past(int gameId, int mistakes, int score, boolean finished,
-            boolean won, List<WordGroup> allGroups) {
-        return new GameInfoDTO(gameId, mistakes, score, finished, false, null, null, null, won,
-                allGroups);
+    public static GameInfoDTO concluded(int gameId, List<WordGroup> allGroups,
+            int correctGroupsCount, int mistakes, int score) {
+        return new GameInfoDTO(gameId, true, mistakes, score, null, null, null, allGroups,
+                correctGroupsCount);
     }
 
     // --- GETTERS ---
     public int getGameId() {
         return gameId;
+    }
+
+    public boolean isFinished() {
+        return finished;
     }
 
     public int getMistakes() {
@@ -87,14 +85,6 @@ public class GameInfoDTO implements DTO {
 
     public int getScore() {
         return score;
-    }
-
-    public boolean isFinished() {
-        return finished;
-    }
-
-    public boolean isCurrent() {
-        return isCurrent;
     }
 
     public Long getRemainingTime() {
@@ -109,11 +99,11 @@ public class GameInfoDTO implements DTO {
         return remainingWords;
     }
 
-    public Boolean isWon() {
-        return won;
-    }
-
     public List<WordGroup> getAllGroups() {
         return allGroups;
+    }
+
+    public Integer getCorrectGroupsCount() {
+        return correctGroupsCount;
     }
 }

@@ -3,57 +3,47 @@ package com.connections.common.protocol.requests;
 import java.util.List;
 
 /**
- * specialized Request subclass for game-related operations.
- * <p>
- * Primarily handles the submission of word group proposals.
- * </p>
+ * Request subclass for active game operations.
+ * Handles proposals, current game info, and current game stats.
  */
 public class GameRequest extends Request {
-    /** The list of words submitted in this request. */
     private final List<String> words;
+    private final Integer gameId;
 
-    private GameRequest(Operation op, List<String> words) {
+    private GameRequest(Operation op, List<String> words, Integer gameId) {
         super(op);
-        if (op == Operation.SUBMIT_PROPOSAL && (words == null || words.isEmpty())) {
-            throw new IllegalArgumentException("A proposal must contain at least one word.");
-        }
         this.words = words;
+        this.gameId = gameId;
     }
 
-    // --- FACTORY METHODS ---
-
     /**
-     * Creates a request to submit a word group proposal.
-     * 
-     * @param words the words to propose
-     * @return a new GameRequest
-     * @throws IllegalArgumentException if the proposal is null or empty
+     * Creates a request to submit a word group proposal for the current game.
      */
     public static GameRequest submitProposal(List<String> words) {
-        return new GameRequest(Operation.SUBMIT_PROPOSAL, words);
+        return new GameRequest(Operation.SUBMIT_PROPOSAL, words, null);
     }
 
-    // --- VALIDATION ---
+    /**
+     * Creates a request for info about the current game.
+     */
+    public static GameRequest getCurrentInfo() {
+        return new GameRequest(Operation.GET_GAME_INFO, null, null);
+    }
 
     /**
-     * Validates the request after deserialization.
-     * <p>
-     * Ensures that a proposal contains at least one word. 
-     * Further rule validation (e.g., exactly 4 words) is performed by the server.
-     * </p>
-     * 
-     * @return true if the request state is valid, false otherwise
+     * Creates a request for stats about the current game.
      */
+    public static GameRequest getCurrentStats() {
+        return new GameRequest(Operation.GET_GAME_STATS, null, null);
+    }
+
+    public List<String> getWords() { return words; }
+    public Integer getGameId() { return gameId; }
+
     public boolean isValid() {
         if (getOperation() == Operation.SUBMIT_PROPOSAL) {
             return words != null && !words.isEmpty();
         }
         return true;
-    }
-
-    // --- GETTERS ---
-
-    public List<String> getWords() {
-        return words;
     }
 }

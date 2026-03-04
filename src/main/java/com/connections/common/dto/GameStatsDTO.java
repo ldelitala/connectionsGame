@@ -2,30 +2,31 @@ package com.connections.common.dto;
 
 /**
  * DTO for global game statistics (both active and concluded).
+ * Follows the project's requirements for what info to return for active vs finished games.
  */
 public class GameStatsDTO implements DTO {
-    // Common fields
     private final int gameId;
-    private final boolean isCurrent;
-    private final int finishedCount;
-    private final int winnersCount;
+    private final boolean finished;
 
-    // Fields for current game
+    // Active game fields
     private final Long remainingTime;
-    private final Integer inProgressCount;
+    private final Integer activePlayers; // Still playing
+    private final Integer finishedPlayers; // Finished (win or loss)
+    private final Integer wonPlayers; // Finished with win
 
-    // Fields for past game
+    // Concluded game fields
     private final Integer totalParticipants;
     private final Double averageScore;
 
-    private GameStatsDTO(int gameId, boolean isCurrent, Long remainingTime, Integer inProgressCount, 
-                        int finishedCount, int winnersCount, Integer totalParticipants, Double averageScore) {
+    private GameStatsDTO(int gameId, boolean finished, Long remainingTime,
+            Integer activePlayers, Integer finishedPlayers, Integer wonPlayers,
+            Integer totalParticipants, Double averageScore) {
         this.gameId = gameId;
-        this.isCurrent = isCurrent;
+        this.finished = finished;
         this.remainingTime = remainingTime;
-        this.inProgressCount = inProgressCount;
-        this.finishedCount = finishedCount;
-        this.winnersCount = winnersCount;
+        this.activePlayers = activePlayers;
+        this.finishedPlayers = finishedPlayers;
+        this.wonPlayers = wonPlayers;
         this.totalParticipants = totalParticipants;
         this.averageScore = averageScore;
     }
@@ -35,13 +36,13 @@ public class GameStatsDTO implements DTO {
      * 
      * @param gameId ID of the game
      * @param remainingTime time left in milliseconds
-     * @param inProgress number of players still playing
+     * @param active number of players currently playing
      * @param finished number of players who completed the game
      * @param winners number of players who won
-     * @return a new GameStatsDTO for the current game
+     * @return a new GameStatsDTO for the active game
      */
-    public static GameStatsDTO current(int gameId, long remainingTime, int inProgress, int finished, int winners) {
-        return new GameStatsDTO(gameId, true, remainingTime, inProgress, finished, winners, null, null);
+    public static GameStatsDTO active(int gameId, long remainingTime, int active, int finished, int winners) {
+        return new GameStatsDTO(gameId, false, remainingTime, active, finished, winners, null, null);
     }
 
     /**
@@ -54,17 +55,17 @@ public class GameStatsDTO implements DTO {
      * @param averageScore average score of all participants
      * @return a new GameStatsDTO for a past game
      */
-    public static GameStatsDTO past(int gameId, int participants, int finished, int winners, double averageScore) {
-        return new GameStatsDTO(gameId, false, null, null, finished, winners, participants, averageScore);
+    public static GameStatsDTO concluded(int gameId, int participants, int finished, int winners, double averageScore) {
+        return new GameStatsDTO(gameId, true, null, null, finished, winners, participants, averageScore);
     }
 
     // --- GETTERS ---
     public int getGameId() { return gameId; }
-    public boolean isCurrent() { return isCurrent; }
+    public boolean isFinished() { return finished; }
     public Long getRemainingTime() { return remainingTime; }
-    public Integer getInProgressCount() { return inProgressCount; }
-    public int getFinishedCount() { return finishedCount; }
-    public int getWinnersCount() { return winnersCount; }
+    public Integer getActivePlayers() { return activePlayers; }
+    public Integer getFinishedPlayers() { return finishedPlayers; }
+    public Integer getWonPlayers() { return wonPlayers; }
     public Integer getTotalParticipants() { return totalParticipants; }
     public Double getAverageScore() { return averageScore; }
 }

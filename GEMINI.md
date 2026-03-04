@@ -36,13 +36,19 @@
 - [x] Implement CLI Client with input/output handlers.
 - [x] Testing and validation (Comprehensive suite: 17/17 passed).
 - [x] Optimization: High-performance Game indexing (Offsets + Buffered I/O).
+- [ ] Refactoring Modulare: Separazione delle logiche Client (User, Game, History) in moduli indipendenti.
+- [ ] Raffinamento Protocollo: Specializzazione di GameInfo/Stats DTO per aderenza rigorosa alle specifiche (Corrente vs Passato).
 
 ## Recent Improvements
 - **Clean Architecture**: Moved sensitive entities (`User`, `Game`) to server-private packages.
 - **Protocol Type Safety**: Implemented `Response<T extends DTO>` to ensure only DTOs are sent over TCP.
 - **Flexible Rules**: Refactored `WordGroup` and `GameRequest` to be agnostic of specific word counts, moving validation logic to the server.
 - **Advanced Notifications**: Added `GameEndNotification` (global) and `PlayerGameSummaryNotification` (individual) via UDP.
-- **DTO Centralization**: Moved all DTOs to `common.dto` for better reuse across TCP and UDP.
+- **Planned Modular Client**: Introduction of `ClientController` and three specialized modules:
+    - `UserModule`: Authentication and account management.
+    - `GameModule`: Active game interactions (proposals, current info/stats).
+    - `HistoryModule`: Historical data, leaderboard, and global stats.
+- **Contextual DTOs**: Refactoring `GameInfoDTO` and `GameStatsDTO` to distinguish explicitly between "Active" and "Concluded" game data as per project requirements.
 
 ## Communication Protocol (JSON)
 - Requests: `{ "operation": "register", "name": "user", "psw": "pass" }`
