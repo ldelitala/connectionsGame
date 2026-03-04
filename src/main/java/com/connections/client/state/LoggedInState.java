@@ -1,6 +1,7 @@
 package com.connections.client.state;
 
 import com.connections.client.ClientController;
+import com.connections.client.modules.ModuleView;
 import com.connections.common.protocol.client_requests.ClientRequest;
 import com.connections.common.protocol.client_requests.Operation;
 import com.connections.common.protocol.server_responses.ServerResponse;
@@ -23,7 +24,7 @@ public class LoggedInState implements ClientState {
     public void handleCommand(String[] tokens) {
         String command = tokens[0].toLowerCase();
         ClientRequest request = null;
-        Object activeModule = null;
+        ModuleView activeModule = null;
 
         switch (command) {
             case "logout": 
@@ -72,22 +73,19 @@ public class LoggedInState implements ClientState {
         }
 
         if (request != null) {
-            executeAndDisplay(request, activeModule, tokens);
+            executeAndDisplay(request, activeModule);
         }
     }
 
-    private void executeAndDisplay(ClientRequest request, Object activeModule, String[] tokens) {
+    private void executeAndDisplay(ClientRequest request, ModuleView activeModule) {
         try {
             ServerResponse<?> response = controller.getTcpPort().sendRequest(request);
             
-            if (activeModule == controller.getUserModule()) controller.getUserModule().displayResponse(response);
-            else if (activeModule == controller.getGameModule()) controller.getGameModule().displayResponse(response);
-            else if (activeModule == controller.getHistoryModule()) controller.getHistoryModule().displayResponse(response);
+            // Clean polymorphic call
+            activeModule.displayResponse(response);
 
-            if (response.getStatus() == Status.OK) {
-                if (request.getOperation() == Operation.LOGOUT) {
-                    controller.changeState(new LoggedOutState(controller));
-                }
+            if (response.getStatus() == Status.OK && request.getOperation() == Operation.LOGOUT) {
+                controller.changeState(new LoggedOutState(controller));
             }
         } catch (Exception e) {
             System.err.println("Errore: " + e.getMessage());

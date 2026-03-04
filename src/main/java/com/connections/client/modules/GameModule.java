@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Handles operations and display for the active game session.
  */
-public class GameModule {
+public class GameModule implements ModuleView {
 
     public ClientRequest prepareSubmit(String[] tokens) {
         if (tokens.length < 2) {

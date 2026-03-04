@@ -2,7 +2,9 @@ package com.connections.client.state;
 
 import java.io.IOException;
 import com.connections.client.ClientController;
+import com.connections.client.modules.ModuleView;
 import com.connections.common.protocol.client_requests.ClientRequest;
+import com.connections.common.protocol.client_requests.Operation;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 
@@ -39,6 +41,7 @@ public class LoggedOutState implements ClientState {
     public void handleCommand(String[] tokens) {
         String command = tokens[0].toLowerCase();
         ClientRequest request = null;
+        ModuleView activeModule = controller.getUserModule();
 
         switch (command) {
             case "register":
@@ -56,23 +59,27 @@ public class LoggedOutState implements ClientState {
         }
 
         if (request != null) {
-            try {
-                // Send request to server via the TCP port
-                ServerResponse<?> response = controller.getTcpPort().sendRequest(request);
-                
-                // Display operation result via the user module
-                controller.getUserModule().displayResponse(response);
+            executeAndTransition(request, activeModule, tokens);
+        }
+    }
 
-                // If login was successful, transition to LoggedInState
-                if (tryLogin && response.getStatus() == Status.OK) {
-                    // tokens[1] contains the username used for login
-                    controller.changeState(new LoggedInState(controller, tokens[1]));
-                    tryLogin = false; 
-                }
+    private void executeAndTransition(ClientRequest request, ModuleView activeModule, String[] tokens) {
+        try {
+            // Send request to server via the TCP port
+            ServerResponse<?> response = controller.getTcpPort().sendRequest(request);
+            
+            // Polymorphic display
+            activeModule.displayResponse(response);
 
-            } catch (IOException e) {
-                System.err.println("Communication error: " + e.getMessage());
+            // If login was successful, transition to LoggedInState
+            if (tryLogin && response.getStatus() == Status.OK) {
+                // tokens[1] contains the username used for login
+                controller.changeState(new LoggedInState(controller, tokens[1]));
+                tryLogin = false; 
             }
+
+        } catch (IOException e) {
+            System.err.println("Communication error: " + e.getMessage());
         }
     }
 

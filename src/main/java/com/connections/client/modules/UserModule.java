@@ -7,7 +7,7 @@ import java.util.Scanner;
 /**
  * Handles account-related request creation and response display.
  */
-public class UserModule {
+public class UserModule implements ModuleView {
     private final Scanner scanner;
     private final int udpPort;
 
