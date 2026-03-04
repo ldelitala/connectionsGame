@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.util.Scanner;
 
 /**
- * Orchestrates the CLI interaction by delegating to specialized modules.
- * Manages TCP communication and maintains local session state.
+ * Main handler for client commands.
+ * It parses the input and delegates the request creation and display to specific modules.
  */
 public class ClientController {
     private final ConnectionClient tcpClient;
@@ -25,9 +25,6 @@ public class ClientController {
         this.historyModule = new HistoryModule();
     }
 
-    /**
-     * Starts the main command loop.
-     */
     public void start(Scanner scanner) {
         while (true) {
             String prompt = (loggedUser != null) ? "[" + loggedUser + "] > " : "> ";
@@ -36,12 +33,9 @@ public class ClientController {
             String line = scanner.nextLine().trim();
             if (line.isEmpty()) continue;
             
-            // Gestione del comando exit come richiesto
             if (line.equalsIgnoreCase("exit")) {
-                System.out.println("Uscita in corso...");
                 break;
             }
-
             if (line.equalsIgnoreCase("help")) {
                 printHelp();
                 continue;
@@ -50,53 +44,84 @@ public class ClientController {
             String[] tokens = line.split("\\s+");
             String command = tokens[0].toLowerCase();
 
-            // 1. Identifica quale modulo deve gestire il comando (Routing)
-            ClientModule module = route(command, tokens);
-            if (module == null) {
-                System.out.println("Comando sconosciuto o argomenti non validi. Digita 'help' per aiuto.");
-                continue;
+            Request request = null;
+            Object activeModule = null;
+
+            // PARSING UNIFICATO NEL CONTROLLER
+            switch (command) {
+                // USER MODULE
+                case "register":
+                    request = userModule.prepareRegister(tokens);
+                    activeModule = userModule;
+                    break;
+                case "login":
+                    request = userModule.prepareLogin(tokens);
+                    activeModule = userModule;
+                    break;
+                case "logout":
+                    request = userModule.prepareLogout();
+                    activeModule = userModule;
+                    break;
+                case "update":
+                    request = userModule.prepareUpdate();
+                    activeModule = userModule;
+                    break;
+
+                // GAME MODULE
+                case "submit":
+                    request = gameModule.prepareSubmit(tokens);
+                    activeModule = gameModule;
+                    break;
+                
+                // INFO & STATS (Routing condizionale)
+                case "info":
+                    if (tokens.length > 1) {
+                        request = historyModule.prepareGameInfo(tokens);
+                        activeModule = historyModule;
+                    } else {
+                        request = gameModule.prepareInfo();
+                        activeModule = gameModule;
+                    }
+                    break;
+                case "stats":
+                    if (tokens.length > 1) {
+                        request = historyModule.prepareGameStats(tokens);
+                        activeModule = historyModule;
+                    } else {
+                        request = gameModule.prepareStats();
+                        activeModule = gameModule;
+                    }
+                    break;
+
+                // HISTORY MODULE
+                case "ranking":
+                    request = historyModule.prepareRanking(tokens);
+                    activeModule = historyModule;
+                    break;
+                case "history":
+                    request = historyModule.prepareHistory();
+                    activeModule = historyModule;
+                    break;
+
+                default:
+                    System.out.println("Comando sconosciuto. Digita 'help' per la lista comandi.");
             }
 
-            // 2. Il modulo prepara la richiesta (Parsing)
-            Request request = module.parseCommand(command, tokens);
-            if (request == null) {
-                continue; // Il modulo ha già stampato l'errore se necessario
-            }
+            // ESECUZIONE E VISUALIZZAZIONE
+            if (request != null) {
+                try {
+                    Response<?> response = tcpClient.sendRequest(request);
+                    updateSessionState(request, response, tokens);
+                    
+                    // Delega la visualizzazione al modulo che ha preparato la richiesta
+                    if (activeModule instanceof UserModule) ((UserModule) activeModule).displayResponse(response);
+                    else if (activeModule instanceof GameModule) ((GameModule) activeModule).displayResponse(response);
+                    else if (activeModule instanceof HistoryModule) ((HistoryModule) activeModule).displayResponse(response);
 
-            // 3. Il Controller invia la richiesta via TCP e aspetta la risposta
-            try {
-                Response<?> response = tcpClient.sendRequest(request);
-                
-                // 4. Aggiorna lo stato della sessione (login/logout/update) se l'operazione ha avuto successo
-                updateSessionState(request, response, tokens);
-                
-                // 5. Il Controller ripassa la risposta al modulo per la visualizzazione
-                module.displayResponse(response);
-                
-            } catch (IOException e) {
-                System.err.println("Errore di rete: " + e.getMessage());
+                } catch (IOException e) {
+                    System.err.println("Errore di rete: " + e.getMessage());
+                }
             }
-        }
-    }
-
-    private ClientModule route(String command, String[] tokens) {
-        switch (command) {
-            case "register":
-            case "login":
-            case "logout":
-            case "update":
-                return userModule;
-            case "submit":
-                return gameModule;
-            case "info":
-            case "stats":
-                // Se ha un argomento è storico (ID), altrimenti è partita corrente
-                return (tokens.length > 1) ? historyModule : gameModule;
-            case "ranking":
-            case "history":
-                return historyModule;
-            default:
-                return null;
         }
     }
 
@@ -112,30 +137,15 @@ public class ClientController {
         } else if (op == Operation.LOGOUT) {
             this.loggedUser = null;
             this.userModule.setCurrentUser(null);
-        } else if (op == Operation.UPDATE_CREDENTIALS) {
-            // Se l'utente ha cambiato username (tokens[1] in handleUpdate), andrebbe aggiornato
-            // Per ora lasciamo che il login successivo o la logica del server lo gestiscano
         }
     }
 
     private void printHelp() {
-        System.out.println("Comandi disponibili:");
         System.out.println("--- Account ---");
-        System.out.println("  register [user] [pass]     - Crea un nuovo account");
-        System.out.println("  login [user] [pass]        - Effettua il login");
-        System.out.println("  logout                     - Effettua il logout");
-        System.out.println("  update                     - Cambia username o password");
-        System.out.println("--- Gioco Attivo ---");
-        System.out.println("  submit [w1] [w2] [w3] [w4] - Invia una proposta di 4 parole");
-        System.out.println("  info                       - Info sulla tua partita corrente");
-        System.out.println("  stats                      - Statistiche globali sulla partita corrente");
-        System.out.println("--- Storico e Classifica ---");
-        System.out.println("  info [id]                  - Dettagli di una partita passata");
-        System.out.println("  stats [id]                 - Statistiche di una partita passata");
-        System.out.println("  ranking [k] [user]         - Top K giocatori o posizione di un utente");
-        System.out.println("  history                    - Visualizza le tue statistiche personali");
-        System.out.println("--- App ---");
-        System.out.println("  help                       - Mostra questo messaggio");
-        System.out.println("  exit                       - Chiudi l'applicazione");
+        System.out.println("  register [user] [pass]  / login [user] [pass] / logout / update");
+        System.out.println("--- Gioco ---");
+        System.out.println("  submit [w1] [w2] [w3] [w4] / info / stats");
+        System.out.println("--- Storico ---");
+        System.out.println("  info [id] / stats [id] / ranking [k] [user] / history");
     }
 }

@@ -7,29 +7,36 @@ import com.connections.common.models.WordGroup;
 import java.util.List;
 
 /**
- * Handles operations related to past games and global statistics.
+ * Handles operations and display for past games and global stats.
  */
-public class HistoryModule implements ClientModule {
+public class HistoryModule {
 
-    @Override
-    public Request parseCommand(String command, String[] tokens) {
-        switch (command.toLowerCase()) {
-            case "info":
-                return (tokens.length > 1) ? HistoryRequest.getGameInfo(Integer.parseInt(tokens[1])) : null;
-            case "stats":
-                return (tokens.length > 1) ? HistoryRequest.getGameStats(Integer.parseInt(tokens[1])) : null;
-            case "ranking":
-                Integer top = (tokens.length > 1) ? Integer.parseInt(tokens[1]) : 10;
-                String player = (tokens.length > 2) ? tokens[2] : null;
-                return HistoryRequest.getLeaderboard(player, top);
-            case "history":
-                return HistoryRequest.getPlayerStats();
-            default:
-                return null;
+    public Request prepareGameInfo(String[] tokens) {
+        if (tokens.length < 2) {
+            System.out.println("Uso: info [id]");
+            return null;
         }
+        return HistoryRequest.getGameInfo(Integer.parseInt(tokens[1]));
     }
 
-    @Override
+    public Request prepareGameStats(String[] tokens) {
+        if (tokens.length < 2) {
+            System.out.println("Uso: stats [id]");
+            return null;
+        }
+        return HistoryRequest.getGameStats(Integer.parseInt(tokens[1]));
+    }
+
+    public Request prepareRanking(String[] tokens) {
+        Integer top = (tokens.length > 1) ? Integer.parseInt(tokens[1]) : 10;
+        String player = (tokens.length > 2) ? tokens[2] : null;
+        return HistoryRequest.getLeaderboard(player, top);
+    }
+
+    public Request prepareHistory() {
+        return HistoryRequest.getPlayerStats();
+    }
+
     public void displayResponse(Response<?> response) {
         System.out.println(response.getMessage());
         Object data = response.getData();
@@ -48,12 +55,12 @@ public class HistoryModule implements ClientModule {
 
     private void displayConcludedGameInfo(GameInfoDTO info) {
         if (!info.isFinished()) {
-            System.out.println("Questa partita è ancora attiva. Usa 'info' senza ID per lo stato in diretta.");
+            System.out.println("Questa partita è ancora attiva. Usa 'info' senza ID per lo stato live.");
             return;
         }
         System.out.println("--- Dettagli Partita Conclusa (ID: " + info.getGameId() + ") ---");
         System.out.println("Punteggio finale: " + info.getScore());
-        System.out.println("Errori finali: " + info.getMistakes());
+        System.out.println("Errori commessi: " + info.getMistakes());
         System.out.println("Gruppi indovinati: " + info.getCorrectGroupsCount() + "/4");
         System.out.println("Assegnazioni ufficiali:");
         for (WordGroup group : info.getAllGroups()) {
@@ -62,20 +69,19 @@ public class HistoryModule implements ClientModule {
     }
 
     private void displayConcludedGameStats(GameStatsDTO stats) {
-        System.out.println("--- Statistiche Globali Partita Conclusa ---");
+        System.out.println("--- Statistiche Partita Passata ---");
         System.out.println("Partecipanti totali: " + stats.getTotalParticipants());
-        System.out.println("Giocatori che hanno concluso: " + stats.getFinishedPlayers());
+        System.out.println("Hanno concluso: " + stats.getFinishedPlayers());
         System.out.println("Vincitori totali: " + stats.getWonPlayers());
         System.out.println("Punteggio medio: " + stats.getAverageScore());
     }
 
     private void displayPlayerStats(PlayerStatsDTO stats) {
         System.out.println("--- Le Tue Statistiche Globali ---");
-        System.out.println("Partite giocate: " + stats.getTotalGamesPlayed());
-        System.out.println("Partite concluse: " + stats.getGamesFinished());
-        System.out.println("Partite vinte: " + stats.getGamesWon());
+        System.out.println("Puzzles completati: " + stats.getGamesFinished());
+        System.out.println("Puzzles vinti: " + stats.getGamesWon());
         System.out.println("Punteggio totale: " + stats.getTotalScore());
-        System.out.println("Media errori per partita: " + stats.getAverageMistakes());
+        System.out.println("Media errori: " + stats.getAverageMistakes());
     }
 
     private void displayLeaderboard(LeaderboardDTO leaderboard) {

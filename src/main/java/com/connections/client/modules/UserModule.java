@@ -5,12 +5,12 @@ import com.connections.common.protocol.responses.*;
 import java.util.Scanner;
 
 /**
- * Handles account-related commands (register, login, logout, update).
+ * Handles account-related requests and responses (register, login, logout, update).
  */
-public class UserModule implements ClientModule {
+public class UserModule {
     private final Scanner scanner;
     private final int udpPort;
-    private String currentUser; // Passato dal ClientController
+    private String currentUser;
 
     public UserModule(Scanner scanner, int udpPort) {
         this.scanner = scanner;
@@ -21,23 +21,7 @@ public class UserModule implements ClientModule {
         this.currentUser = user;
     }
 
-    @Override
-    public Request parseCommand(String command, String[] tokens) {
-        switch (command.toLowerCase()) {
-            case "register":
-                return handleRegister(tokens);
-            case "login":
-                return handleLogin(tokens);
-            case "logout":
-                return UserRequest.logout();
-            case "update":
-                return handleUpdate();
-            default:
-                return null;
-        }
-    }
-
-    private UserRequest handleRegister(String[] tokens) {
+    public Request prepareRegister(String[] tokens) {
         String user, pass;
         if (tokens.length >= 3) {
             user = tokens[1];
@@ -51,7 +35,7 @@ public class UserModule implements ClientModule {
         return (user.isEmpty() || pass.isEmpty()) ? null : UserRequest.register(user, pass);
     }
 
-    private UserRequest handleLogin(String[] tokens) {
+    public Request prepareLogin(String[] tokens) {
         String user, pass;
         if (tokens.length >= 3) {
             user = tokens[1];
@@ -65,26 +49,28 @@ public class UserModule implements ClientModule {
         return (user.isEmpty() || pass.isEmpty()) ? null : UserRequest.login(user, pass, udpPort);
     }
 
-    private UserRequest handleUpdate() {
+    public Request prepareLogout() {
+        return UserRequest.logout();
+    }
+
+    public Request prepareUpdate() {
         if (currentUser == null) {
             System.out.println("Devi essere loggato per cambiare le credenziali.");
             return null;
         }
-
-        System.out.print("Nuovo username (lascia vuoto per mantenere [" + currentUser + "]): ");
+        System.out.print("Nuovo username (vuoto per mantenere [" + currentUser + "]): ");
         String newUname = scanner.nextLine().trim();
         if (newUname.isEmpty()) newUname = null;
         
         System.out.print("Password attuale: ");
         String oldPass = scanner.nextLine().trim();
-        System.out.print("Nuova password (lascia vuoto per non cambiarla): ");
+        System.out.print("Nuova password (vuoto per non cambiarla): ");
         String newPass = scanner.nextLine().trim();
         if (newPass.isEmpty()) newPass = null;
 
         return UserRequest.updateCredentials(currentUser, oldPass, newUname, newPass);
     }
 
-    @Override
     public void displayResponse(Response<?> response) {
         System.out.println(response.getMessage());
     }

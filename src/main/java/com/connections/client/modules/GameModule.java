@@ -8,34 +8,27 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Handles operations related to the active game session (proposals, current info/stats).
+ * Handles operations and display for the active game session.
  */
-public class GameModule implements ClientModule {
+public class GameModule {
 
-    @Override
-    public Request parseCommand(String command, String[] tokens) {
-        switch (command.toLowerCase()) {
-            case "submit":
-                return handleSubmit(tokens);
-            case "info":
-                return (tokens.length == 1) ? GameRequest.getCurrentInfo() : null;
-            case "stats":
-                return (tokens.length == 1) ? GameRequest.getCurrentStats() : null;
-            default:
-                return null;
-        }
-    }
-
-    private Request handleSubmit(String[] tokens) {
+    public Request prepareSubmit(String[] tokens) {
         if (tokens.length < 2) {
-            System.out.println("Usage: submit parola1 parola2 parola3 parola4");
+            System.out.println("Uso: submit parola1 parola2 parola3 parola4");
             return null;
         }
         List<String> words = Arrays.asList(Arrays.copyOfRange(tokens, 1, tokens.length));
         return GameRequest.submitProposal(words);
     }
 
-    @Override
+    public Request prepareInfo() {
+        return GameRequest.getCurrentInfo();
+    }
+
+    public Request prepareStats() {
+        return GameRequest.getCurrentStats();
+    }
+
     public void displayResponse(Response<?> response) {
         System.out.println(response.getMessage());
         Object data = response.getData();
@@ -50,7 +43,7 @@ public class GameModule implements ClientModule {
 
     private void displayActiveGameInfo(GameInfoDTO info) {
         if (info.isFinished()) {
-            System.out.println("La partita corrente è già conclusa per te. Usa 'history' per i dettagli.");
+            System.out.println("La tua partita per questo puzzle è conclusa. Usa 'history' per i dettagli.");
             return;
         }
         System.out.println("--- Stato Partita Corrente ---");
