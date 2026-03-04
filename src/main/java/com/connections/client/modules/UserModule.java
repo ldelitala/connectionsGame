@@ -5,15 +5,20 @@ import com.connections.common.protocol.responses.*;
 import java.util.Scanner;
 
 /**
- * Handles user account operations (register, login, logout, update).
+ * Handles account-related commands (register, login, logout, update).
  */
 public class UserModule implements ClientModule {
     private final Scanner scanner;
     private final int udpPort;
+    private String currentUser; // Passato dal ClientController
 
     public UserModule(Scanner scanner, int udpPort) {
         this.scanner = scanner;
         this.udpPort = udpPort;
+    }
+
+    public void setCurrentUser(String user) {
+        this.currentUser = user;
     }
 
     @Override
@@ -38,7 +43,7 @@ public class UserModule implements ClientModule {
             user = tokens[1];
             pass = tokens[2];
         } else {
-            System.out.print("Username: ");
+            System.out.print("Username desiderato: ");
             user = scanner.nextLine().trim();
             System.out.print("Password: ");
             pass = scanner.nextLine().trim();
@@ -61,17 +66,22 @@ public class UserModule implements ClientModule {
     }
 
     private UserRequest handleUpdate() {
-        System.out.print("New username (leave empty to keep current): ");
+        if (currentUser == null) {
+            System.out.println("Devi essere loggato per cambiare le credenziali.");
+            return null;
+        }
+
+        System.out.print("Nuovo username (lascia vuoto per mantenere [" + currentUser + "]): ");
         String newUname = scanner.nextLine().trim();
         if (newUname.isEmpty()) newUname = null;
         
-        System.out.print("Current password: ");
+        System.out.print("Password attuale: ");
         String oldPass = scanner.nextLine().trim();
-        System.out.print("New password (leave empty to keep current): ");
+        System.out.print("Nuova password (lascia vuoto per non cambiarla): ");
         String newPass = scanner.nextLine().trim();
         if (newPass.isEmpty()) newPass = null;
 
-        return UserRequest.updateCredentials(null, oldPass, newUname, newPass);
+        return UserRequest.updateCredentials(currentUser, oldPass, newUname, newPass);
     }
 
     @Override

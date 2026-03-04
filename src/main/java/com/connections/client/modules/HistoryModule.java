@@ -48,43 +48,42 @@ public class HistoryModule implements ClientModule {
 
     private void displayConcludedGameInfo(GameInfoDTO info) {
         if (!info.isFinished()) {
-            System.out.println("This game is still in progress. Use 'info' for details.");
+            System.out.println("Questa partita è ancora attiva. Usa 'info' senza ID per lo stato in diretta.");
             return;
         }
-        System.out.println("--- Concluded Game Details (Game ID: " + info.getGameId() + ") ---");
-        System.out.println("Score obtained: " + info.getScore());
-        System.out.println("Mistakes made: " + info.getMistakes());
-        System.out.println("Correct groups guessed: " + info.getCorrectGroupsCount() + "/4");
-        System.out.println("Full word assignments:");
+        System.out.println("--- Dettagli Partita Conclusa (ID: " + info.getGameId() + ") ---");
+        System.out.println("Punteggio finale: " + info.getScore());
+        System.out.println("Errori finali: " + info.getMistakes());
+        System.out.println("Gruppi indovinati: " + info.getCorrectGroupsCount() + "/4");
+        System.out.println("Assegnazioni ufficiali:");
         for (WordGroup group : info.getAllGroups()) {
             System.out.println("  - " + group.getCategory() + ": " + String.join(", ", group.getWords()));
         }
     }
 
     private void displayConcludedGameStats(GameStatsDTO stats) {
-        System.out.println("--- Concluded Game Global Statistics ---");
-        System.out.println("Total participants: " + stats.getTotalParticipants());
-        System.out.println("Finished participants: " + stats.getFinishedPlayers());
-        System.out.println("Total winners: " + stats.getWonPlayers());
-        System.out.println("Average score: " + stats.getAverageScore());
+        System.out.println("--- Statistiche Globali Partita Conclusa ---");
+        System.out.println("Partecipanti totali: " + stats.getTotalParticipants());
+        System.out.println("Giocatori che hanno concluso: " + stats.getFinishedPlayers());
+        System.out.println("Vincitori totali: " + stats.getWonPlayers());
+        System.out.println("Punteggio medio: " + stats.getAverageScore());
     }
 
     private void displayPlayerStats(PlayerStatsDTO stats) {
-        System.out.println("--- Your Statistics ---");
-        System.out.println("Total games played: " + stats.getTotalGamesPlayed());
-        System.out.println("Total score: " + stats.getTotalScore());
-        System.out.println("Average mistakes: " + stats.getAverageMistakes());
-        System.out.println("Games finished: " + stats.getGamesFinished());
-        System.out.println("Games won: " + stats.getGamesWon());
+        System.out.println("--- Le Tue Statistiche Globali ---");
+        System.out.println("Partite giocate: " + stats.getTotalGamesPlayed());
+        System.out.println("Partite concluse: " + stats.getGamesFinished());
+        System.out.println("Partite vinte: " + stats.getGamesWon());
+        System.out.println("Punteggio totale: " + stats.getTotalScore());
+        System.out.println("Media errori per partita: " + stats.getAverageMistakes());
     }
 
     private void displayLeaderboard(LeaderboardDTO leaderboard) {
-        System.out.println("--- Leaderboard ---");
+        System.out.println("--- Classifica ---");
         List<LeaderboardEntryDTO> entries = leaderboard.getEntries();
         for (int i = 0; i < entries.size(); i++) {
             LeaderboardEntryDTO entry = entries.get(i);
-            System.out.printf("%2d. %-15s %5d points
-", (i + 1), entry.getUsername(), entry.getScore());
+            System.out.printf("%2d. %-15s | Punteggio: %5d\n", (i + 1), entry.getUsername(), entry.getScore());
         }
     }
 }

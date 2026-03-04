@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Handles operations related to the active game session.
+ * Handles operations related to the active game session (proposals, current info/stats).
  */
 public class GameModule implements ClientModule {
 
@@ -18,10 +18,8 @@ public class GameModule implements ClientModule {
             case "submit":
                 return handleSubmit(tokens);
             case "info":
-                // If it's just "info", it refers to the current game
                 return (tokens.length == 1) ? GameRequest.getCurrentInfo() : null;
             case "stats":
-                // If it's just "stats", it refers to the current game
                 return (tokens.length == 1) ? GameRequest.getCurrentStats() : null;
             default:
                 return null;
@@ -30,7 +28,7 @@ public class GameModule implements ClientModule {
 
     private Request handleSubmit(String[] tokens) {
         if (tokens.length < 2) {
-            System.out.println("Usage: submit word1 word2 word3 word4");
+            System.out.println("Usage: submit parola1 parola2 parola3 parola4");
             return null;
         }
         List<String> words = Arrays.asList(Arrays.copyOfRange(tokens, 1, tokens.length));
@@ -44,32 +42,32 @@ public class GameModule implements ClientModule {
         if (data == null) return;
 
         if (data instanceof GameInfoDTO) {
-            displayGameInfo((GameInfoDTO) data);
+            displayActiveGameInfo((GameInfoDTO) data);
         } else if (data instanceof GameStatsDTO) {
-            displayGameStats((GameStatsDTO) data);
+            displayActiveGameStats((GameStatsDTO) data);
         }
     }
 
-    private void displayGameInfo(GameInfoDTO info) {
+    private void displayActiveGameInfo(GameInfoDTO info) {
         if (info.isFinished()) {
-            System.out.println("The game is already finished. Use 'history' for details.");
+            System.out.println("La partita corrente è già conclusa per te. Usa 'history' per i dettagli.");
             return;
         }
-        System.out.println("--- Current Game Status ---");
-        System.out.println("Time left: " + (info.getRemainingTime() / 1000) + "s");
-        System.out.println("Mistakes: " + info.getMistakes() + "/4");
-        System.out.println("Found groups:");
+        System.out.println("--- Stato Partita Corrente ---");
+        System.out.println("Tempo rimasto: " + (info.getRemainingTime() / 1000) + "s");
+        System.out.println("Errori: " + info.getMistakes() + "/4");
+        System.out.println("Gruppi trovati:");
         for (WordGroup group : info.getFoundGroups()) {
             System.out.println("  - " + group.getCategory() + ": " + String.join(", ", group.getWords()));
         }
-        System.out.println("Remaining words: " + String.join(", ", info.getRemainingWords()));
-        System.out.println("Score: " + info.getScore());
+        System.out.println("Parole rimaste: " + String.join(", ", info.getRemainingWords()));
+        System.out.println("Punteggio attuale: " + info.getScore());
     }
 
-    private void displayGameStats(GameStatsDTO stats) {
-        System.out.println("--- Current Game Statistics ---");
-        System.out.println("Active players: " + stats.getActivePlayers());
-        System.out.println("Finished players: " + stats.getFinishedPlayers());
-        System.out.println("Winners: " + stats.getWonPlayers());
+    private void displayActiveGameStats(GameStatsDTO stats) {
+        System.out.println("--- Statistiche Globali Partita Corrente ---");
+        System.out.println("Giocatori attivi: " + stats.getActivePlayers());
+        System.out.println("Giocatori che hanno concluso: " + stats.getFinishedPlayers());
+        System.out.println("Vincitori: " + stats.getWonPlayers());
     }
 }
