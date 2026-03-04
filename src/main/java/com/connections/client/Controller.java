@@ -8,19 +8,19 @@ import java.util.Scanner;
  * Context for the Client State Pattern.
  * Manages the current state and provides shared resources to states.
  */
-public class ClientController {
+public class Controller {
     private final TcpConnectionPort tcpPort;
-    private final UserModule userModule;
-    private final GameModule gameModule;
-    private final HistoryModule historyModule;
-    
-    private ClientState currentState;
+    private final UserModuleView userModule;
+    private final GameModuleView gameModule;
+    private final HistoryModuleView historyModule;
 
-    public ClientController(TcpConnectionPort tcpPort, Scanner scanner, int udpPort) {
+    private ControllerState currentState;
+
+    public Controller(TcpConnectionPort tcpPort, Scanner scanner, int udpPort) {
         this.tcpPort = tcpPort;
-        this.userModule = new UserModule(scanner, udpPort);
-        this.gameModule = new GameModule();
-        this.historyModule = new HistoryModule();
+        this.userModule = new UserModuleView(scanner, udpPort);
+        this.gameModule = new GameModuleView();
+        this.historyModule = new HistoryModuleView();
         // Initial state
         this.currentState = new LoggedOutState(this);
     }
@@ -28,10 +28,10 @@ public class ClientController {
     public void start(Scanner scanner) {
         while (true) {
             System.out.print(currentState.getPrompt());
-            
+
             String line = scanner.nextLine().trim();
             if (line.isEmpty()) continue;
-            
+
             if (line.equalsIgnoreCase("exit")) {
                 System.out.println("Uscita in corso...");
                 break;
@@ -49,15 +49,15 @@ public class ClientController {
     }
 
     /**
-     * Changes the current state of the client.
+     * Changes the current state of the controller.
      */
-    public void changeState(ClientState newState) {
+    public void changeState(ControllerState newState) {
         this.currentState = newState;
     }
 
     // Getters for states to access common resources
     public TcpConnectionPort getTcpPort() { return tcpPort; }
-    public UserModule getUserModule() { return userModule; }
-    public GameModule getGameModule() { return gameModule; }
-    public HistoryModule getHistoryModule() { return historyModule; }
+    public UserModuleView getUserModule() { return userModule; }
+    public GameModuleView getGameModule() { return gameModule; }
+    public HistoryModuleView getHistoryModule() { return historyModule; }
 }

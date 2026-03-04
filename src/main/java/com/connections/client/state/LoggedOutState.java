@@ -1,22 +1,20 @@
 package com.connections.client.state;
 
 import java.io.IOException;
-import com.connections.client.ClientController;
+import com.connections.client.Controller;
 import com.connections.client.modules.ModuleView;
 import com.connections.common.protocol.client_requests.ClientRequest;
-import com.connections.common.protocol.client_requests.Operation;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 
 /**
  * Represents the client state when the user is not authenticated (Logged Out).
  */
-public class LoggedOutState implements ClientState {
-    
-    private final ClientController controller;
-    private boolean tryLogin = false;
+public class LoggedOutState implements ControllerState {
 
-    public LoggedOutState(ClientController controller) {
+    private final Controller controller;
+
+    public LoggedOutState(Controller controller) {
         this.controller = controller;
     }
 
@@ -24,7 +22,7 @@ public class LoggedOutState implements ClientState {
     public void handleCommand(String[] tokens) {
         String command = tokens[0].toLowerCase();
         ClientRequest request = null;
-        ModuleView activeModule = controller.getUserModule();
+        boolean tryLogin = false;
 
         switch (command) {
             case "register":
@@ -42,27 +40,23 @@ public class LoggedOutState implements ClientState {
         }
 
         if (request != null) {
-            executeAndDisplay(request, activeModule, tokens);
-        }
-    }
+            try {
+                ServerResponse<?> response = controller.getTcpPort().sendRequest(request);
 
-    private void executeAndDisplay(ClientRequest request, ModuleView activeModule, String[] tokens) {
-        try {
-            ServerResponse<?> response = controller.getTcpPort().sendRequest(request);
-            
-            // Polymorphic call: no ifs, no casts
-            activeModule.displayResponse(response);
+                controller.getUserModule().displayResponse(response);
 
-            if (tryLogin && response.getStatus() == Status.OK) {
-                // tokens[1] contains the username used for login
-                controller.changeState(new LoggedInState(controller, tokens[1]));
-                tryLogin = false; 
+                if (tryLogin && response.getStatus() == Status.OK) {
+                    // Get username from request if not in tokens
+                    String username = (tokens.length >= 2) ? tokens[1] : ((com.connections.common.protocol.client_requests.UserRequest)request).getUsername();
+                    controller.changeState(new LoggedInState(controller, username));
+                }
+
+            } catch (IOException e) {
+                System.err.println("Communication error: " + e.getMessage());
             }
-
-        } catch (IOException e) {
-            System.err.println("Communication error: " + e.getMessage());
         }
     }
+
 
     @Override
     public void printHelp() {

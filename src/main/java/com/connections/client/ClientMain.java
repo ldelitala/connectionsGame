@@ -1,6 +1,7 @@
 package com.connections.client;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.Scanner;
 
 /**
@@ -11,43 +12,37 @@ public class ClientMain {
 
     public static void main(String[] args) {
         ClientConfig config = new ClientConfig();
-        Scanner scanner = new Scanner(System.in);
-        TcpConnectionPort tcpPort = null;
-        UdpNotificationListener udpListener = null;
 
         System.out.println("Benvenuto in Connections Game!");
 
-        try {
-            // 1. Configurazione connessione TCP tramite il "Porto"
-            tcpPort = new TcpConnectionPort(config.getServerHost(), config.getServerPort());
+        try (Scanner scanner = new Scanner(System.in);
+                TcpConnectionPort tcpPort =
+                        new TcpConnectionPort(config.getServerHost(), config.getServerPort());
+                UdpNotificationListener udpListener =
+                        new UdpNotificationListener(config.getUdpPort())) {
+
             System.out.println(
                     "Connesso al server: " + config.getServerHost() + ":" + config.getServerPort());
 
-            // 2. Configurazione listener UDP
-            int udpPort = config.getUdpPort();
-            udpListener = new UdpNotificationListener(udpPort);
-            new Thread(udpListener).start();
-
+            udpListener.start();
             int actualUdpPort = udpListener.getLocalPort();
             System.out.println("Listener notifiche UDP avviato sulla porta " + actualUdpPort);
 
-            // 3. Avvio del ClientController passando il "Porto"
-            ClientController controller = new ClientController(tcpPort, scanner, actualUdpPort);
+            Controller controller = new Controller(tcpPort, scanner, actualUdpPort);
             controller.start(scanner);
 
+        }
+
+        catch (SocketException e) {
+            System.err.println("Errore di connessione UDP: " + e.getMessage());
         } catch (IOException e) {
-            System.err.println("Errore fatale all'avvio: " + e.getMessage());
-        } finally {
-            // Pulizia finale
+            System.err.println("Errore di comunicazione: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Errore inaspettato: " + e.getMessage());
+        }
+
+        finally {
             System.out.println("Chiusura delle connessioni...");
-            try {
-                if (tcpPort != null)
-                    tcpPort.close();
-                if (udpListener != null)
-                    udpListener.stopListener(); // Use the correct method name
-            } catch (IOException ignored) {
-            }
-            scanner.close();
             System.out.println("Applicazione terminata.");
         }
     }

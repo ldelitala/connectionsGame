@@ -84,7 +84,7 @@ public class GameSessionManagerTest {
 
         assertNotNull(result);
         assertEquals("success", result.getStatus());
-        // Final points: 3 groups (+18) - 0 mistakes (0) = 18
+        // Final points: 3 groups indovinati (+18) - 0 errori (0) = 18
         assertEquals(18, result.getTotalPoints());
         verify(user).recordWin(0, 18);
     }
@@ -100,7 +100,7 @@ public class GameSessionManagerTest {
         GameInfoDTO status = sessionManager.getPersonalGameStatus("test", 1);
         
         assertNotNull(status);
-        assertTrue(status.isCurrent());
+        assertFalse(status.isFinished());
         List<String> remainingWords = status.getRemainingWords();
         assertEquals(12, remainingWords.size());
         assertFalse(remainingWords.contains("CAT"));

@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Handles operations and display for past games and global stats.
  */
-public class HistoryModule implements ModuleView {
+public class HistoryModuleView implements ModuleView {
 
     public ClientRequest preparePastInfo(String[] tokens) {
         if (tokens.length < 2) {

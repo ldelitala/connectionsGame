@@ -8,7 +8,7 @@ import java.net.SocketException;
 /**
  * Listens for asynchronous UDP notifications from the server.
  */
-public class UdpNotificationListener extends Thread {
+public class UdpNotificationListener extends Thread implements AutoCloseable {
     private final int port;
     private final DatagramSocket socket;
 
@@ -26,7 +26,7 @@ public class UdpNotificationListener extends Thread {
     public void run() {
         System.out.println("UDP Notification listener started on port " + port);
         byte[] buffer = new byte[1024];
-        while (!isInterrupted()) {
+        while (!isInterrupted() && !socket.isClosed()) {
             try {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
@@ -42,7 +42,8 @@ public class UdpNotificationListener extends Thread {
         }
     }
 
-    public void stopListener() {
+    @Override
+    public void close() {
         interrupt();
         socket.close();
     }

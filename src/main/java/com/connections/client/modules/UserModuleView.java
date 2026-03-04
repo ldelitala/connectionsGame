@@ -7,11 +7,11 @@ import java.util.Scanner;
 /**
  * Handles account-related request creation and response display.
  */
-public class UserModule implements ModuleView {
+public class UserModuleView implements ModuleView {
     private final Scanner scanner;
     private final int udpPort;
 
-    public UserModule(Scanner scanner, int udpPort) {
+    public UserModuleView(Scanner scanner, int udpPort) {
         this.scanner = scanner;
         this.udpPort = udpPort;
     }
