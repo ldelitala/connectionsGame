@@ -7,56 +7,51 @@ import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 
 /**
- * Represents the client state when a user is successfully authenticated (Logged In). In this state,
- * the user can participate in the active game, view historical data, check global rankings, and
- * manage their account. Implements the State pattern to manage contextual client behavior.
+ * Represents the client state when a user is successfully authenticated (Logged In).
  */
 public class LoggedInState implements ControllerState {
 
-    // --- Commands ---
+    // --- Commands: Account ---
     private static final String CMD_LOGOUT = "logout";
     private static final String CMD_UPDATE = "update";
+
+    // --- Commands: Active Game ---
     private static final String CMD_SUBMIT = "submit";
     private static final String CMD_STATUS = "status";
     private static final String CMD_STATS = "stats";
+
+    // --- Commands: History and Global ---
     private static final String CMD_INFO = "info";
     private static final String CMD_GLOBAL = "global";
     private static final String CMD_RANKING = "ranking";
     private static final String CMD_HISTORY = "history";
+
+    // --- System / State Internal Commands ---
     private static final String CMD_REGISTER = "register";
     private static final String CMD_LOGIN = "login";
-    private static final String CMD_HELP = "help";
+
+    // --- Messages ---
+    private static final String HELP_MESSAGE = 
+        "\n--- AVAILABLE COMMANDS (Logged In) ---\n" +
+        "Active Game:\n" +
+        "  submit [w1-w4]    : Send a 4-word proposal\n" +
+        "  status            : View your current game status (mistakes, time)\n" +
+        "  stats             : View global participation stats for current game\n" +
+        "\nHistory and Rankings:\n" +
+        "  info [id]         : View details and solution of a past game\n" +
+        "  global [id]       : View global statistics of a past game\n" +
+        "  ranking [k] [u]   : View top players or a specific user's rank\n" +
+        "  history           : View your personal overall statistics\n" +
+        "\nAccount:\n" +
+        "  update            : Change your username or password\n" +
+        "  logout            : Sign out of your account\n";
 
     // --- Formatting ---
     private static final String PROMPT_FORMAT = "[%s] > ";
 
-    // --- Help UI ---
-    private static final String HELP_HEADER = "\n--- AVAILABLE COMMANDS (Logged In) ---";
-    private static final String HELP_SECTION_ACTIVE = "Active Game:";
-    private static final String HELP_SUBMIT = "  submit [w1-w4]    : Send a 4-word proposal";
-    private static final String HELP_STATUS = "  status            : View your current game status (mistakes, time)";
-    private static final String HELP_STATS = "  stats             : View global participation stats for current game";
-    private static final String HELP_SECTION_HISTORY = "\nHistory and Rankings:";
-    private static final String HELP_INFO = "  info [id]         : View details and solution of a past game";
-    private static final String HELP_GLOBAL = "  global [id]       : View global statistics of a past game";
-    private static final String HELP_RANKING = "  ranking [k] [u]   : View top players or a specific user's rank";
-    private static final String HELP_HISTORY = "  history           : View your personal overall statistics";
-    private static final String HELP_SECTION_ACCOUNT = "\nAccount:";
-    private static final String HELP_UPDATE = "  update            : Change your username or password";
-    private static final String HELP_LOGOUT = "  logout            : Sign out of your account";
-    private static final String HELP_SECTION_SYSTEM = "\nSystem:";
-    private static final String HELP_HELP = "  help              : Show this list";
-    private static final String HELP_EXIT = "  exit              : Close the application\n";
-
     private final Controller controller;
     private final String username;
 
-    /**
-     * Constructs a new LoggedInState.
-     * 
-     * @param controller the controller managing the client's state machine.
-     * @param username the name of the authenticated user.
-     */
     public LoggedInState(Controller controller, String username) {
         this.controller = controller;
         this.username = username;
@@ -120,10 +115,6 @@ public class LoggedInState implements ControllerState {
                 System.out.println(String.format("Already logged in as [%s]. Please logout first.", username));
                 return;
 
-            case CMD_HELP:
-                printHelp();
-                return;
-
             default:
                 System.out.println("Unknown command. Type 'help' for assistance.");
                 return;
@@ -146,25 +137,7 @@ public class LoggedInState implements ControllerState {
 
     @Override
     public void printHelp() {
-        System.out.println(HELP_HEADER);
-        System.out.println(HELP_SECTION_ACTIVE);
-        System.out.println(HELP_SUBMIT);
-        System.out.println(HELP_STATUS);
-        System.out.println(HELP_STATS);
-
-        System.out.println(HELP_SECTION_HISTORY);
-        System.out.println(HELP_INFO);
-        System.out.println(HELP_GLOBAL);
-        System.out.println(HELP_RANKING);
-        System.out.println(HELP_HISTORY);
-
-        System.out.println(HELP_SECTION_ACCOUNT);
-        System.out.println(HELP_UPDATE);
-        System.out.println(HELP_LOGOUT);
-
-        System.out.println(HELP_SECTION_SYSTEM);
-        System.out.println(HELP_HELP);
-        System.out.println(HELP_EXIT);
+        System.out.println(HELP_MESSAGE);
     }
 
     @Override

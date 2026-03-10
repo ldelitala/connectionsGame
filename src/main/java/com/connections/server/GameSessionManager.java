@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 /**
  * Manages the active game session and player progress.
+ * Orchestrates the transition between game sessions and historical archiving.
  */
 public class GameSessionManager {
 
@@ -23,7 +24,7 @@ public class GameSessionManager {
     private static final int POINTS_PER_GROUP = 6;
     private static final int PENALTY_PER_MISTAKE = 4;
     private static final int MAX_MISTAKES = 4;
-    private static final int GROUPS_TO_WIN = 3; 
+    private static final int GROUPS_TO_WIN = 3; // 4th is implicit
 
     // --- Configuration ---
     private static final int TOP_K_LEADERBOARD = 10;

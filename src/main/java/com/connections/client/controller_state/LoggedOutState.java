@@ -16,18 +16,13 @@ public class LoggedOutState implements ControllerState {
     private static final String CMD_LOGIN = "login";
 
     // --- Messages ---
-    private static final String MSG_NOT_LOGGED = "Command not available. Please login to play.";
-    private static final String ERR_PREFIX = "Communication error: ";
+    private static final String HELP_MESSAGE = 
+        "\n--- AVAILABLE COMMANDS (Logged Out) ---\n" +
+        "  register [u] [p]  : Register a new account\n" +
+        "  login [u] [p]     : Sign in to the game\n";
+
+    // --- Configuration ---
     private static final String PROMPT = "> ";
-
-    // --- Help Messages ---
-    private static final String HELP_HEADER = "\n--- AVAILABLE COMMANDS (Logged Out) ---";
-    private static final String HELP_REGISTER = "  register [u] [p]  : Register a new account";
-    private static final String HELP_LOGIN = "  login [u] [p]     : Sign in to the game";
-    private static final String HELP_HELP = "  help              : Show this list";
-    private static final String HELP_EXIT = "  exit              : Close the application\n";
-
-    // --- Indices ---
     private static final int CMD_INDEX = 0;
     private static final int USERNAME_INDEX = 1;
     private static final int MIN_TOKENS_FOR_USERNAME = 2;
@@ -55,7 +50,7 @@ public class LoggedOutState implements ControllerState {
                 break;
 
             default:
-                System.out.println(MSG_NOT_LOGGED);
+                System.out.println("Command not available. Please login to play.");
                 return;
         }
 
@@ -72,19 +67,14 @@ public class LoggedOutState implements ControllerState {
                 }
 
             } catch (IOException e) {
-                System.err.println(ERR_PREFIX + e.getMessage());
+                System.err.println("Communication error: " + e.getMessage());
             }
         }
     }
 
-
     @Override
     public void printHelp() {
-        System.out.println(HELP_HEADER);
-        System.out.println(HELP_REGISTER);
-        System.out.println(HELP_LOGIN);
-        System.out.println(HELP_HELP);
-        System.out.println(HELP_EXIT);
+        System.out.println(HELP_MESSAGE);
     }
 
     @Override

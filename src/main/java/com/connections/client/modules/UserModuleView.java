@@ -1,13 +1,24 @@
 package com.connections.client.modules;
 
-import com.connections.common.protocol.client_requests.*;
-import com.connections.common.protocol.server_responses.*;
+import com.connections.common.protocol.client_requests.ClientRequest;
+import com.connections.common.protocol.client_requests.UserRequest;
+import com.connections.common.protocol.server_responses.ServerResponse;
 import java.util.Scanner;
 
 /**
  * Handles account-related request creation and response display.
  */
 public class UserModuleView implements ModuleView {
+
+    // --- Prompts ---
+    private static final String PROMPT_NEW_USERNAME = "Enter new username (leave empty to skip): ";
+    private static final String PROMPT_NEW_PASSWORD = "Enter new password (leave empty to skip): ";
+
+    // --- Indices ---
+    private static final int INDEX_USERNAME = 1;
+    private static final int INDEX_PASSWORD = 2;
+    private static final int MIN_TOKENS_AUTH = 3;
+
     private final Scanner scanner;
     private final int udpPort;
 
@@ -16,53 +27,59 @@ public class UserModuleView implements ModuleView {
         this.udpPort = udpPort;
     }
 
+    public Scanner getScanner() {
+        return scanner;
+    }
+
     public ClientRequest prepareRegister(String[] tokens) {
         String user, pass;
-        if (tokens.length >= 3) {
-            user = tokens[1];
-            pass = tokens[2];
+        if (tokens.length >= MIN_TOKENS_AUTH) {
+            user = tokens[INDEX_USERNAME];
+            pass = tokens[INDEX_PASSWORD];
         } else {
-            System.out.print("Username desiderato: ");
-            user = scanner.nextLine().trim();
-            System.out.print("Password: ");
-            pass = scanner.nextLine().trim();
+            System.out.println("Usage: register <username> <password>");
+            return null;
         }
-        return (user.isEmpty() || pass.isEmpty()) ? null : UserRequest.register(user, pass);
+        return UserRequest.register(user, pass);
     }
 
     public ClientRequest prepareLogin(String[] tokens) {
         String user, pass;
-        if (tokens.length >= 3) {
-            user = tokens[1];
-            pass = tokens[2];
+        if (tokens.length >= MIN_TOKENS_AUTH) {
+            user = tokens[INDEX_USERNAME];
+            pass = tokens[INDEX_PASSWORD];
         } else {
-            System.out.print("Username: ");
-            user = scanner.nextLine().trim();
-            System.out.print("Password: ");
-            pass = scanner.nextLine().trim();
+            System.out.println("Usage: login <username> <password>");
+            return null;
         }
-        return (user.isEmpty() || pass.isEmpty()) ? null : UserRequest.login(user, pass, udpPort);
+        return UserRequest.login(user, pass, udpPort);
     }
 
     public ClientRequest prepareLogout() {
         return UserRequest.logout();
     }
 
-    public ClientRequest prepareUpdate(String currentUser) {
-        System.out.print("Nuovo username (vuoto per mantenere [" + currentUser + "]): ");
-        String newUname = scanner.nextLine().trim();
-        if (newUname.isEmpty()) newUname = null;
-        
-        System.out.print("Password attuale: ");
-        String oldPass = scanner.nextLine().trim();
-        System.out.print("Nuova password (vuoto per non cambiarla): ");
-        String newPass = scanner.nextLine().trim();
-        if (newPass.isEmpty()) newPass = null;
+    public ClientRequest prepareUpdate(String currentUsername) {
+        System.out.print(PROMPT_NEW_USERNAME);
+        String newUsername = scanner.nextLine().trim();
+        if (newUsername.isEmpty()) newUsername = null;
 
-        return UserRequest.updateCredentials(currentUser, oldPass, newUname, newPass);
+        System.out.print(PROMPT_NEW_PASSWORD);
+        String newPassword = scanner.nextLine().trim();
+        if (newPassword.isEmpty()) newPassword = null;
+
+        if (newUsername == null && newPassword == null) {
+            System.out.println("No changes provided.");
+            return null;
+        }
+
+        // The protocol requires oldName and optionally newName/newPsw. 
+        // We'll use the existing updateCredentials but adapt it.
+        return UserRequest.updateCredentials(currentUsername, null, newUsername, newPassword);
     }
 
+    @Override
     public void displayResponse(ServerResponse<?> response) {
-        System.out.println(response.getMessage());
+        System.out.println("[" + response.getStatus() + "] " + response.getMessage());
     }
 }
