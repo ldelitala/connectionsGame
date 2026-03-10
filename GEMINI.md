@@ -40,6 +40,17 @@
 - [x] Raffinamento Protocollo: Specializzazione di GameInfo/Stats DTO per aderenza rigorosa alle specifiche (Corrente vs Passato).
 - [x] Allineamento Specifiche (Allegato 1): Correzione dei nomi dei campi JSON (`name` vs `username`, `psw`) e ripristino dei nomi operazione originali (`requestGameInfo`, `requestLeaderboard`, etc.) per garantire la piena conformità.
 
+## Latest Session Improvements (March 10, 2026)
+- **Global Localization**: Standardized the entire project to **English** for all user-facing outputs, logs, and error messages.
+- **Clean Code & Magic Values**: Extracted all hardcoded logical values (commands, scoring rules, timeouts) into `private static final` constants. Organized them by category (Commands, Scoring, Config).
+- **Security Fixes**: Updated `UserModuleView` to strictly require the old password for credential updates, aligning the client with the server protocol.
+- **Auto-Logout on Exit**: Implemented a graceful exit strategy where the client attempts to notify the server (logout) before terminating the process.
+- **Architectural Cleanup**:
+    - Centralized System-level commands (`help`, `exit`) in the `Controller`.
+    - Renamed the `state` package to `controller_state` for better role clarity.
+    - Added comprehensive **Javadoc** (English) to the core client logic.
+- **Tooling optimization**: Configured `eclipse-formatter.xml` and used `@formatter` tags to preserve manual alignment of multi-line string constants (CLI help blocks).
+
 ## Recent Improvements
 - **Clean Architecture**: Moved sensitive entities (`User`, `Game`) to server-private packages.
 - **Protocol Type Safety**: Implemented `Response<T extends DTO>` to ensure only DTOs are sent over TCP.

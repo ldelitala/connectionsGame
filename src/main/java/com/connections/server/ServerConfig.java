@@ -8,10 +8,8 @@ import java.util.Properties;
 
 /**
  * Configuration for the Connections Server.
- * Follows the "Single Source of Truth" principle.
  */
 public class ServerConfig {
-    
     private final Properties props = new Properties();
     private final File configFile;
 
@@ -19,6 +17,7 @@ public class ServerConfig {
 
     // Keys
     private static final String KEY_TCP_PORT = "server.tcp_port";
+    private static final String KEY_UDP_PORT = "server.udp_port";
     private static final String KEY_THREAD_POOL = "server.thread_pool_size";
     private static final String KEY_GAME_DATA = "server.game_data_path";
     private static final String KEY_USER_DATA = "server.user_data_path";
@@ -26,36 +25,32 @@ public class ServerConfig {
     private static final String KEY_GAME_DURATION = "server.game_duration_ms";
 
     public ServerConfig() {
-        this.configFile = new File(DEFAULT_CONFIG_PATH);
-
-        setDefaultProperties();
-        loadOrInitConfig();
+        this(DEFAULT_CONFIG_PATH);
     }
 
     public ServerConfig(String configPath) {
         this.configFile = new File(configPath);
-        
-        setDefaultProperties();        
+        setDefaultProperties();
         loadOrInitConfig();
     }
 
-    // --- STARTERS ---
     private void setDefaultProperties() {
         props.setProperty(KEY_TCP_PORT, "8080");
+        props.setProperty(KEY_UDP_PORT, "8081");
         props.setProperty(KEY_THREAD_POOL, "10");
         props.setProperty(KEY_GAME_DATA, "Connections_Data.json");
         props.setProperty(KEY_USER_DATA, "data/users.json");
         props.setProperty(KEY_LOG_PATH, "data/games_log.json");
-        props.setProperty(KEY_GAME_DURATION, "300000");
+        props.setProperty(KEY_GAME_DURATION, "300000"); // 5 minutes
     }
 
-    private void loadOrInitConfig() {        
+    private void loadOrInitConfig() {
         if (configFile.exists()) {
             try (FileInputStream in = new FileInputStream(configFile)) {
                 props.load(in);
                 System.out.println("Config loaded from: " + configFile.getPath());
             } catch (IOException e) {
-                System.err.println("Error reading config: " + e.getMessage());
+                System.err.println("Error reading server config: " + e.getMessage());
             }
         } else {
             saveConfig();
@@ -67,17 +62,17 @@ public class ServerConfig {
         if (parent != null && !parent.exists()) {
             parent.mkdirs();
         }
-        
         try (FileOutputStream out = new FileOutputStream(configFile)) {
             props.store(out, "Connections Server Configuration");
             System.out.println("Default config file created: " + configFile.getPath());
         } catch (IOException e) {
-            System.err.println("Could not save config: " + e.getMessage());
+            System.err.println("Could not save server config: " + e.getMessage());
         }
     }
 
-    // --- GETTERS ---
+    // Getters
     public int getTcpPort() { return Integer.parseInt(props.getProperty(KEY_TCP_PORT)); }
+    public int getUdpPort() { return Integer.parseInt(props.getProperty(KEY_UDP_PORT)); }
     public int getThreadPoolSize() { return Integer.parseInt(props.getProperty(KEY_THREAD_POOL)); }
     public String getGameDataPath() { return props.getProperty(KEY_GAME_DATA); }
     public String getUserDataPath() { return props.getProperty(KEY_USER_DATA); }

@@ -100,7 +100,7 @@ public class GameSessionManager {
         archiveCurrentGame();
         currentGame = gamesDAO.getNextGame();
         if (currentGame == null) {
-            System.err.println("Nessun gioco disponibile!");
+            System.err.println("No games available!");
             return;
         }
         gameEndTime = System.currentTimeMillis() + gameDurationMillis;
@@ -108,7 +108,7 @@ public class GameSessionManager {
         playerMistakes.clear();
         completedPlayers.clear();
         
-        System.out.println(String.format("Nuova partita avviata: ID %d", currentGame.getGameId()));
+        System.out.println(String.format("New game started: ID %d", currentGame.getGameId()));
         if (udpNotifier != null) {
             NewGameNotification notification = NewGameNotification.create(currentGame.getGameId(), currentGame.getAllWords());
             udpNotifier.notifyAll(new Gson().toJson(notification));

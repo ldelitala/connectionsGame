@@ -17,7 +17,7 @@ import java.net.Socket;
 public class TcpConnectionPort implements AutoCloseable {
 
     // --- Error Messages ---
-    private static final String ERR_SERVER_CLOSED = "Il server ha chiuso la connessione.";
+    private static final String ERR_SERVER_CLOSED = "The server closed the connection.";
 
     private final Socket socket;
     private final PrintWriter out;

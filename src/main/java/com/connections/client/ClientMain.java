@@ -17,10 +17,10 @@ public class ClientMain {
      */
     public static void main(String[] args) {
 
-        System.out.println("Configurazione...");
+        System.out.println("Configuring...");
         ClientConfig config = (args.length > 0) ? new ClientConfig(args[0]) : new ClientConfig();
 
-        System.out.println("Benvenuto in Connections Game!");
+        System.out.println("Welcome to Connections Game!");
 
         try (Scanner scanner = new Scanner(System.in);
                 TcpConnectionPort tcpPort =
@@ -28,24 +28,24 @@ public class ClientMain {
                 UdpNotificationListener udpListener =
                         new UdpNotificationListener(config.getUdpPort())) {
 
-            System.out.println("Connesso al server: " + config.getServerHost() + ":" + config.getServerPort());
+            System.out.println("Connected to server: " + config.getServerHost() + ":" + config.getServerPort());
 
             udpListener.start();
             int actualUdpPort = udpListener.getLocalPort();
-            System.out.println("Listener notifiche UDP avviato sulla porta " + actualUdpPort);
+            System.out.println("UDP Notification listener started on port " + actualUdpPort);
 
             Controller controller = new Controller(tcpPort, scanner, actualUdpPort);
             controller.start();
 
         } catch (SocketException e) {
-            System.err.println("Errore di connessione UDP: " + e.getMessage());
+            System.err.println("UDP Connection error: " + e.getMessage());
         } catch (IOException e) {
-            System.err.println("Errore di comunicazione: " + e.getMessage());
+            System.err.println("Communication error: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Errore inaspettato: " + e.getMessage());
+            System.err.println("Unexpected error: " + e.getMessage());
         } finally {
-            System.out.println("Chiusura delle connessioni...");
-            System.out.println("Applicazione terminata.");
+            System.out.println("Closing connections...");
+            System.out.println("Application terminated.");
         }
     }
 }

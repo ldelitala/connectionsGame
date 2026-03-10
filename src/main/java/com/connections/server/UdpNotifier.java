@@ -1,10 +1,7 @@
 package com.connections.server;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,58 +9,47 @@ import java.util.concurrent.ConcurrentHashMap;
  * Handles asynchronous UDP notifications to clients.
  */
 public class UdpNotifier {
-    private DatagramSocket socket;
-    // Map: username -> client UDP address/port
-    private final Map<String, ClientEndpoint> clientEndpoints = new ConcurrentHashMap<>();
+    private final DatagramSocket socket;
+    
+    // Map of username -> ClientEndpoint
+    private final Map<String, ClientEndpoint> clients = new ConcurrentHashMap<>();
 
-    public UdpNotifier() {
+    public UdpNotifier() throws SocketException {
+        this.socket = new DatagramSocket();
+    }
+
+    public void registerClient(String username, String host, int port) {
         try {
-            this.socket = new DatagramSocket();
-        } catch (SocketException e) {
-            System.err.println("Could not start UDP notifier: " + e.getMessage());
+            clients.put(username, new ClientEndpoint(InetAddress.getByName(host), port));
+        } catch (UnknownHostException e) {
+            System.err.println("Error registering UDP client " + username + ": " + e.getMessage());
         }
     }
 
-    public void registerClient(String username, InetAddress address, int port) {
-        clientEndpoints.put(username, new ClientEndpoint(address, port));
-        System.out.println("Registered UDP endpoint for " + username + " at " + address + ":" + port);
+    public void removeClient(String username) {
+        clients.remove(username);
     }
 
-    public void unregisterClient(String username) {
-        clientEndpoints.remove(username);
-    }
-
-    /**
-     * Sends a UDP notification to all registered clients.
-     * 
-     * @param message the JSON message to send
-     */
     public void notifyAll(String message) {
         byte[] buffer = message.getBytes();
-        for (ClientEndpoint endpoint : clientEndpoints.values()) {
-            sendToEndpoint(buffer, endpoint);
+        for (ClientEndpoint endpoint : clients.values()) {
+            send(buffer, endpoint);
         }
     }
 
-    /**
-     * Sends a UDP notification to a specific user.
-     * 
-     * @param username the target user
-     * @param message the JSON message to send
-     */
     public void notifyUser(String username, String message) {
-        ClientEndpoint endpoint = clientEndpoints.get(username);
+        ClientEndpoint endpoint = clients.get(username);
         if (endpoint != null) {
-            sendToEndpoint(message.getBytes(), endpoint);
+            send(message.getBytes(), endpoint);
         }
     }
 
-    private void sendToEndpoint(byte[] buffer, ClientEndpoint endpoint) {
+    private void send(byte[] buffer, ClientEndpoint endpoint) {
         try {
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, endpoint.address, endpoint.port);
             socket.send(packet);
         } catch (IOException e) {
-            System.err.println("Failed to send UDP notification to " + endpoint.address + ": " + e.getMessage());
+            System.err.println("Error sending UDP packet: " + e.getMessage());
         }
     }
 
