@@ -7,7 +7,7 @@ import com.connections.common.protocol.server_responses.ServerResponse;
 /**
  * Handles account-related request creation and response display.
  */
-public class UserModuleView implements ModuleView {
+public class UserModuleView implements ResponseView {
 
     // --- Placeholders ---
     private static final String NO_CHANGE = "-";

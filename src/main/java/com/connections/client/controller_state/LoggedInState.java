@@ -1,7 +1,7 @@
 package com.connections.client.controller_state;
 
 import com.connections.client.Controller;
-import com.connections.client.modules.ModuleView;
+import com.connections.client.modules.ResponseView;
 import com.connections.common.protocol.client_requests.ClientRequest;
 import com.connections.common.protocol.client_requests.UserRequest;
 import com.connections.common.protocol.server_responses.ServerResponse;
@@ -46,7 +46,7 @@ public class LoggedInState implements ControllerState {
         "  ranking [k] [u]   : View top players or a specific user's rank\n" +
         "  history           : View your personal overall statistics\n" +
         "\nAccount:\n" +
-        "  update <oP> <nU> <nP> : Change your username or password (use '-' to skip)\n" + 
+        "  update <oP> <nU> <nP> : Change your username or password (<oP> required, '-' to skip nU/nP)\n" + 
         "  logout            : Sign out of your account\n";
     // @formatter:on
 
@@ -80,7 +80,7 @@ public class LoggedInState implements ControllerState {
     public void handleCommand(String[] tokens) {
         String command = tokens[0].toLowerCase();
         ClientRequest request = null;
-        ModuleView activeModule = null;
+        ResponseView activeModule = null;
         boolean tryLogout = false;
         boolean tryUpdate = false;
 
@@ -147,18 +147,18 @@ public class LoggedInState implements ControllerState {
                 ServerResponse<?> response = controller.getTcpPort().sendRequest(request);
                 activeModule.displayResponse(response);
 
-                if (tryLogout && response.getStatus() == Status.OK) {
+                if (tryLogout && response.getStatus() == Status.OK)
                     controller.changeState(new LoggedOutState(controller));
-                }
 
-                // Update local username if changed successfully
                 if (tryUpdate && response.getStatus() == Status.OK) {
                     UserRequest userReq = (UserRequest) request;
-                    if (userReq.getNewName() != null) {
+                    if (userReq.getNewName() != null)
                         this.username = userReq.getNewName();
-                    }
+
                 }
 
+            } catch (java.io.IOException e) {
+                System.err.println("Communication error: " + e.getMessage());
             } catch (Exception e) {
                 System.err.println("Error: " + e.getMessage());
             }

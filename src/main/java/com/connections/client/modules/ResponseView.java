@@ -5,6 +5,6 @@ import com.connections.common.protocol.server_responses.ServerResponse;
 /**
  * Interface for modules that can display a server response.
  */
-public interface ModuleView {
+public interface ResponseView {
     void displayResponse(ServerResponse<?> response);
 }
