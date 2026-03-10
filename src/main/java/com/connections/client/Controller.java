@@ -5,9 +5,9 @@ import com.connections.client.controller_state.*;
 import java.util.Scanner;
 
 /**
- * Context for the Client State Pattern.
- * Manages the current state of the application and provides shared resources to individual states.
- * It coordinates the main command loop and handles global system commands like exit and help.
+ * Context for the Client State Pattern. Manages the current state of the application and provides
+ * shared resources to individual states. It coordinates the main command loop and handles global
+ * system commands like exit and help.
  */
 public class Controller {
 
@@ -39,7 +39,8 @@ public class Controller {
      * 
      * @param tcpPort the TCP port used for server communication.
      * @param scanner the scanner for reading user input.
-     * @param udpPort the port for receiving asynchronous UDP notifications.
+     * @param udpPort the port for receiving asynchronous UDP notifications (to send to the server
+     *        at login).
      */
     public Controller(TcpConnectionPort tcpPort, Scanner scanner, int udpPort) {
         this.tcpPort = tcpPort;
@@ -52,17 +53,17 @@ public class Controller {
     }
 
     /**
-     * Starts the main command loop. Reads input from the user, handles global system
-     * commands, and delegates specific logic to the current state.
+     * Starts the main command loop. Reads input from the user, handles global system commands, and
+     * delegates specific logic to the current state.
      */
     public void start() {
         while (true) {
             System.out.print(currentState.getPrompt());
 
             String line = scanner.nextLine().trim();
-            if (line.isEmpty()) continue;
+            if (line.isEmpty())
+                continue;
 
-            // Handle System-level commands globally
             if (line.equalsIgnoreCase(CMD_EXIT)) {
                 System.out.println("Exiting...");
                 currentState.onExit();
@@ -70,49 +71,36 @@ public class Controller {
             }
 
             if (line.equalsIgnoreCase(CMD_HELP)) {
-                currentState.printHelp();
-                System.out.println(SYSTEM_HELP);
+                currentState.printHelp(); // 1. Print state-specific help
+                System.out.println(SYSTEM_HELP); // 2. Append system help
                 continue;
             }
 
             String[] tokens = line.split(REGEX_WHITESPACE);
-            // Delegate command handling to the current state
+
             currentState.handleCommand(tokens);
         }
     }
 
-    /**
-     * Changes the current state of the controller.
-     * 
-     * @param newState the new state to transition to.
-     */
     public void changeState(ControllerState newState) {
         this.currentState = newState;
     }
 
     // --- Getters for states to access common resources ---
 
-    /**
-     * Returns the TCP connection port.
-     * @return the TcpConnectionPort instance.
-     */
-    public TcpConnectionPort getTcpPort() { return tcpPort; }
+    public TcpConnectionPort getTcpPort() {
+        return tcpPort;
+    }
 
-    /**
-     * Returns the user management module view.
-     * @return the UserModuleView instance.
-     */
-    public UserModuleView getUserModule() { return userModule; }
+    public UserModuleView getUserModule() {
+        return userModule;
+    }
 
-    /**
-     * Returns the active game module view.
-     * @return the GameModuleView instance.
-     */
-    public GameModuleView getGameModule() { return gameModule; }
+    public GameModuleView getGameModule() {
+        return gameModule;
+    }
 
-    /**
-     * Returns the historical data module view.
-     * @return the HistoryModuleView instance.
-     */
-    public HistoryModuleView getHistoryModule() { return historyModule; }
+    public HistoryModuleView getHistoryModule() {
+        return historyModule;
+    }
 }

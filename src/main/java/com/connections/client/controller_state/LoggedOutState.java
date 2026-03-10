@@ -7,8 +7,8 @@ import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 
 /**
- * Represents the client state when the user is not authenticated (Logged Out). 
- * In this state, the user can only register or log in.
+ * Represents the client state when the user is not authenticated (Logged Out). In this state, the
+ * user can only register or log in.
  */
 public class LoggedOutState implements ControllerState {
 
@@ -28,16 +28,10 @@ public class LoggedOutState implements ControllerState {
     private static final String PROMPT = "> ";
     private static final int CMD_INDEX = 0;
     private static final int USERNAME_INDEX = 1;
-    private static final int MIN_TOKENS_FOR_USERNAME = 2;
 
     /** The main controller acting as the context for the state. */
     private final Controller controller;
 
-    /**
-     * Constructs a new LoggedOutState.
-     * 
-     * @param controller the controller managing the client's state machine.
-     */
     public LoggedOutState(Controller controller) {
         this.controller = controller;
     }
@@ -74,13 +68,8 @@ public class LoggedOutState implements ControllerState {
 
                 controller.getUserModule().displayResponse(response);
 
-                if (tryLogin && response.getStatus() == Status.OK) {
-                    // Get username from request if not in tokens
-                    String username = (tokens.length >= MIN_TOKENS_FOR_USERNAME) ? tokens[USERNAME_INDEX]
-                            : ((com.connections.common.protocol.client_requests.UserRequest) request)
-                                    .getUsername();
-                    controller.changeState(new LoggedInState(controller, username));
-                }
+                if (tryLogin && response.getStatus() == Status.OK)
+                    controller.changeState(new LoggedInState(controller, tokens[USERNAME_INDEX]));
 
             } catch (IOException e) {
                 System.err.println("Communication error: " + e.getMessage());
