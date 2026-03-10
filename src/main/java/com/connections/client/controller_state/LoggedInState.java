@@ -32,6 +32,7 @@ public class LoggedInState implements ControllerState {
     private static final String CMD_LOGIN = "login";
 
     // --- Messages ---
+    // @formatter:off
     private static final String HELP_MESSAGE = 
         "\n--- AVAILABLE COMMANDS (Logged In) ---\n" +
         "Active Game:\n" +
@@ -46,6 +47,7 @@ public class LoggedInState implements ControllerState {
         "\nAccount:\n" +
         "  update            : Change your username or password\n" +
         "  logout            : Sign out of your account\n";
+    // @formatter:on
 
     // --- Formatting ---
     private static final String PROMPT_FORMAT = "[%s] > ";

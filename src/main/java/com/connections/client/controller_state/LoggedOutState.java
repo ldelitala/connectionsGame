@@ -17,10 +17,12 @@ public class LoggedOutState implements ControllerState {
     private static final String CMD_LOGIN = "login";
 
     // --- Messages ---
+    // @formatter:off
     private static final String HELP_MESSAGE = 
         "\n--- AVAILABLE COMMANDS (Logged Out) ---\n" +
         "  register [u] [p]  : Register a new account\n" +
         "  login [u] [p]     : Sign in to the game\n";
+    // @formatter:on
 
     // --- Configuration ---
     private static final String PROMPT = "> ";

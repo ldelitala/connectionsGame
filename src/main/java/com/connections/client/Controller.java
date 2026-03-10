@@ -16,9 +16,12 @@ public class Controller {
     private static final String CMD_HELP = "help";
 
     // --- Help Messages ---
-    private static final String SYSTEM_HELP =
-            "\nSystem:\n" + "  help              : Show this list\n"
-                    + "  exit              : Close the application\n";
+    // @formatter:off
+    private static final String SYSTEM_HELP = 
+        "\nSystem:\n" +
+        "  help              : Show this list\n" +
+        "  exit              : Close the application\n";
+    // @formatter:on
 
     // --- Patterns ---
     private static final String REGEX_WHITESPACE = "\\s+";
