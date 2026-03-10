@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 /**
  * Handles the low-level TCP connection and JSON communication with the server.
@@ -29,12 +30,18 @@ public class TcpConnectionPort implements AutoCloseable {
      * 
      * @param host the server host address.
      * @param port the server TCP port.
-     * @throws IOException if connection fails.
+     * @throws UnknownHostException if the host address could not be resolved.
+     * @throws IOException if an I/O error occurs when creating the socket or streams.
      */
-    public TcpConnectionPort(String host, int port) throws IOException {
+    public TcpConnectionPort(String host, int port) throws UnknownHostException, IOException {
         this.socket = new Socket(host, port);
-        this.out = new PrintWriter(socket.getOutputStream(), true);
-        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        try {
+            this.out = new PrintWriter(socket.getOutputStream(), true);
+            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        } catch (IOException e) {
+            socket.close();
+            throw e;
+        }
     }
 
     /**
