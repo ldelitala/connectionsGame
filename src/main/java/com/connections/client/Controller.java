@@ -70,7 +70,8 @@ public class Controller {
             }
 
             if (line.equalsIgnoreCase(CMD_HELP)) {
-                printFullHelp();
+                currentState.printHelp();
+                System.out.println(SYSTEM_HELP);
                 continue;
             }
 
@@ -78,17 +79,6 @@ public class Controller {
             // Delegate command handling to the current state
             currentState.handleCommand(tokens);
         }
-    }
-
-    /**
-     * Prints the full help documentation, including state-specific commands and
-     * global system commands.
-     */
-    private void printFullHelp() {
-        // 1. Print state-specific help
-        currentState.printHelp();
-        // 2. Append system help
-        System.out.println(SYSTEM_HELP);
     }
 
     /**

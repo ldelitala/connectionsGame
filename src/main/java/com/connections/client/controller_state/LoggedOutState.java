@@ -7,7 +7,7 @@ import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 
 /**
- * Represents the client state when the user is not authenticated (Logged Out).
+ * Represents the client state when the user is not authenticated (Logged Out). 
  * In this state, the user can only register or log in.
  */
 public class LoggedOutState implements ControllerState {
@@ -43,8 +43,7 @@ public class LoggedOutState implements ControllerState {
     }
 
     /**
-     * Handles registration and login commands. 
-     * Transitions to LoggedInState if login is successful.
+     * Handles registration and login commands. Transitions to LoggedInState if login is successful.
      * 
      * @param tokens the command split into tokens.
      */
@@ -77,7 +76,9 @@ public class LoggedOutState implements ControllerState {
 
                 if (tryLogin && response.getStatus() == Status.OK) {
                     // Get username from request if not in tokens
-                    String username = (tokens.length >= MIN_TOKENS_FOR_USERNAME) ? tokens[USERNAME_INDEX] : ((com.connections.common.protocol.client_requests.UserRequest)request).getUsername();
+                    String username = (tokens.length >= MIN_TOKENS_FOR_USERNAME) ? tokens[USERNAME_INDEX]
+                            : ((com.connections.common.protocol.client_requests.UserRequest) request)
+                                    .getUsername();
                     controller.changeState(new LoggedInState(controller, username));
                 }
 
