@@ -28,6 +28,7 @@ public class Controller {
 
     private final TcpConnectionPort tcpPort;
     private final Scanner scanner;
+    private final int udpPort;
     private final UserModuleView userModule;
     private final GameModuleView gameModule;
     private final HistoryModuleView historyModule;
@@ -45,7 +46,8 @@ public class Controller {
     public Controller(TcpConnectionPort tcpPort, Scanner scanner, int udpPort) {
         this.tcpPort = tcpPort;
         this.scanner = scanner;
-        this.userModule = new UserModuleView(udpPort);
+        this.udpPort = udpPort;
+        this.userModule = new UserModuleView();
         this.gameModule = new GameModuleView();
         this.historyModule = new HistoryModuleView();
         // Initial state
@@ -90,6 +92,10 @@ public class Controller {
 
     public TcpConnectionPort getTcpPort() {
         return tcpPort;
+    }
+
+    public int getUdpPort() {
+        return udpPort;
     }
 
     public UserModuleView getUserModule() {

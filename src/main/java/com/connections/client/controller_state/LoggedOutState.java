@@ -53,7 +53,7 @@ public class LoggedOutState implements ControllerState {
                 break;
 
             case CMD_LOGIN:
-                request = controller.getUserModule().prepareLogin(tokens);
+                request = controller.getUserModule().prepareLogin(tokens, controller.getUdpPort());
                 tryLogin = true;
                 break;
 

@@ -22,10 +22,8 @@ public class UserModuleView implements ResponseView {
     private static final int MIN_TOKENS_AUTH = 3;
     private static final int MIN_TOKENS_UPDATE = 4;
 
-    private final int udpPort;
-
-    public UserModuleView(int udpPort) {
-        this.udpPort = udpPort;
+    public UserModuleView() {
+        // No dependencies needed anymore
     }
 
     public ClientRequest prepareRegister(String[] tokens) {
@@ -40,7 +38,7 @@ public class UserModuleView implements ResponseView {
         return UserRequest.register(user, pass);
     }
 
-    public ClientRequest prepareLogin(String[] tokens) {
+    public ClientRequest prepareLogin(String[] tokens, int udpPort) {
         String user, pass;
         if (tokens.length >= MIN_TOKENS_AUTH) {
             user = tokens[INDEX_USERNAME];
