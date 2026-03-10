@@ -11,6 +11,7 @@ import java.util.Scanner;
 public class UserModuleView implements ModuleView {
 
     // --- Prompts ---
+    private static final String PROMPT_OLD_PASSWORD = "Enter current password (required): ";
     private static final String PROMPT_NEW_USERNAME = "Enter new username (leave empty to skip): ";
     private static final String PROMPT_NEW_PASSWORD = "Enter new password (leave empty to skip): ";
 
@@ -60,22 +61,32 @@ public class UserModuleView implements ModuleView {
     }
 
     public ClientRequest prepareUpdate(String currentUsername) {
+        System.out.print(PROMPT_OLD_PASSWORD);
+        String oldPassword = scanner.nextLine().trim();
+        if (oldPassword.isEmpty()) {
+            System.out.println("Old password is required to perform updates.");
+            return null;
+        }
+
         System.out.print(PROMPT_NEW_USERNAME);
         String newUsername = scanner.nextLine().trim();
-        if (newUsername.isEmpty()) newUsername = null;
+        if (newUsername.isEmpty()) {
+            newUsername = null;
+        }
 
         System.out.print(PROMPT_NEW_PASSWORD);
         String newPassword = scanner.nextLine().trim();
-        if (newPassword.isEmpty()) newPassword = null;
+        if (newPassword.isEmpty()) {
+            newPassword = null;
+        }
 
         if (newUsername == null && newPassword == null) {
             System.out.println("No changes provided.");
             return null;
         }
 
-        // The protocol requires oldName and optionally newName/newPsw. 
-        // We'll use the existing updateCredentials but adapt it.
-        return UserRequest.updateCredentials(currentUsername, null, newUsername, newPassword);
+        // The protocol requires oldName (currentUsername) and oldPsw to authorize the change.
+        return UserRequest.updateCredentials(currentUsername, oldPassword, newUsername, newPassword);
     }
 
     @Override
