@@ -16,9 +16,19 @@ import java.util.stream.Collectors;
 
 /**
  * Manages the active game session and player progress.
- * Orchestrates the transition between game sessions and historical archiving.
  */
 public class GameSessionManager {
+
+    // --- Scoring Rules ---
+    private static final int POINTS_PER_GROUP = 6;
+    private static final int PENALTY_PER_MISTAKE = 4;
+    private static final int MAX_MISTAKES = 4;
+    private static final int GROUPS_TO_WIN = 3; 
+
+    // --- Configuration ---
+    private static final int TOP_K_LEADERBOARD = 10;
+    private static final int WORDS_PER_PROPOSAL = 4;
+
     private final GamesDAO gamesDAO;
     private final UserManager userManager;
     private final UdpNotifier udpNotifier;
@@ -30,8 +40,6 @@ public class GameSessionManager {
     private final Map<String, List<WordGroup>> playerProgress = new ConcurrentHashMap<>();
     private final Map<String, Integer> playerMistakes = new ConcurrentHashMap<>();
     private final Set<String> completedPlayers = ConcurrentHashMap.newKeySet();
-    
-    // Historical results for past games
     private final Map<Integer, Map<String, PlayerResult>> gameHistory = new ConcurrentHashMap<>();
 
     public GameSessionManager(GamesDAO gamesDAO, UserManager userManager, UdpNotifier udpNotifier, long gameDurationMillis) {
@@ -46,11 +54,7 @@ public class GameSessionManager {
         int mistakes = playerMistakes.getOrDefault(username, 0);
         int correctGroups = playerProgress.getOrDefault(username, Collections.emptyList()).size();
         boolean finished = completedPlayers.contains(username);
-        // Points calculation logic (as per NYT rules in Progetto spec)
-        // Correct group: +6, Total win: +18 bonus included? No, spec says:
-        // +6 for 1 group, +12 for 2, +18 for 3 (last is implicit).
-        // Penalty: -4 for each mistake.
-        int score = (correctGroups * 6) - (mistakes * 4);
+        int score = (correctGroups * POINTS_PER_GROUP) - (mistakes * PENALTY_PER_MISTAKE);
         return new PlayerResult(mistakes, correctGroups, finished);
     }
 
@@ -59,7 +63,6 @@ public class GameSessionManager {
         int gameId = currentGame.getGameId();
         Map<String, PlayerResult> results = new HashMap<>();
         
-        // Collect all users who made any progress or mistakes
         Set<String> participants = new HashSet<>(playerProgress.keySet());
         participants.addAll(playerMistakes.keySet());
         
@@ -68,12 +71,10 @@ public class GameSessionManager {
         }
         gameHistory.put(gameId, results);
 
-        // Async notifications via UDP
         if (udpNotifier != null) {
             Gson gson = new Gson();
-            // 1. Global stats & leaderboard
             GameStatsDTO stats = getGlobalGameStats(gameId);
-            List<User> topPlayers = userManager.getTopK(10);
+            List<User> topPlayers = userManager.getTopK(TOP_K_LEADERBOARD);
             List<LeaderboardEntryDTO> leaderboardEntries = new ArrayList<>();
             for (int i = 0; i < topPlayers.size(); i++) {
                 User u = topPlayers.get(i);
@@ -84,7 +85,6 @@ public class GameSessionManager {
             String globalMsg = gson.toJson(GameEndNotification.create(leaderboard, stats));
             udpNotifier.notifyAll(globalMsg);
 
-            // 2. Personal summaries
             for (String user : participants) {
                 GameInfoDTO personal = getPersonalGameStatus(user, gameId);
                 if (personal != null) {
@@ -107,7 +107,7 @@ public class GameSessionManager {
         playerMistakes.clear();
         completedPlayers.clear();
         
-        System.out.println("Nuova partita avviata: ID " + currentGame.getGameId());
+        System.out.println(String.format("Nuova partita avviata: ID %d", currentGame.getGameId()));
         if (udpNotifier != null) {
             NewGameNotification notification = NewGameNotification.create(currentGame.getGameId(), currentGame.getAllWords());
             udpNotifier.notifyAll(new Gson().toJson(notification));
@@ -115,11 +115,51 @@ public class GameSessionManager {
         scheduler.schedule(this::startNewGame, gameDurationMillis, TimeUnit.MILLISECONDS);
     }
 
-    public Game getCurrentGame() { return currentGame; }
+    public synchronized ProposalResultDTO submitProposal(String username, List<String> words) {
+        if (completedPlayers.contains(username)) return null;
+        if (getRemainingTime() <= 0) return null;
+        if (words == null || words.size() != WORDS_PER_PROPOSAL) return null;
+        
+        WordGroup matched = currentGame.getGroups().stream()
+                .filter(g -> new HashSet<>(g.getWords()).equals(new HashSet<>(words)))
+                .findFirst().orElse(null);
+
+        if (matched != null) {
+            List<WordGroup> progress = playerProgress.computeIfAbsent(username, k -> new ArrayList<>());
+            if (progress.contains(matched)) return null; 
+            
+            progress.add(matched);
+            boolean win = (progress.size() == GROUPS_TO_WIN); 
+            if (win) finalizePlayerGame(username, true);
+            
+            PlayerResult snapshot = getPlayerSnapshot(username);
+            return ProposalResultDTO.success((float) POINTS_PER_GROUP, snapshot.getPoints());
+        } else {
+            int m = playerMistakes.getOrDefault(username, 0) + 1;
+            playerMistakes.put(username, m);
+            boolean lose = (m >= MAX_MISTAKES);
+            if (lose) finalizePlayerGame(username, false);
+            
+            PlayerResult snapshot = getPlayerSnapshot(username);
+            return ProposalResultDTO.wrong((float) -PENALTY_PER_MISTAKE, snapshot.getPoints());
+        }
+    }
+
+    private void finalizePlayerGame(String username, boolean won) {
+        completedPlayers.add(username);
+        PlayerResult res = getPlayerSnapshot(username);
+        User u = userManager.getUser(username);
+        if (won) u.recordWin(res.getMistakes(), res.getPoints());
+        else u.recordLoss(res.getMistakes(), res.getPoints());
+    }
 
     public long getRemainingTime() {
         return Math.max(0, gameEndTime - System.currentTimeMillis());
     }
+
+    public Game getCurrentGame() { return currentGame; }
+    public List<WordGroup> getPlayerProgress(String username) { return playerProgress.getOrDefault(username, Collections.emptyList()); }
+    public int getPlayerMistakes(String username) { return playerMistakes.getOrDefault(username, 0); }
 
     public synchronized GameInfoDTO getPersonalGameStatus(String username, int gameId) {
         if (currentGame != null && gameId == currentGame.getGameId()) {
@@ -132,10 +172,7 @@ public class GameSessionManager {
                     .filter(w -> !foundWords.contains(w))
                     .collect(Collectors.toList());
             
-            return GameInfoDTO.active(
-                gameId, getRemainingTime(), foundGroups, remainingWords, 
-                res.getMistakes(), res.getPoints()
-            );
+            return GameInfoDTO.active(gameId, getRemainingTime(), foundGroups, remainingWords, res.getMistakes(), res.getPoints());
         } 
         
         Map<String, PlayerResult> history = gameHistory.get(gameId);
@@ -144,10 +181,7 @@ public class GameSessionManager {
             Game oldGame = gamesDAO.getGame(gameId);
             List<WordGroup> allGroups = (oldGame != null) ? oldGame.getGroups() : Collections.emptyList();
             
-            return GameInfoDTO.concluded(
-                gameId, allGroups, res.getCorrectGroups(), 
-                res.getMistakes(), res.getPoints()
-            );
+            return GameInfoDTO.concluded(gameId, allGroups, res.getCorrectGroups(), res.getMistakes(), res.getPoints());
         }
         return null;
     }
@@ -180,57 +214,10 @@ public class GameSessionManager {
         }
         
         if (isActive) {
-            return GameStatsDTO.active(gameId, getRemainingTime(), 
-                                      results.size() - finishedCount, finishedCount, winners);
+            return GameStatsDTO.active(gameId, getRemainingTime(), results.size() - finishedCount, finishedCount, winners);
         } else {
             double avg = results.isEmpty() ? 0.0 : (double) totalScore / results.size();
             return GameStatsDTO.concluded(gameId, results.size(), finishedCount, winners, avg);
         }
-    }
-
-    public synchronized ProposalResultDTO submitProposal(String username, List<String> words) {
-        if (completedPlayers.contains(username)) return null;
-        if (getRemainingTime() <= 0) return null;
-        if (words == null || words.size() != 4) return null;
-        
-        WordGroup matched = currentGame.getGroups().stream()
-                .filter(g -> new HashSet<>(g.getWords()).equals(new HashSet<>(words)))
-                .findFirst().orElse(null);
-
-        if (matched != null) {
-            List<WordGroup> progress = playerProgress.computeIfAbsent(username, k -> new ArrayList<>());
-            if (progress.contains(matched)) return null; 
-            
-            progress.add(matched);
-            boolean win = (progress.size() == 3); // 4th is implicit
-            if (win) finalizePlayerGame(username, true);
-            
-            PlayerResult snapshot = getPlayerSnapshot(username);
-            return ProposalResultDTO.success(6.0f, snapshot.getPoints());
-        } else {
-            int m = playerMistakes.getOrDefault(username, 0) + 1;
-            playerMistakes.put(username, m);
-            boolean lose = (m >= 4);
-            if (lose) finalizePlayerGame(username, false);
-            
-            PlayerResult snapshot = getPlayerSnapshot(username);
-            return ProposalResultDTO.wrong(-4.0f, snapshot.getPoints());
-        }
-    }
-
-    private void finalizePlayerGame(String username, boolean won) {
-        completedPlayers.add(username);
-        PlayerResult res = getPlayerSnapshot(username);
-        User u = userManager.getUser(username);
-        if (won) u.recordWin(res.getMistakes(), res.getPoints());
-        else u.recordLoss(res.getMistakes(), res.getPoints());
-    }
-
-    public List<WordGroup> getPlayerProgress(String username) {
-        return playerProgress.getOrDefault(username, Collections.emptyList());
-    }
-
-    public int getPlayerMistakes(String username) {
-        return playerMistakes.getOrDefault(username, 0);
     }
 }

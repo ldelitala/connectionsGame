@@ -10,6 +10,11 @@ import java.util.Scanner;
  */
 public class ClientMain {
 
+    /**
+     * Entry point of the client application.
+     * 
+     * @param args command line arguments (optional: config path)
+     */
     public static void main(String[] args) {
 
         System.out.println("Configurazione...");
@@ -23,8 +28,7 @@ public class ClientMain {
                 UdpNotificationListener udpListener =
                         new UdpNotificationListener(config.getUdpPort())) {
 
-            System.out.println(
-                    "Connesso al server: " + config.getServerHost() + ":" + config.getServerPort());
+            System.out.println("Connesso al server: " + config.getServerHost() + ":" + config.getServerPort());
 
             udpListener.start();
             int actualUdpPort = udpListener.getLocalPort();
@@ -33,17 +37,13 @@ public class ClientMain {
             Controller controller = new Controller(tcpPort, scanner, actualUdpPort);
             controller.start();
 
-        }
-
-        catch (SocketException e) {
+        } catch (SocketException e) {
             System.err.println("Errore di connessione UDP: " + e.getMessage());
         } catch (IOException e) {
             System.err.println("Errore di comunicazione: " + e.getMessage());
         } catch (Exception e) {
             System.err.println("Errore inaspettato: " + e.getMessage());
-        }
-
-        finally {
+        } finally {
             System.out.println("Chiusura delle connessioni...");
             System.out.println("Applicazione terminata.");
         }

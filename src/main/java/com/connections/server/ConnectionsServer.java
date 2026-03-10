@@ -27,6 +27,40 @@ import java.util.concurrent.Executors;
  * Handles ClientRequests and sends ServerResponses.
  */
 public class ConnectionsServer {
+
+    // --- Configuration ---
+    private static final int BUFFER_SIZE = 8192;
+    private static final int DEFAULT_LEADERBOARD_SIZE = 10;
+    private static final int CURRENT_GAME_ID_SENTINEL = -1;
+    private static final String MSG_DELIMITER = "\n";
+
+    // --- Messages ---
+    private static final String MSG_SERVER_STARTED = "TCP Server started on port %d";
+    private static final String ERR_MISSING_OP = "Operazione mancante o sconosciuta.";
+    private static final String ERR_NOT_IMPLEMENTED = "Operazione non implementata.";
+    private static final String ERR_INTERNAL = "Errore interno del server: %s";
+    private static final String ERR_NOT_LOGGED = "Non sei loggato.";
+    private static final String ERR_NOT_FOUND = "Partita non trovata.";
+    private static final String ERR_PLAYER_NOT_FOUND = "Giocatore non trovato.";
+    private static final String ERR_USER_OP_NOT_SUPPORTED = "Operazione utente non supportata.";
+    private static final String ERR_DATA_OP_NOT_SUPPORTED = "Operazione di recupero dati non supportata.";
+    
+    // --- Success Messages ---
+    private static final String OK_REGISTER = "Registrazione avvenuta con successo.";
+    private static final String ERR_USER_EXISTS = "Username già esistente.";
+    private static final String OK_LOGIN = "Login effettuato con successo.";
+    private static final String ERR_INVALID_CREDENTIALS = "Credenziali non valide.";
+    private static final String OK_LOGOUT = "Logout effettuato.";
+    private static final String OK_UPDATE = "Credenziali aggiornate.";
+    private static final String ERR_UPDATE_FAILED = "Aggiornamento fallito (password errata o nuovo username occupato).";
+    private static final String OK_PROPOSAL = "Proposta elaborata.";
+    private static final String ERR_INVALID_PROPOSAL = "Proposta non valida (partita finita o gruppo già trovato).";
+    private static final String OK_GAME_INFO = "Info partita %d";
+    private static final String OK_GAME_STATS = "Statistiche partita %d";
+    private static final String OK_PLAYER_STATS = "Le tue statistiche.";
+    private static final String OK_LEADERBOARD_POS = "Posizione in classifica.";
+    private static final String OK_LEADERBOARD_GLOBAL = "Classifica globale.";
+
     private final ServerConfig config;
     private final UserManager userManager;
     private final GameSessionManager sessionManager;
@@ -51,7 +85,7 @@ public class ConnectionsServer {
         serverChannel.configureBlocking(false);
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-        System.out.println("TCP Server started on port " + config.getTcpPort());
+        System.out.println(String.format(MSG_SERVER_STARTED, config.getTcpPort()));
 
         while (!Thread.currentThread().isInterrupted()) {
             selector.select();
@@ -78,7 +112,7 @@ public class ConnectionsServer {
 
     private void handleRead(SelectionKey key) {
         SocketChannel clientChannel = (SocketChannel) key.channel();
-        ByteBuffer buffer = ByteBuffer.allocate(8192); // Increased buffer size for larger requests
+        ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE); // Increased buffer size for larger requests
         try {
             int bytesRead = clientChannel.read(buffer);
             if (bytesRead == -1) {
@@ -101,7 +135,7 @@ public class ConnectionsServer {
             Operation op = (peek != null) ? peek.operation : null;
 
             if (op == null) {
-                sendResponse(clientChannel, ServerResponse.error("Operazione mancante o sconosciuta."));
+                sendResponse(clientChannel, ServerResponse.error(ERR_MISSING_OP));
                 return;
             }
 
@@ -126,11 +160,11 @@ public class ConnectionsServer {
                     response = handleHistoryOperation(clientChannel, op, historyReq);
                     break;
                 default:
-                    response = ServerResponse.error("Operazione non implementata.");
+                    response = ServerResponse.error(ERR_NOT_IMPLEMENTED);
             }
             sendResponse(clientChannel, response);
         } catch (Exception e) {
-            sendResponse(clientChannel, ServerResponse.error("Errore interno del server: " + e.getMessage()));
+            sendResponse(clientChannel, ServerResponse.error(String.format(ERR_INTERNAL, e.getMessage())));
         }
     }
 
@@ -138,8 +172,8 @@ public class ConnectionsServer {
         switch (op) {
             case REGISTER:
                 return userManager.register(req.getUsername(), req.getPassword()) ? 
-                    ServerResponse.ok("Registrazione avvenuta con successo.") : 
-                    ServerResponse.error("Username già esistente.");
+                    ServerResponse.ok(OK_REGISTER) : 
+                    ServerResponse.error(ERR_USER_EXISTS);
             case LOGIN:
                 User user = userManager.authenticate(req.getUsername(), req.getPassword());
                 if (user != null) {
@@ -150,58 +184,58 @@ public class ConnectionsServer {
                             udpNotifier.registerClient(user.getUsername(), addr, req.getUdpPort());
                         } catch (IOException ignored) {}
                     }
-                    return ServerResponse.ok("Login effettuato con successo.");
+                    return ServerResponse.ok(OK_LOGIN);
                 }
-                return ServerResponse.error("Credenziali non valide.");
+                return ServerResponse.error(ERR_INVALID_CREDENTIALS);
             case LOGOUT:
                 String uname = activeSessions.remove(channel);
                 if (uname != null) udpNotifier.unregisterClient(uname);
-                return ServerResponse.ok("Logout effettuato.");
+                return ServerResponse.ok(OK_LOGOUT);
             case UPDATE_CREDENTIALS:
                 String currentUname = activeSessions.get(channel);
-                if (currentUname == null) return ServerResponse.error("Non sei loggato.");
+                if (currentUname == null) return ServerResponse.error(ERR_NOT_LOGGED);
                 if (userManager.updateCredentials(currentUname, req.getNewName(), req.getOldPsw(), req.getNewPsw())) {
                     if (req.getNewName() != null) activeSessions.put(channel, req.getNewName());
-                    return ServerResponse.ok("Credenziali aggiornate.");
+                    return ServerResponse.ok(OK_UPDATE);
                 }
-                return ServerResponse.error("Aggiornamento fallito (password errata o nuovo username occupato).");
+                return ServerResponse.error(ERR_UPDATE_FAILED);
             default:
-                return ServerResponse.error("Operazione utente non supportata.");
+                return ServerResponse.error(ERR_USER_OP_NOT_SUPPORTED);
         }
     }
 
     private ServerResponse<?> handleSubmitProposal(SocketChannel channel, GameRequest req) {
         String username = activeSessions.get(channel);
-        if (username == null) return ServerResponse.error("Non sei loggato.");
+        if (username == null) return ServerResponse.error(ERR_NOT_LOGGED);
         
         ProposalResultDTO result = sessionManager.submitProposal(username, req.getWords());
         if (result == null) {
-            return ServerResponse.error("Proposta non valida (partita finita o gruppo già trovato).");
+            return ServerResponse.error(ERR_INVALID_PROPOSAL);
         }
-        return ServerResponse.ok("Proposta elaborata.", result);
+        return ServerResponse.ok(OK_PROPOSAL, result);
     }
 
     private ServerResponse<?> handleHistoryOperation(SocketChannel channel, Operation op, HistoryRequest req) {
         String username = activeSessions.get(channel);
-        if (username == null) return ServerResponse.error("Non sei loggato.");
+        if (username == null) return ServerResponse.error(ERR_NOT_LOGGED);
 
         switch (op) {
             case GET_GAME_INFO:
                 // If gameId is null, use current game
-                int gid = (req.getGameId() != null && req.getGameId() != -1) ? 
+                int gid = (req.getGameId() != null && req.getGameId() != CURRENT_GAME_ID_SENTINEL) ? 
                           req.getGameId() : sessionManager.getCurrentGame().getGameId();
                 GameInfoDTO info = sessionManager.getPersonalGameStatus(username, gid);
-                return info != null ? ServerResponse.ok("Info partita " + gid, info) : 
-                                     ServerResponse.error("Partita non trovata.");
+                return info != null ? ServerResponse.ok(String.format(OK_GAME_INFO, gid), info) : 
+                                     ServerResponse.error(ERR_NOT_FOUND);
             case GET_GAME_STATS:
-                int sgid = (req.getGameId() != null && req.getGameId() != -1) ? 
+                int sgid = (req.getGameId() != null && req.getGameId() != CURRENT_GAME_ID_SENTINEL) ? 
                            req.getGameId() : sessionManager.getCurrentGame().getGameId();
                 GameStatsDTO stats = sessionManager.getGlobalGameStats(sgid);
-                return stats != null ? ServerResponse.ok("Statistiche partita " + sgid, stats) : 
-                                      ServerResponse.error("Partita non trovata.");
+                return stats != null ? ServerResponse.ok(String.format(OK_GAME_STATS, sgid), stats) : 
+                                      ServerResponse.error(ERR_NOT_FOUND);
             case GET_PLAYER_STATS:
                 User u = userManager.getUser(username);
-                return ServerResponse.ok("Le tue statistiche.", PlayerStatsDTO.create(
+                return ServerResponse.ok(OK_PLAYER_STATS, PlayerStatsDTO.create(
                     u.getPuzzlesCompleted(), u.getWinRate(), u.getLossRate(),
                     u.getCurrentStreak(), u.getMaxStreak(), u.getPerfectPuzzles(),
                     u.getMistakeHistogram(), u.getTotalScore()));
@@ -211,26 +245,26 @@ public class ConnectionsServer {
                     for (int i = 0; i < all.size(); i++) {
                         User pu = all.get(i);
                         if (pu.getUsername().equals(req.getPlayerName())) 
-                            return ServerResponse.ok("Posizione in classifica.", LeaderboardEntryDTO.create(i + 1, pu.getUsername(), pu.getTotalScore()));
+                            return ServerResponse.ok(OK_LEADERBOARD_POS, LeaderboardEntryDTO.create(i + 1, pu.getUsername(), pu.getTotalScore()));
                     }
-                    return ServerResponse.error("Giocatore non trovato.");
+                    return ServerResponse.error(ERR_PLAYER_NOT_FOUND);
                 }
-                int k = (req.getTopPlayers() != null) ? req.getTopPlayers() : 10;
+                int k = (req.getTopPlayers() != null) ? req.getTopPlayers() : DEFAULT_LEADERBOARD_SIZE;
                 List<LeaderboardEntryDTO> entries = new java.util.ArrayList<>();
                 for (int i = 0; i < Math.min(k, all.size()); i++) {
                     User lu = all.get(i);
                     entries.add(LeaderboardEntryDTO.create(i + 1, lu.getUsername(), lu.getTotalScore()));
                 }
-                return ServerResponse.ok("Classifica globale.", LeaderboardDTO.create(entries));
+                return ServerResponse.ok(OK_LEADERBOARD_GLOBAL, LeaderboardDTO.create(entries));
             default:
-                return ServerResponse.error("Operazione di recupero dati non supportata.");
+                return ServerResponse.error(ERR_DATA_OP_NOT_SUPPORTED);
         }
     }
 
     private void sendResponse(SocketChannel channel, ServerResponse<?> response) {
         try {
             String json = gson.toJson(response);
-            channel.write(ByteBuffer.wrap((json + "\n").getBytes()));
+            channel.write(ByteBuffer.wrap((json + MSG_DELIMITER).getBytes()));
         } catch (IOException e) {
             closeConnection(channel);
         }

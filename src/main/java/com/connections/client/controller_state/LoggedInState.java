@@ -1,4 +1,4 @@
-package com.connections.client.state;
+package com.connections.client.controller_state;
 
 import com.connections.client.Controller;
 import com.connections.client.modules.ModuleView;
@@ -13,10 +13,42 @@ import com.connections.common.protocol.server_responses.Status;
  */
 public class LoggedInState implements ControllerState {
 
-    /** The main controller acting as the context for the state. */
-    private final Controller controller;
+    // --- Commands ---
+    private static final String CMD_LOGOUT = "logout";
+    private static final String CMD_UPDATE = "update";
+    private static final String CMD_SUBMIT = "submit";
+    private static final String CMD_STATUS = "status";
+    private static final String CMD_STATS = "stats";
+    private static final String CMD_INFO = "info";
+    private static final String CMD_GLOBAL = "global";
+    private static final String CMD_RANKING = "ranking";
+    private static final String CMD_HISTORY = "history";
+    private static final String CMD_REGISTER = "register";
+    private static final String CMD_LOGIN = "login";
+    private static final String CMD_HELP = "help";
 
-    /** The username of the currently logged-in user. */
+    // --- Formatting ---
+    private static final String PROMPT_FORMAT = "[%s] > ";
+
+    // --- Help UI ---
+    private static final String HELP_HEADER = "\n--- AVAILABLE COMMANDS (Logged In) ---";
+    private static final String HELP_SECTION_ACTIVE = "Active Game:";
+    private static final String HELP_SUBMIT = "  submit [w1-w4]    : Send a 4-word proposal";
+    private static final String HELP_STATUS = "  status            : View your current game status (mistakes, time)";
+    private static final String HELP_STATS = "  stats             : View global participation stats for current game";
+    private static final String HELP_SECTION_HISTORY = "\nHistory and Rankings:";
+    private static final String HELP_INFO = "  info [id]         : View details and solution of a past game";
+    private static final String HELP_GLOBAL = "  global [id]       : View global statistics of a past game";
+    private static final String HELP_RANKING = "  ranking [k] [u]   : View top players or a specific user's rank";
+    private static final String HELP_HISTORY = "  history           : View your personal overall statistics";
+    private static final String HELP_SECTION_ACCOUNT = "\nAccount:";
+    private static final String HELP_UPDATE = "  update            : Change your username or password";
+    private static final String HELP_LOGOUT = "  logout            : Sign out of your account";
+    private static final String HELP_SECTION_SYSTEM = "\nSystem:";
+    private static final String HELP_HELP = "  help              : Show this list";
+    private static final String HELP_EXIT = "  exit              : Close the application\n";
+
+    private final Controller controller;
     private final String username;
 
     /**
@@ -30,14 +62,6 @@ public class LoggedInState implements ControllerState {
         this.username = username;
     }
 
-    /**
-     * Handles user commands by delegating request creation to the appropriate modules, then sending
-     * them to the server and last displaying the response. Commands are categorized into active
-     * gameplay, historical data, and account management. The method also manages state transitions
-     * (e.g., logout) based on server responses.
-     * 
-     * @param tokens the array of strings composing the command entered by the user.
-     */
     @Override
     public void handleCommand(String[] tokens) {
         String command = tokens[0].toLowerCase();
@@ -48,52 +72,56 @@ public class LoggedInState implements ControllerState {
         switch (command) {
 
             // --- ACCOUNT MANAGEMENT ---
-            case "logout":
+            case CMD_LOGOUT:
                 request = controller.getUserModule().prepareLogout();
                 activeModule = controller.getUserModule();
                 trylogout = true;
                 break;
-            case "update":
+            case CMD_UPDATE:
                 request = controller.getUserModule().prepareUpdate(username);
                 activeModule = controller.getUserModule();
                 break;
 
             // --- ACTIVE GAME ---
-            case "submit":
+            case CMD_SUBMIT:
                 request = controller.getGameModule().prepareSubmit(tokens);
                 activeModule = controller.getGameModule();
                 break;
-            case "status":
+            case CMD_STATUS:
                 request = controller.getGameModule().prepareStatus();
                 activeModule = controller.getGameModule();
                 break;
-            case "stats":
+            case CMD_STATS:
                 request = controller.getGameModule().prepareStats();
                 activeModule = controller.getGameModule();
                 break;
 
             // --- HISTORY AND GLOBAL DATA ---
-            case "info":
+            case CMD_INFO:
                 request = controller.getHistoryModule().preparePastInfo(tokens);
                 activeModule = controller.getHistoryModule();
                 break;
-            case "global":
+            case CMD_GLOBAL:
                 request = controller.getHistoryModule().prepareGlobalStats(tokens);
                 activeModule = controller.getHistoryModule();
                 break;
-            case "ranking":
+            case CMD_RANKING:
                 request = controller.getHistoryModule().prepareRanking(tokens);
                 activeModule = controller.getHistoryModule();
                 break;
-            case "history":
+            case CMD_HISTORY:
                 request = controller.getHistoryModule().prepareHistory();
                 activeModule = controller.getHistoryModule();
                 break;
 
             // --- ALREADY LOGGED IN ---
-            case "register":
-            case "login":
-                System.out.println("Already logged in as [" + username + "]. Please logout first.");
+            case CMD_REGISTER:
+            case CMD_LOGIN:
+                System.out.println(String.format("Already logged in as [%s]. Please logout first.", username));
+                return;
+
+            case CMD_HELP:
+                printHelp();
                 return;
 
             default:
@@ -116,42 +144,31 @@ public class LoggedInState implements ControllerState {
         }
     }
 
-
-    /**
-     * Prints contextual help for the logged-in state. Lists commands for active gameplay,
-     * historical data, and account management.
-     */
     @Override
     public void printHelp() {
-        System.out.println("\n--- AVAILABLE COMMANDS (Logged In) ---");
-        System.out.println("Active Game:");
-        System.out.println("  submit [w1-w4]    : Send a 4-word proposal");
-        System.out.println("  status            : View your current game status (mistakes, time)");
-        System.out
-                .println("  stats             : View global participation stats for current game");
+        System.out.println(HELP_HEADER);
+        System.out.println(HELP_SECTION_ACTIVE);
+        System.out.println(HELP_SUBMIT);
+        System.out.println(HELP_STATUS);
+        System.out.println(HELP_STATS);
 
-        System.out.println("\nHistory and Rankings:");
-        System.out.println("  info [id]         : View details and solution of a past game");
-        System.out.println("  global [id]       : View global statistics of a past game");
-        System.out.println("  ranking [k] [u]   : View top players or a specific user's rank");
-        System.out.println("  history           : View your personal overall statistics");
+        System.out.println(HELP_SECTION_HISTORY);
+        System.out.println(HELP_INFO);
+        System.out.println(HELP_GLOBAL);
+        System.out.println(HELP_RANKING);
+        System.out.println(HELP_HISTORY);
 
-        System.out.println("\nAccount:");
-        System.out.println("  update            : Change your username or password");
-        System.out.println("  logout            : Sign out of your account");
+        System.out.println(HELP_SECTION_ACCOUNT);
+        System.out.println(HELP_UPDATE);
+        System.out.println(HELP_LOGOUT);
 
-        System.out.println("\nSystem:");
-        System.out.println("  help              : Show this list");
-        System.out.println("  exit              : Close the application\n");
+        System.out.println(HELP_SECTION_SYSTEM);
+        System.out.println(HELP_HELP);
+        System.out.println(HELP_EXIT);
     }
 
-    /**
-     * Returns the dynamic command prompt for the authenticated user.
-     * 
-     * @return the prompt string formatted as "[username] > ".
-     */
     @Override
     public String getPrompt() {
-        return "[" + username + "] > ";
+        return String.format(PROMPT_FORMAT, username);
     }
 }

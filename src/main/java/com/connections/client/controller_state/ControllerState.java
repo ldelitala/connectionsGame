@@ -1,4 +1,4 @@
-package com.connections.client.state;
+package com.connections.client.controller_state;
 
 /**
  * Interface for all client states (LoggedOut, LoggedIn).
