@@ -13,7 +13,7 @@ public class ClientMain {
     public static void main(String[] args) {
 
         System.out.println("Configurazione...");
-        ClientConfig config = new ClientConfig();
+        ClientConfig config = (args.length > 0) ? new ClientConfig(args[0]) : new ClientConfig();
 
         System.out.println("Benvenuto in Connections Game!");
 
@@ -31,7 +31,7 @@ public class ClientMain {
             System.out.println("Listener notifiche UDP avviato sulla porta " + actualUdpPort);
 
             Controller controller = new Controller(tcpPort, scanner, actualUdpPort);
-            controller.start(scanner);
+            controller.start();
 
         }
 

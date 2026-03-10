@@ -10,6 +10,7 @@ import java.util.Scanner;
  */
 public class Controller {
     private final TcpConnectionPort tcpPort;
+    private final Scanner scanner;
     private final UserModuleView userModule;
     private final GameModuleView gameModule;
     private final HistoryModuleView historyModule;
@@ -18,6 +19,7 @@ public class Controller {
 
     public Controller(TcpConnectionPort tcpPort, Scanner scanner, int udpPort) {
         this.tcpPort = tcpPort;
+        this.scanner = scanner;
         this.userModule = new UserModuleView(scanner, udpPort);
         this.gameModule = new GameModuleView();
         this.historyModule = new HistoryModuleView();
@@ -25,7 +27,7 @@ public class Controller {
         this.currentState = new LoggedOutState(this);
     }
 
-    public void start(Scanner scanner) {
+    public void start() {
         while (true) {
             System.out.print(currentState.getPrompt());
 
