@@ -18,13 +18,11 @@ public class UserModuleView implements ResponseView {
     private static final int INDEX_OLD_PASSWORD = 1;
     private static final int INDEX_NEW_USERNAME = 2;
     private static final int INDEX_NEW_PASSWORD = 3;
-    
+
     private static final int MIN_TOKENS_AUTH = 3;
     private static final int MIN_TOKENS_UPDATE = 4;
 
-    public UserModuleView() {
-        // No dependencies needed anymore
-    }
+    public UserModuleView() {}
 
     public ClientRequest prepareRegister(String[] tokens) {
         String user, pass;
@@ -78,7 +76,8 @@ public class UserModuleView implements ResponseView {
         }
 
         // The protocol requires oldName (currentUsername) and oldPsw to authorize the change.
-        return UserRequest.updateCredentials(currentUsername, oldPassword, newUsername, newPassword);
+        return UserRequest.updateCredentials(currentUsername, oldPassword, newUsername,
+                newPassword);
     }
 
     @Override

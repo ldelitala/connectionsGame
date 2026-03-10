@@ -11,26 +11,46 @@ import java.util.List;
  */
 public class HistoryModuleView implements ResponseView {
 
+    // --- Logic Constants ---
+    private static final int MIN_TOKENS_ARG = 2;
+    private static final int INDEX_ARG_1 = 1;
+    private static final int INDEX_ARG_2 = 2;
+    private static final String FLAG_TOP = "-top";
+
     public ClientRequest preparePastInfo(String[] tokens) {
-        if (tokens.length < 2) {
-            System.out.println("Uso: info [id]");
+        if (tokens.length < MIN_TOKENS_ARG) {
+            System.out.println("Usage: info [id]");
             return null;
         }
-        return HistoryRequest.getGameInfo(Integer.parseInt(tokens[1]));
+        return HistoryRequest.getGameInfo(Integer.parseInt(tokens[INDEX_ARG_1]));
     }
 
     public ClientRequest prepareGlobalStats(String[] tokens) {
-        if (tokens.length < 2) {
-            System.out.println("Uso: global [id]");
+        if (tokens.length < MIN_TOKENS_ARG) {
+            System.out.println("Usage: global [id]");
             return null;
         }
-        return HistoryRequest.getGameStats(Integer.parseInt(tokens[1]));
+        return HistoryRequest.getGameStats(Integer.parseInt(tokens[INDEX_ARG_1]));
     }
 
     public ClientRequest prepareRanking(String[] tokens) {
-        Integer top = (tokens.length > 1) ? Integer.parseInt(tokens[1]) : 10;
-        String player = (tokens.length > 2) ? tokens[2] : null;
-        return HistoryRequest.getLeaderboard(player, top);
+        if (tokens.length < MIN_TOKENS_ARG) {
+            System.out.println("Usage:");
+            System.out.println("  ranking <username>      : View a specific player's rank");
+            System.out.println("  ranking -top [k]        : View top k players (omit k for full list)");
+            return null;
+        }
+
+        String firstArg = tokens[INDEX_ARG_1];
+
+        if (firstArg.equalsIgnoreCase(FLAG_TOP)) {
+            // Case: ranking -top [k]
+            Integer k = (tokens.length > INDEX_ARG_2) ? Integer.parseInt(tokens[INDEX_ARG_2]) : Integer.MAX_VALUE;
+            return HistoryRequest.getLeaderboard(null, k);
+        } else {
+            // Case: ranking <username>
+            return HistoryRequest.getLeaderboard(firstArg, null);
+        }
     }
 
     public ClientRequest prepareHistory() {
@@ -54,38 +74,38 @@ public class HistoryModuleView implements ResponseView {
     }
 
     private void displayConcludedGameInfo(GameInfoDTO info) {
-        System.out.println("--- Dettagli Partita Conclusa (ID: " + info.getGameId() + ") ---");
-        System.out.println("Punteggio finale: " + info.getScore());
-        System.out.println("Errori commessi: " + info.getMistakes());
-        System.out.println("Gruppi indovinati: " + info.getCorrectGroupsCount() + "/4");
-        System.out.println("Assegnazioni ufficiali:");
+        System.out.println("--- Past Game Details (ID: " + info.getGameId() + ") ---");
+        System.out.println("Final score: " + info.getScore());
+        System.out.println("Mistakes made: " + info.getMistakes());
+        System.out.println("Groups found: " + info.getCorrectGroupsCount() + "/4");
+        System.out.println("Official assignments:");
         for (WordGroup group : info.getAllGroups()) {
             System.out.println("  - " + group.getTheme() + ": " + String.join(", ", group.getWords()));
         }
     }
 
     private void displayConcludedGameStats(GameStatsDTO stats) {
-        System.out.println("--- Statistiche Partita Passata (ID: " + stats.getGameId() + ") ---");
-        System.out.println("Partecipanti totali: " + stats.getTotalParticipants());
-        System.out.println("Hanno concluso: " + stats.getFinishedPlayers());
-        System.out.println("Vincitori totali: " + stats.getWonPlayers());
-        System.out.println("Punteggio medio: " + stats.getAverageScore());
+        System.out.println("--- Past Game Global Stats (ID: " + stats.getGameId() + ") ---");
+        System.out.println("Total participants: " + stats.getTotalParticipants());
+        System.out.println("Players finished: " + stats.getFinishedPlayers());
+        System.out.println("Total winners: " + stats.getWonPlayers());
+        System.out.println("Average score: " + stats.getAverageScore());
     }
 
     private void displayPlayerStats(PlayerStatsDTO stats) {
-        System.out.println("--- Le Tue Statistiche Globali ---");
-        System.out.println("Puzzles completati: " + stats.getPuzzlesCompleted());
-        System.out.println("Puzzles vinti: " + (int)(stats.getWinRate() * stats.getPuzzlesCompleted() / 100));
-        System.out.println("Punteggio totale: " + stats.getTotalScore());
-        System.out.println("Media punteggio: " + stats.getAverageScore());
+        System.out.println("--- Your Global Statistics ---");
+        System.out.println("Puzzles completed: " + stats.getPuzzlesCompleted());
+        System.out.println("Puzzles won: " + (int) (stats.getWinRate() * stats.getPuzzlesCompleted() / 100));
+        System.out.println("Total score: " + stats.getTotalScore());
+        System.out.println("Average score: " + stats.getAverageScore());
     }
 
     private void displayLeaderboard(LeaderboardDTO leaderboard) {
-        System.out.println("--- Classifica Globale ---");
+        System.out.println("--- Global Leaderboard ---");
         List<LeaderboardEntryDTO> entries = leaderboard.getEntries();
         for (int i = 0; i < entries.size(); i++) {
             LeaderboardEntryDTO entry = entries.get(i);
-            System.out.printf("%2d. %-15s | Punteggio: %5d\n", (i + 1), entry.getUsername(), entry.getScore());
+            System.out.printf("%2d. %-15s | Score: %5d\n", (i + 1), entry.getUsername(), entry.getScore());
         }
     }
 }

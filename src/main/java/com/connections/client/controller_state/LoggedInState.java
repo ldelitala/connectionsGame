@@ -43,7 +43,7 @@ public class LoggedInState implements ControllerState {
         "\nHistory and Rankings:\n" +
         "  info [id]         : View details and solution of a past game\n" +
         "  global [id]       : View global statistics of a past game\n" +
-        "  ranking [k] [u]   : View top players or a specific user's rank\n" +
+        "  ranking <u|-top k>: View rank of user <u> or top k players\n" +
         "  history           : View your personal overall statistics\n" +
         "\nAccount:\n" +
         "  update <oP> <nU> <nP> : Change your username or password (<oP> required, '-' to skip nU/nP)\n" + 
