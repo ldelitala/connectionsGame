@@ -7,14 +7,16 @@ import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 
 /**
- * Represents the client state when a user is successfully authenticated (Logged In).
- * In this state, the user can participate in active games, view history, and manage their account.
+ * Represents the client state when a user is successfully authenticated (Logged In). In this state,
+ * the user can participate in active games, view history, and manage their account.
  */
 public class LoggedInState implements ControllerState {
 
     // --- Commands: Account ---
     private static final String CMD_LOGOUT = "logout";
     private static final String CMD_UPDATE = "update";
+    // todo: check update command consistency with internal login state
+
 
     // --- Commands: Active Game ---
     private static final String CMD_SUBMIT = "submit";
@@ -27,7 +29,7 @@ public class LoggedInState implements ControllerState {
     private static final String CMD_RANKING = "ranking";
     private static final String CMD_HISTORY = "history";
 
-    // --- System / State Internal Commands ---
+    // --- State Internal Commands ---
     private static final String CMD_REGISTER = "register";
     private static final String CMD_LOGIN = "login";
 
@@ -45,7 +47,7 @@ public class LoggedInState implements ControllerState {
         "  ranking [k] [u]   : View top players or a specific user's rank\n" +
         "  history           : View your personal overall statistics\n" +
         "\nAccount:\n" +
-        "  update            : Change your username or password\n" +
+        "  update            : Change your username or password\n" + 
         "  logout            : Sign out of your account\n";
     // @formatter:on
 
@@ -56,7 +58,7 @@ public class LoggedInState implements ControllerState {
     private final Controller controller;
 
     /** The username of the currently logged-in user. */
-    private final String username;
+    private String username;
 
     /**
      * Constructs a new LoggedInState for the given user.
@@ -70,8 +72,8 @@ public class LoggedInState implements ControllerState {
     }
 
     /**
-     * Handles user commands by delegating request creation to modules and 
-     * interacting with the server via the controller's TCP port.
+     * Handles user commands by delegating request creation to modules and interacting with the
+     * server via the controller's TCP port.
      * 
      * @param tokens the command split into tokens.
      */
@@ -130,7 +132,8 @@ public class LoggedInState implements ControllerState {
             // --- ALREADY LOGGED IN ---
             case CMD_REGISTER:
             case CMD_LOGIN:
-                System.out.println(String.format("Already logged in as [%s]. Please logout first.", username));
+                System.out.println(
+                        String.format("Already logged in as [%s]. Please logout first.", username));
                 return;
 
             default:
@@ -145,6 +148,14 @@ public class LoggedInState implements ControllerState {
 
                 if (trylogout && response.getStatus() == Status.OK) {
                     controller.changeState(new LoggedOutState(controller));
+                }
+
+                // Update local username if changed successfully
+                if (command.equals(CMD_UPDATE) && response.getStatus() == Status.OK) {
+                    UserRequest userReq = (UserRequest) request;
+                    if (userReq.getNewName() != null) {
+                        this.username = userReq.getNewName();
+                    }
                 }
 
             } catch (Exception e) {
