@@ -36,8 +36,8 @@
 - [x] Implement CLI Client with input/output handlers.
 - [x] Testing and validation (Comprehensive suite: 17/17 passed).
 - [x] Optimization: High-performance Game indexing (Offsets + Buffered I/O).
-- [ ] Refactoring Modulare: Separazione delle logiche Client (User, Game, History) in moduli indipendenti.
-- [ ] Raffinamento Protocollo: Specializzazione di GameInfo/Stats DTO per aderenza rigorosa alle specifiche (Corrente vs Passato).
+- [x] Refactoring Modulare: Separazione delle logiche Client (User, Game, History) in moduli indipendenti.
+- [x] Raffinamento Protocollo: Specializzazione di GameInfo/Stats DTO per aderenza rigorosa alle specifiche (Corrente vs Passato).
 - [x] Allineamento Specifiche (Allegato 1): Correzione dei nomi dei campi JSON (`name` vs `username`, `psw`) e ripristino dei nomi operazione originali (`requestGameInfo`, `requestLeaderboard`, etc.) per garantire la piena conformità.
 
 ## Recent Improvements

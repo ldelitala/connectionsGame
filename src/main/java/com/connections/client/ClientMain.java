@@ -11,6 +11,8 @@ import java.util.Scanner;
 public class ClientMain {
 
     public static void main(String[] args) {
+
+        System.out.println("Configurazione...");
         ClientConfig config = new ClientConfig();
 
         System.out.println("Benvenuto in Connections Game!");
