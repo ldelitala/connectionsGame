@@ -5,8 +5,9 @@ import com.connections.client.controller_state.*;
 import java.util.Scanner;
 
 /**
- * Context for the Client State Pattern.
- * Manages the current state and provides shared resources to states.
+ * Context for the Client State Pattern. Manages the current state of the application and provides
+ * shared resources to individual states. It coordinates the main command loop and handles global
+ * system commands like exit and help.
  */
 public class Controller {
 
@@ -15,10 +16,9 @@ public class Controller {
     private static final String CMD_HELP = "help";
 
     // --- Help Messages ---
-    private static final String SYSTEM_HELP = 
-        "\nSystem:\n" +
-        "  help              : Show this list\n" +
-        "  exit              : Close the application\n";
+    private static final String SYSTEM_HELP =
+            "\nSystem:\n" + "  help              : Show this list\n"
+                    + "  exit              : Close the application\n";
 
     // --- Patterns ---
     private static final String REGEX_WHITESPACE = "\\s+";
@@ -31,6 +31,13 @@ public class Controller {
 
     private ControllerState currentState;
 
+    /**
+     * Constructs a new Controller and initializes the modules and the initial state.
+     * 
+     * @param tcpPort the TCP port used for server communication.
+     * @param scanner the scanner for reading user input.
+     * @param udpPort the port for receiving asynchronous UDP notifications.
+     */
     public Controller(TcpConnectionPort tcpPort, Scanner scanner, int udpPort) {
         this.tcpPort = tcpPort;
         this.scanner = scanner;
@@ -40,21 +47,28 @@ public class Controller {
         this.currentState = new LoggedOutState(this);
     }
 
+    /**
+     * Starts the main command loop. Reads input from the user, handles global system commands, and
+     * delegates specific logic to the current state.
+     */
     public void start() {
         while (true) {
             System.out.print(currentState.getPrompt());
 
             String line = scanner.nextLine().trim();
-            if (line.isEmpty()) continue;
+            if (line.isEmpty())
+                continue;
 
             // Handle System-level commands globally
             if (line.equalsIgnoreCase(CMD_EXIT)) {
                 System.out.println("Uscita in corso...");
+                currentState.onExit();
                 break;
             }
 
             if (line.equalsIgnoreCase(CMD_HELP)) {
-                printFullHelp();
+                currentState.printHelp(); // 1. Print state-specific help
+                System.out.println(SYSTEM_HELP); // 2. Append system help
                 continue;
             }
 
@@ -63,19 +77,25 @@ public class Controller {
         }
     }
 
-    private void printFullHelp() {
-        // 1. Print state-specific help
-        currentState.printHelp();
-        // 2. Append system help
-        System.out.println(SYSTEM_HELP);
-    }
-
     public void changeState(ControllerState newState) {
         this.currentState = newState;
     }
 
-    public TcpConnectionPort getTcpPort() { return tcpPort; }
-    public UserModuleView getUserModule() { return userModule; }
-    public GameModuleView getGameModule() { return gameModule; }
-    public HistoryModuleView getHistoryModule() { return historyModule; }
+    // --- GETTERS FOR SHARED RESOURCES ---
+
+    public TcpConnectionPort getTcpPort() {
+        return tcpPort;
+    }
+
+    public UserModuleView getUserModule() {
+        return userModule;
+    }
+
+    public GameModuleView getGameModule() {
+        return gameModule;
+    }
+
+    public HistoryModuleView getHistoryModule() {
+        return historyModule;
+    }
 }

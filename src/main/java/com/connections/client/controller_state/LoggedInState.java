@@ -8,6 +8,7 @@ import com.connections.common.protocol.server_responses.Status;
 
 /**
  * Represents the client state when a user is successfully authenticated (Logged In).
+ * In this state, the user can participate in active games, view history, and manage their account.
  */
 public class LoggedInState implements ControllerState {
 
@@ -49,14 +50,29 @@ public class LoggedInState implements ControllerState {
     // --- Formatting ---
     private static final String PROMPT_FORMAT = "[%s] > ";
 
+    /** The main controller acting as the context for the state. */
     private final Controller controller;
+
+    /** The username of the currently logged-in user. */
     private final String username;
 
+    /**
+     * Constructs a new LoggedInState for the given user.
+     * 
+     * @param controller the controller managing the client's state machine.
+     * @param username the name of the authenticated user.
+     */
     public LoggedInState(Controller controller, String username) {
         this.controller = controller;
         this.username = username;
     }
 
+    /**
+     * Handles user commands by delegating request creation to modules and 
+     * interacting with the server via the controller's TCP port.
+     * 
+     * @param tokens the command split into tokens.
+     */
     @Override
     public void handleCommand(String[] tokens) {
         String command = tokens[0].toLowerCase();
@@ -135,13 +151,31 @@ public class LoggedInState implements ControllerState {
         }
     }
 
+    /**
+     * Prints help documentation specific to the logged-in state.
+     */
     @Override
     public void printHelp() {
         System.out.println(HELP_MESSAGE);
     }
 
+    /**
+     * Returns the dynamic command prompt for the authenticated user.
+     * 
+     * @return the prompt string formatted with the username.
+     */
     @Override
     public String getPrompt() {
         return String.format(PROMPT_FORMAT, username);
+    }
+
+    @Override
+    public void onExit() {
+        try {
+            ClientRequest request = controller.getUserModule().prepareLogout();
+            controller.getTcpPort().sendRequest(request);
+        } catch (Exception ignored) {
+            // Silently fail as we are closing the application anyway
+        }
     }
 }

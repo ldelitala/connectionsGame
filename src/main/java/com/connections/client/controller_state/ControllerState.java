@@ -20,4 +20,9 @@ public interface ControllerState {
      * Returns the dynamic prompt for this state (e.g., "> " or "[user] > ").
      */
     String getPrompt();
+
+    /**
+     * Optional cleanup logic performed when the application exits while in this state.
+     */
+    void onExit();
 }

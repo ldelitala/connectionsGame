@@ -8,6 +8,7 @@ import com.connections.common.protocol.server_responses.Status;
 
 /**
  * Represents the client state when the user is not authenticated (Logged Out).
+ * In this state, the user can only register or log in.
  */
 public class LoggedOutState implements ControllerState {
 
@@ -27,12 +28,24 @@ public class LoggedOutState implements ControllerState {
     private static final int USERNAME_INDEX = 1;
     private static final int MIN_TOKENS_FOR_USERNAME = 2;
 
+    /** The main controller acting as the context for the state. */
     private final Controller controller;
 
+    /**
+     * Constructs a new LoggedOutState.
+     * 
+     * @param controller the controller managing the client's state machine.
+     */
     public LoggedOutState(Controller controller) {
         this.controller = controller;
     }
 
+    /**
+     * Handles registration and login commands. 
+     * Transitions to LoggedInState if login is successful.
+     * 
+     * @param tokens the command split into tokens.
+     */
     @Override
     public void handleCommand(String[] tokens) {
         String command = tokens[CMD_INDEX].toLowerCase();
@@ -72,13 +85,26 @@ public class LoggedOutState implements ControllerState {
         }
     }
 
+    /**
+     * Prints help documentation specific to the logged-out state.
+     */
     @Override
     public void printHelp() {
         System.out.println(HELP_MESSAGE);
     }
 
+    /**
+     * Returns the static prompt for the logged-out state.
+     * 
+     * @return the "> " prompt string.
+     */
     @Override
     public String getPrompt() {
         return PROMPT;
+    }
+
+    @Override
+    public void onExit() {
+        // No session cleanup needed when logged out
     }
 }
