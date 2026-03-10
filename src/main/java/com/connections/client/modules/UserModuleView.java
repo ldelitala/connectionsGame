@@ -3,33 +3,29 @@ package com.connections.client.modules;
 import com.connections.common.protocol.client_requests.ClientRequest;
 import com.connections.common.protocol.client_requests.UserRequest;
 import com.connections.common.protocol.server_responses.ServerResponse;
-import java.util.Scanner;
 
 /**
  * Handles account-related request creation and response display.
  */
 public class UserModuleView implements ModuleView {
 
-    // --- Prompts ---
-    private static final String PROMPT_OLD_PASSWORD = "Enter current password (required): ";
-    private static final String PROMPT_NEW_USERNAME = "Enter new username (leave empty to skip): ";
-    private static final String PROMPT_NEW_PASSWORD = "Enter new password (leave empty to skip): ";
+    // --- Placeholders ---
+    private static final String NO_CHANGE = "-";
 
     // --- Indices ---
     private static final int INDEX_USERNAME = 1;
     private static final int INDEX_PASSWORD = 2;
+    private static final int INDEX_OLD_PASSWORD = 1;
+    private static final int INDEX_NEW_USERNAME = 2;
+    private static final int INDEX_NEW_PASSWORD = 3;
+    
     private static final int MIN_TOKENS_AUTH = 3;
+    private static final int MIN_TOKENS_UPDATE = 4;
 
-    private final Scanner scanner;
     private final int udpPort;
 
-    public UserModuleView(Scanner scanner, int udpPort) {
-        this.scanner = scanner;
+    public UserModuleView(int udpPort) {
         this.udpPort = udpPort;
-    }
-
-    public Scanner getScanner() {
-        return scanner;
     }
 
     public ClientRequest prepareRegister(String[] tokens) {
@@ -60,23 +56,21 @@ public class UserModuleView implements ModuleView {
         return UserRequest.logout();
     }
 
-    public ClientRequest prepareUpdate(String currentUsername) {
-        System.out.print(PROMPT_OLD_PASSWORD);
-        String oldPassword = scanner.nextLine().trim();
-        if (oldPassword.isEmpty()) {
-            System.out.println("Old password is required to perform updates.");
+    public ClientRequest prepareUpdate(String currentUsername, String[] tokens) {
+        if (tokens.length < MIN_TOKENS_UPDATE) {
+            System.out.println("Usage: update <oldPassword> <newUsername> <newPassword>");
+            System.out.println("Use '" + NO_CHANGE + "' to keep a value unchanged.");
             return null;
         }
 
-        System.out.print(PROMPT_NEW_USERNAME);
-        String newUsername = scanner.nextLine().trim();
-        if (newUsername.isEmpty()) {
+        String oldPassword = tokens[INDEX_OLD_PASSWORD];
+        String newUsername = tokens[INDEX_NEW_USERNAME];
+        String newPassword = tokens[INDEX_NEW_PASSWORD];
+
+        if (newUsername.equals(NO_CHANGE)) {
             newUsername = null;
         }
-
-        System.out.print(PROMPT_NEW_PASSWORD);
-        String newPassword = scanner.nextLine().trim();
-        if (newPassword.isEmpty()) {
+        if (newPassword.equals(NO_CHANGE)) {
             newPassword = null;
         }
 

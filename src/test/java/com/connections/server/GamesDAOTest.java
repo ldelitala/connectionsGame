@@ -3,6 +3,7 @@ package com.connections.server;
 import com.connections.server.models.Game;
 import com.connections.common.models.WordGroup;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -27,14 +28,14 @@ public class GamesDAOTest {
     public void setup() throws IOException {
         gameFile = tempDir.resolve("games.json").toString();
         
-        // Create a small test games file
+        // Create a small test games file with pretty printing to ensure each '{' starts a line
         List<Game> games = Arrays.asList(
             new Game(101, Arrays.asList(new WordGroup("G1", Arrays.asList("A", "B", "C", "D")))),
             new Game(202, Arrays.asList(new WordGroup("G2", Arrays.asList("X", "Y", "Z", "W"))))
         );
         
         try (FileWriter writer = new FileWriter(gameFile)) {
-            new Gson().toJson(games, writer);
+            new GsonBuilder().setPrettyPrinting().create().toJson(games, writer);
         }
         
         gamesDAO = new GamesDAO(gameFile);

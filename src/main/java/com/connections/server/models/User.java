@@ -39,12 +39,16 @@ public class User {
         this.username = username;
     }
 
-    public boolean checkPassword(String password) {
-        return this.password.equals(password);
+    public String getPassword() {
+        return password;
     }
 
-    public void updatePassword(String newPassword) {
-        this.password = newPassword;
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public boolean checkPassword(String password) {
+        return this.password.equals(password);
     }
 
     // Statistic updates
@@ -67,8 +71,6 @@ public class User {
         losses++;
         totalScore += points;
         currentStreak = 0;
-        // If mistakes == 4, it's a loss by mistakes. If mistakes < 4 but game ended, it's DNF?
-        // Let's use 5 for DNF (Time out)
         int key = (mistakes >= 4) ? 4 : 5;
         mistakeHistogram.put(key, mistakeHistogram.getOrDefault(key, 0) + 1);
     }

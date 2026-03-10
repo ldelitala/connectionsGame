@@ -45,7 +45,7 @@ public class Controller {
     public Controller(TcpConnectionPort tcpPort, Scanner scanner, int udpPort) {
         this.tcpPort = tcpPort;
         this.scanner = scanner;
-        this.userModule = new UserModuleView(scanner, udpPort);
+        this.userModule = new UserModuleView(udpPort);
         this.gameModule = new GameModuleView();
         this.historyModule = new HistoryModuleView();
         // Initial state

@@ -45,7 +45,7 @@ public class UserManagerTest {
     @Test
     public void testPersistence() {
         userManager.register("charlie", "pass");
-        userManager.saveUsers();
+        userManager.saveUserData();
         
         // Load again from same file
         UserManager otherManager = new UserManager(persistenceFile);

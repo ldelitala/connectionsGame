@@ -8,6 +8,7 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Data Access Object for Game data.
@@ -30,12 +31,17 @@ public class GamesDAO {
             long pos = 0;
             String line;
             while ((line = raf.readLine()) != null) {
-                if (line.trim().startsWith("{") && line.contains("\"gameId\"")) {
+                String trimmed = line.trim();
+                // A game object in the provided JSON format starts with '{'
+                // We look for the start of an object that is likely a Game (contains gameId on next lines)
+                // To be safe and fast, we just index every line starting with '{' 
+                // and verify it's a game when reading.
+                if (trimmed.equals("{")) {
                     gameOffsets.add(pos);
                 }
                 pos = raf.getFilePointer();
             }
-            System.out.println("Indexed " + gameOffsets.size() + " games.");
+            System.out.println("Indexed " + gameOffsets.size() + " potential games.");
         } catch (IOException e) {
             System.err.println("Critical error building game index: " + e.getMessage());
         }
@@ -43,17 +49,22 @@ public class GamesDAO {
 
     public synchronized Game getNextGame() {
         if (gameOffsets.isEmpty()) return null;
-        if (nextGameIndex >= gameOffsets.size()) {
-            System.out.println("All games have been played. Restarting from the first game.");
-            nextGameIndex = 0;
+        
+        Game game = null;
+        int attempts = 0;
+        while (game == null && attempts < gameOffsets.size()) {
+            if (nextGameIndex >= gameOffsets.size()) {
+                System.out.println("End of game list. Restarting from the first game.");
+                nextGameIndex = 0;
+            }
+            game = getGameByOffset(gameOffsets.get(nextGameIndex));
+            nextGameIndex++;
+            attempts++;
         }
-        Game game = getGameByOffset(gameOffsets.get(nextGameIndex));
-        nextGameIndex++;
         return game;
     }
 
     public Game getGameById(int id) {
-        // Simplified: in a real scenario we'd use a Map<Id, Offset>
         for (Long offset : gameOffsets) {
             Game g = getGameByOffset(offset);
             if (g != null && g.getGameId() == id) return g;
@@ -65,7 +76,6 @@ public class GamesDAO {
         try (RandomAccessFile raf = new RandomAccessFile(filePath, "r")) {
             raf.seek(offset);
             
-            // Read until the end of the JSON object
             StringBuilder sb = new StringBuilder();
             int balance = 0;
             boolean started = false;
@@ -75,13 +85,19 @@ public class GamesDAO {
                 if (charC == '{') {
                     balance++;
                     started = true;
+                } else if (charC == '}') {
+                    balance--;
                 }
-                if (charC == '}') balance--;
                 
                 if (started) sb.append(charC);
                 if (started && balance == 0) break;
             }
-            return gson.fromJson(sb.toString(), Game.class);
+            
+            String json = sb.toString();
+            if (json.contains("\"gameId\"")) {
+                return gson.fromJson(json, Game.class);
+            }
+            return null;
         } catch (IOException e) {
             System.err.println("Error reading game at offset " + offset + ": " + e.getMessage());
             return null;
@@ -90,5 +106,21 @@ public class GamesDAO {
 
     public Game getGame(int gameId) {
         return getGameById(gameId);
+    }
+
+    public int getNumGames() {
+        // Return count of valid games
+        return (int) gameOffsets.stream()
+                .map(this::getGameByOffset)
+                .filter(java.util.Objects::nonNull)
+                .count();
+    }
+
+    public List<Integer> getAllGameIds() {
+        return gameOffsets.stream()
+                .map(this::getGameByOffset)
+                .filter(java.util.Objects::nonNull)
+                .map(Game::getGameId)
+                .collect(Collectors.toList());
     }
 }

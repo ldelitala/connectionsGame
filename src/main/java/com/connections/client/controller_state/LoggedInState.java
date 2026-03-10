@@ -3,6 +3,7 @@ package com.connections.client.controller_state;
 import com.connections.client.Controller;
 import com.connections.client.modules.ModuleView;
 import com.connections.common.protocol.client_requests.ClientRequest;
+import com.connections.common.protocol.client_requests.UserRequest;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 
@@ -15,8 +16,6 @@ public class LoggedInState implements ControllerState {
     // --- Commands: Account ---
     private static final String CMD_LOGOUT = "logout";
     private static final String CMD_UPDATE = "update";
-    // todo: check update command consistency with internal login state
-
 
     // --- Commands: Active Game ---
     private static final String CMD_SUBMIT = "submit";
@@ -47,7 +46,7 @@ public class LoggedInState implements ControllerState {
         "  ranking [k] [u]   : View top players or a specific user's rank\n" +
         "  history           : View your personal overall statistics\n" +
         "\nAccount:\n" +
-        "  update            : Change your username or password\n" + 
+        "  update <oP> <nU> <nP> : Change your username or password (use '-' to skip)\n" + 
         "  logout            : Sign out of your account\n";
     // @formatter:on
 
@@ -82,7 +81,8 @@ public class LoggedInState implements ControllerState {
         String command = tokens[0].toLowerCase();
         ClientRequest request = null;
         ModuleView activeModule = null;
-        boolean trylogout = false;
+        boolean tryLogout = false;
+        boolean tryUpdate = false;
 
         switch (command) {
 
@@ -90,11 +90,12 @@ public class LoggedInState implements ControllerState {
             case CMD_LOGOUT:
                 request = controller.getUserModule().prepareLogout();
                 activeModule = controller.getUserModule();
-                trylogout = true;
+                tryLogout = true;
                 break;
             case CMD_UPDATE:
-                request = controller.getUserModule().prepareUpdate(username);
+                request = controller.getUserModule().prepareUpdate(username, tokens);
                 activeModule = controller.getUserModule();
+                tryUpdate = true;
                 break;
 
             // --- ACTIVE GAME ---
@@ -146,12 +147,12 @@ public class LoggedInState implements ControllerState {
                 ServerResponse<?> response = controller.getTcpPort().sendRequest(request);
                 activeModule.displayResponse(response);
 
-                if (trylogout && response.getStatus() == Status.OK) {
+                if (tryLogout && response.getStatus() == Status.OK) {
                     controller.changeState(new LoggedOutState(controller));
                 }
 
                 // Update local username if changed successfully
-                if (command.equals(CMD_UPDATE) && response.getStatus() == Status.OK) {
+                if (tryUpdate && response.getStatus() == Status.OK) {
                     UserRequest userReq = (UserRequest) request;
                     if (userReq.getNewName() != null) {
                         this.username = userReq.getNewName();
