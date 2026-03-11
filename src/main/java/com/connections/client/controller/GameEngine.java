@@ -1,7 +1,7 @@
 package com.connections.client.controller;
 
 import com.connections.client.network.NetworkGateway;
-import com.connections.client.adapters.*;
+import com.connections.client.controller.adapters.*;
 import com.connections.client.controller.state.*;
 import com.connections.client.ui.ClientView;
 import com.connections.client.ui.InputProvider;

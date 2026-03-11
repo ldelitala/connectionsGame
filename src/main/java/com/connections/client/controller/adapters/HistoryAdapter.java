@@ -1,4 +1,4 @@
-package com.connections.client.adapters;
+package com.connections.client.controller.adapters;
 
 import com.connections.client.network.NetworkGateway;
 import com.connections.client.ui.ClientView;
