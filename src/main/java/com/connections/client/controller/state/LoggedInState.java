@@ -1,25 +1,15 @@
 package com.connections.client.controller.state;
 
 import com.connections.client.controller.GameEngine;
-import com.connections.common.protocol.client_requests.ClientRequest;
-import com.connections.common.protocol.client_requests.UserRequest;
+import com.connections.common.protocol.client_requests.*;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
+import java.util.List;
 
 /**
- * State for logged-in players.
+ * State for players who are authenticated and can participate in puzzles.
  */
 public class LoggedInState implements EngineState {
-
-    private static final String CMD_LOGOUT = "logout";
-    private static final String CMD_UPDATE = "update";
-    private static final String CMD_GUESS = "guess";
-    private static final String CMD_BOARD = "board";
-    private static final String CMD_STATS = "stats";
-    private static final String CMD_INFO = "info";
-    private static final String CMD_GLOBAL = "global";
-    private static final String CMD_RANKING = "ranking";
-    private static final String CMD_HISTORY = "history";
 
     private static final String HELP_MESSAGE = 
         "\n--- AVAILABLE COMMANDS (Logged In) ---\n" +
@@ -33,120 +23,84 @@ public class LoggedInState implements EngineState {
     private final GameEngine engine;
     private String username;
 
-    /**
-     * Initializes a new state for a logged-in user.
-     *
-     * @param engine   The parent GameEngine.
-     * @param username The username of the authenticated player.
-     */
     public LoggedInState(GameEngine engine, String username) {
         this.engine = engine;
         this.username = username;
     }
 
-    /**
-     * Handles commands available to authenticated users, delegating to the appropriate service.
-     * Supports gameplay, account updates, and history queries.
-     *
-     * @param tokens The command split into tokens.
-     */
     @Override
-    public void handleCommand(String[] tokens) {
-        String command = tokens[0].toLowerCase();
-        ClientRequest request = null;
-        Object service = null;
-
-        switch (command) {
-            case CMD_LOGOUT:
-                request = engine.getIdentityService().prepareLogout();
-                service = engine.getIdentityService();
-                break;
-            case CMD_UPDATE:
-                request = engine.getIdentityService().prepareUpdate(username, tokens);
-                service = engine.getIdentityService();
-                break;
-            case CMD_GUESS:
-                request = engine.getGameplayService().prepareSubmit(tokens);
-                service = engine.getGameplayService();
-                break;
-            case CMD_BOARD:
-                request = engine.getGameplayService().prepareStatus();
-                service = engine.getGameplayService();
-                break;
-            case CMD_STATS:
-                request = engine.getGameplayService().prepareStats();
-                service = engine.getGameplayService();
-                break;
-            case CMD_INFO:
-                request = engine.getArchiveService().preparePastInfo(tokens);
-                service = engine.getArchiveService();
-                break;
-            case CMD_GLOBAL:
-                request = engine.getArchiveService().prepareGlobalStats(tokens);
-                service = engine.getArchiveService();
-                break;
-            case CMD_RANKING:
-                request = engine.getArchiveService().prepareRanking(tokens);
-                service = engine.getArchiveService();
-                break;
-            case CMD_HISTORY:
-                request = engine.getArchiveService().prepareHistory();
-                service = engine.getArchiveService();
-                break;
-            default:
-                engine.getView().showMessage("Unknown command.");
-                return;
-        }
-
-        if (request != null) {
-            try {
-                ServerResponse<?> response = engine.getGateway().sendRequest(request);
-                
-                if (service instanceof com.connections.client.services.IdentityService) {
-                    ((com.connections.client.services.IdentityService) service).handleResponse(response);
-                    if (CMD_LOGOUT.equals(command) && response.getStatus() == Status.OK) {
-                        engine.changeState(new LoggedOutState(engine));
-                    } else if (CMD_UPDATE.equals(command) && response.getStatus() == Status.OK) {
-                        UserRequest userReq = (UserRequest) request;
-                        if (userReq.getNewName() != null) this.username = userReq.getNewName();
-                    }
-                } else if (service instanceof com.connections.client.services.GameplayService) {
-                    ((com.connections.client.services.GameplayService) service).handleResponse(response);
-                } else if (service instanceof com.connections.client.services.ArchiveService) {
-                    ((com.connections.client.services.ArchiveService) service).handleResponse(response);
-                }
-
-            } catch (Exception e) {
-                engine.getView().showError(e.getMessage());
-            }
+    public void onLogout() {
+        ClientRequest request = engine.getIdentityService().prepareLogout();
+        if (executeRequest(request, engine.getIdentityService()) && lastStatusOk(request)) {
+            engine.changeState(new LoggedOutState(engine));
         }
     }
 
-    /**
-     * Displays the authenticated user's command menu.
-     */
     @Override
-    public void printHelp() {
-        engine.getView().showMessage(HELP_MESSAGE);
+    public void onUpdateCredentials(String oldPass, String newName, String newPass) {
+        String[] tokens = new String[]{"update", oldPass, newName, newPass};
+        ClientRequest request = engine.getIdentityService().prepareUpdate(username, tokens);
+        if (executeRequest(request, engine.getIdentityService()) && lastStatusOk(request)) {
+            UserRequest userReq = (UserRequest) request;
+            if (userReq.getNewName() != null) this.username = userReq.getNewName();
+        }
     }
 
-    /**
-     * Returns a prompt including the current username.
-     *
-     * @return The user-specific prompt.
-     */
     @Override
-    public String getPrompt() {
-        return String.format("[%s] > ", username);
+    public void onGuess(List<String> words) {
+        // Mocking tokens for legacy preparation method
+        String[] tokens = new String[words.size() + 1];
+        tokens[0] = "guess";
+        for(int i=0; i<words.size(); i++) tokens[i+1] = words.get(i);
+        
+        ClientRequest request = engine.getGameplayService().prepareSubmit(tokens);
+        executeRequest(request, engine.getGameplayService());
     }
 
-    /**
-     * Attempts to gracefully log out the user from the server before exiting.
-     */
+    @Override public void onRequestBoard() { executeRequest(engine.getGameplayService().prepareStatus(), engine.getGameplayService()); }
+    @Override public void onRequestStats() { executeRequest(engine.getGameplayService().prepareStats(), engine.getGameplayService()); }
+    
     @Override
-    public void onExit() {
+    public void onRequestPastInfo(int puzzleId) {
+        ClientRequest request = engine.getArchiveService().preparePastInfo(new String[]{"info", String.valueOf(puzzleId)});
+        executeRequest(request, engine.getArchiveService());
+    }
+
+    @Override
+    public void onRequestGlobalStats(int puzzleId) {
+        ClientRequest request = engine.getArchiveService().prepareGlobalStats(new String[]{"global", String.valueOf(puzzleId)});
+        executeRequest(request, engine.getArchiveService());
+    }
+
+    @Override
+    public void onRequestRanking(String username, Integer topK) {
+        String[] tokens = (topK != null) ? new String[]{"ranking", "-top", String.valueOf(topK)} : new String[]{"ranking", username};
+        ClientRequest request = engine.getArchiveService().prepareRanking(tokens);
+        executeRequest(request, engine.getArchiveService());
+    }
+
+    @Override public void onRequestHistory() { executeRequest(engine.getArchiveService().prepareHistory(), engine.getArchiveService()); }
+
+    // Helpers
+    private boolean executeRequest(ClientRequest request, Object service) {
+        if (request == null) return false;
         try {
-            engine.getGateway().sendRequest(engine.getIdentityService().prepareLogout());
-        } catch (Exception ignored) {}
+            ServerResponse<?> response = engine.getGateway().sendRequest(request);
+            if (service instanceof com.connections.client.services.IdentityService) ((com.connections.client.services.IdentityService) service).handleResponse(response);
+            else if (service instanceof com.connections.client.services.GameplayService) ((com.connections.client.services.GameplayService) service).handleResponse(response);
+            else if (service instanceof com.connections.client.services.ArchiveService) ((com.connections.client.services.ArchiveService) service).handleResponse(response);
+            return response.getStatus() == Status.OK;
+        } catch (Exception e) {
+            engine.getView().showError(e.getMessage());
+            return false;
+        }
     }
+
+    private boolean lastStatusOk(ClientRequest request) { return true; /* Already checked in executeRequest */ }
+
+    @Override public void onRegister(String u, String p) { engine.getView().showMessage("Already logged in."); }
+    @Override public void onLogin(String u, String p) { engine.getView().showMessage("Already logged in."); }
+    @Override public void printHelp() { engine.getView().showMessage(HELP_MESSAGE); }
+    @Override public String getPrompt() { return String.format("[%s] > ", username); }
+    @Override public void onExit() { try { engine.getGateway().sendRequest(engine.getIdentityService().prepareLogout()); } catch (Exception ignored) {} }
 }

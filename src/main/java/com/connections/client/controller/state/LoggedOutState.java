@@ -4,14 +4,12 @@ import com.connections.client.controller.GameEngine;
 import com.connections.common.protocol.client_requests.ClientRequest;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
+import java.util.List;
 
 /**
- * State for logged-out users.
+ * State for players who are not authenticated.
  */
 public class LoggedOutState implements EngineState {
-
-    private static final String CMD_REGISTER = "register";
-    private static final String CMD_LOGIN = "login";
 
     private static final String HELP_MESSAGE = 
         "\n--- AVAILABLE COMMANDS (Logged Out) ---\n" +
@@ -20,75 +18,46 @@ public class LoggedOutState implements EngineState {
 
     private final GameEngine engine;
 
-    /**
-     * Initializes a new state for a guest user.
-     *
-     * @param engine The parent GameEngine.
-     */
     public LoggedOutState(GameEngine engine) {
         this.engine = engine;
     }
 
-    /**
-     * Handles commands for registration and login.
-     * Switches state to {@link LoggedInState} upon successful authentication.
-     *
-     * @param tokens The command split into tokens.
-     */
     @Override
-    public void handleCommand(String[] tokens) {
-        String command = tokens[0].toLowerCase();
-        ClientRequest request = null;
-        boolean isLogin = false;
+    public void onRegister(String username, String password) {
+        ClientRequest request = engine.getIdentityService().prepareRegister(new String[]{"register", username, password});
+        executeRequest(request, false, username);
+    }
 
-        switch (command) {
-            case CMD_REGISTER:
-                request = engine.getIdentityService().prepareRegister(tokens);
-                break;
-            case CMD_LOGIN:
-                request = engine.getIdentityService().prepareLogin(tokens, engine.getUdpPort());
-                isLogin = true;
-                break;
-            default:
-                engine.getView().showMessage("Please login or register first.");
-                return;
-        }
+    @Override
+    public void onLogin(String username, String password) {
+        ClientRequest request = engine.getIdentityService().prepareLogin(new String[]{"login", username, password}, engine.getUdpPort());
+        executeRequest(request, true, username);
+    }
 
-        if (request != null) {
-            try {
-                ServerResponse<?> response = engine.getGateway().sendRequest(request);
-                engine.getIdentityService().handleResponse(response);
-
-                if (isLogin && response.getStatus() == Status.OK) {
-                    engine.changeState(new LoggedInState(engine, tokens[1]));
-                }
-            } catch (Exception e) {
-                engine.getView().showError(e.getMessage());
+    private void executeRequest(ClientRequest request, boolean isLogin, String username) {
+        if (request == null) return;
+        try {
+            ServerResponse<?> response = engine.getGateway().sendRequest(request);
+            engine.getIdentityService().handleResponse(response);
+            if (isLogin && response.getStatus() == Status.OK) {
+                engine.changeState(new LoggedInState(engine, username));
             }
+        } catch (Exception e) {
+            engine.getView().showError(e.getMessage());
         }
     }
 
-    /**
-     * Displays the guest user's command menu.
-     */
-    @Override
-    public void printHelp() {
-        engine.getView().showMessage(HELP_MESSAGE);
-    }
+    @Override public void onLogout() { engine.getView().showMessage("You are not logged in."); }
+    @Override public void onUpdateCredentials(String oP, String nU, String nP) { engine.getView().showMessage("Please login first."); }
+    @Override public void onGuess(List<String> words) { engine.getView().showMessage("Please login first."); }
+    @Override public void onRequestBoard() { engine.getView().showMessage("Please login first."); }
+    @Override public void onRequestStats() { engine.getView().showMessage("Please login first."); }
+    @Override public void onRequestPastInfo(int id) { engine.getView().showMessage("Please login first."); }
+    @Override public void onRequestGlobalStats(int id) { engine.getView().showMessage("Please login first."); }
+    @Override public void onRequestRanking(String u, Integer k) { engine.getView().showMessage("Please login first."); }
+    @Override public void onRequestHistory() { engine.getView().showMessage("Please login first."); }
 
-    /**
-     * Returns the generic guest prompt.
-     *
-     * @return The guest prompt.
-     */
-    @Override
-    public String getPrompt() {
-        return "> ";
-    }
-
-    /**
-     * No cleanup required for guest users.
-     */
-    @Override
-    public void onExit() {}
+    @Override public void printHelp() { engine.getView().showMessage(HELP_MESSAGE); }
+    @Override public String getPrompt() { return "> "; }
+    @Override public void onExit() {}
 }

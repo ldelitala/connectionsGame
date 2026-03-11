@@ -1,35 +1,32 @@
 package com.connections.client.controller.state;
 
-import com.connections.client.controller.GameEngine;
+import java.util.List;
 
 /**
- * Interface representing a distinct operational state of the Game Engine (e.g., Logged In, Logged Out).
- * Encapsulates the state-specific logic for command handling, user feedback, and lifecycle management,
- * following the State design pattern.
+ * Interface for Game Engine states. Defines how the engine reacts to specific 
+ * user actions in different contexts (LoggedOut vs LoggedIn).
  */
 public interface EngineState {
-    /**
-     * Processes a user command according to the rules and permissions of the current state.
-     * 
-     * @param tokens The command and its arguments split into a string array.
-     */
-    void handleCommand(String[] tokens);
+    
+    // Auth actions
+    void onRegister(String username, String password);
+    void onLogin(String username, String password);
+    void onLogout();
+    void onUpdateCredentials(String oldPass, String newName, String newPass);
 
-    /**
-     * Displays a help menu containing only the commands available in this specific state.
-     */
+    // Gameplay actions
+    void onGuess(List<String> words);
+    void onRequestBoard();
+    void onRequestStats();
+
+    // Archive actions
+    void onRequestPastInfo(int puzzleId);
+    void onRequestGlobalStats(int puzzleId);
+    void onRequestRanking(String username, Integer topK);
+    void onRequestHistory();
+
+    // General
     void printHelp();
-
-    /**
-     * Retrieves the visual command prompt string associated with this state.
-     * 
-     * @return The state-specific prompt (e.g., "> " or "[username] > ").
-     */
     String getPrompt();
-
-    /**
-     * Performs necessary cleanup or final server notifications before the application terminates.
-     * This is invoked when the user issues an 'exit' command.
-     */
     void onExit();
 }

@@ -5,17 +5,13 @@ import com.connections.client.services.*;
 import com.connections.client.controller.state.*;
 import com.connections.client.ui.ClientView;
 import com.connections.client.ui.InputProvider;
+import java.util.List;
 
 /**
  * The Game Engine: The central reactive hub of the application.
- * It operates on a "Command Protocol": it receives normalized command strings
- * and delegates their execution to the current EngineState.
+ * It reacts to explicit actions received from an InputProvider.
  */
 public class GameEngine implements InputProvider.InputListener {
-
-    private static final String CMD_EXIT = "exit";
-    private static final String CMD_HELP = "help";
-    private static final String REGEX_WHITESPACE = "\\s+";
 
     private static final String SYSTEM_HELP = 
         "\nSystem:\n" +
@@ -33,14 +29,6 @@ public class GameEngine implements InputProvider.InputListener {
 
     private EngineState currentState;
 
-    /**
-     * Initializes a new GameEngine with necessary infrastructure components.
-     *
-     * @param gateway The network gateway for server communication.
-     * @param udpPort The local UDP port used for incoming notifications.
-     * @param view The UI component for displaying information.
-     * @param inputProvider The source of user input.
-     */
     public GameEngine(NetworkGateway gateway, int udpPort, ClientView view, InputProvider inputProvider) {
         this.gateway = gateway;
         this.udpPort = udpPort;
@@ -52,69 +40,107 @@ public class GameEngine implements InputProvider.InputListener {
         this.currentState = new LoggedOutState(this);
     }
 
-    /**
-     * Starts the game engine's main execution loop.
-     * Displays the initial prompt and starts the input listener.
-     */
     public void run() {
         view.renderPrompt(currentState.getPrompt());
         inputProvider.startListening(this);
     }
 
-    /**
-     * Processes input strings received from the {@link InputProvider}.
-     * Handles system-level commands like 'help' and 'exit' before delegating
-     * state-specific commands to the current {@link EngineState}.
-     *
-     * @param data The raw input line from the user.
-     */
+    // --- Action Implementations (Delegating to State) ---
+
     @Override
-    public void onInput(String data) {
-        String line = data.trim();
-        if (line.isEmpty()) return;
+    public void onRegister(String username, String password) {
+        currentState.onRegister(username, password);
+        postAction();
+    }
 
-        if (line.equalsIgnoreCase(CMD_EXIT)) {
-            view.showMessage("Exiting Engine...");
-            currentState.onExit();
-            inputProvider.stop();
-            return;
-        }
+    @Override
+    public void onLogin(String username, String password) {
+        currentState.onLogin(username, password);
+        postAction();
+    }
 
-        if (line.equalsIgnoreCase(CMD_HELP)) {
-            currentState.printHelp();
-            view.showMessage(SYSTEM_HELP);
-        } else {
-            String[] tokens = line.split(REGEX_WHITESPACE);
-            currentState.handleCommand(tokens);
-        }
-        
+    @Override
+    public void onLogout() {
+        currentState.onLogout();
+        postAction();
+    }
+
+    @Override
+    public void onUpdateCredentials(String oldPass, String newName, String newPass) {
+        currentState.onUpdateCredentials(oldPass, newName, newPass);
+        postAction();
+    }
+
+    @Override
+    public void onGuess(List<String> words) {
+        currentState.onGuess(words);
+        postAction();
+    }
+
+    @Override
+    public void onRequestBoard() {
+        currentState.onRequestBoard();
+        postAction();
+    }
+
+    @Override
+    public void onRequestStats() {
+        currentState.onRequestStats();
+        postAction();
+    }
+
+    @Override
+    public void onRequestPastInfo(int puzzleId) {
+        currentState.onRequestPastInfo(puzzleId);
+        postAction();
+    }
+
+    @Override
+    public void onRequestGlobalStats(int puzzleId) {
+        currentState.onRequestGlobalStats(puzzleId);
+        postAction();
+    }
+
+    @Override
+    public void onRequestRanking(String username, Integer topK) {
+        currentState.onRequestRanking(username, topK);
+        postAction();
+    }
+
+    @Override
+    public void onRequestHistory() {
+        currentState.onRequestHistory();
+        postAction();
+    }
+
+    @Override
+    public void onHelp() {
+        currentState.printHelp();
+        view.showMessage(SYSTEM_HELP);
+        postAction();
+    }
+
+    @Override
+    public void onExit() {
+        view.showMessage("Exiting Engine...");
+        currentState.onExit();
+        inputProvider.stop();
+    }
+
+    /** Helper to restore prompt after an action */
+    private void postAction() {
         view.renderPrompt(currentState.getPrompt());
     }
 
-    /**
-     * Changes the current active state of the game engine.
-     *
-     * @param newState The new {@link EngineState} to transition to.
-     */
     public void changeState(EngineState newState) {
         this.currentState = newState;
     }
 
-    /** @return The network gateway used by the engine. */
+    // Getters for infrastructure
     public NetworkGateway getGateway() { return gateway; }
-    
-    /** @return The local UDP port used for server notifications. */
     public int getUdpPort() { return udpPort; }
-    
-    /** @return The UI view interface. */
     public ClientView getView() { return view; }
-    
-    /** @return The service for identity and account management. */
     public IdentityService getIdentityService() { return identityService; }
-    
-    /** @return The service for active game logic and status. */
     public GameplayService getGameplayService() { return gameplayService; }
-    
-    /** @return The service for historical data and rankings. */
     public ArchiveService getArchiveService() { return archiveService; }
 }
