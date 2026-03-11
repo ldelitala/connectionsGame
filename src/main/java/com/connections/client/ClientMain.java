@@ -6,7 +6,6 @@ import com.connections.client.controller.GameEngine;
 import com.connections.client.ui.*;
 import com.connections.client.ui.console.*;
 import java.io.IOException;
-import java.util.Scanner;
 
 /**
  * Main entry point for the 100% Modular MVC Game Client.
@@ -21,9 +20,10 @@ public class ClientMain {
 
         view.showMessage("Welcome to Connections Engine!");
 
-        try (Scanner scanner = new Scanner(System.in);
-                NetworkGateway gateway = new NetworkGateway(config.getServerHost(), config.getServerPort());
-                NotificationService notificationService = new NotificationService(config.getUdpPort(), view)) {
+        // try-with-resources manages the lifecycle of the network and the input provider.
+        try (NetworkGateway gateway = new NetworkGateway(config.getServerHost(), config.getServerPort());
+                NotificationService notificationService = new NotificationService(config.getUdpPort(), view);
+                CommandProvider inputProvider = new ConsoleCommandProvider()) {
 
             view.showMessage("Connected to server: " + config.getServerHost() + ":" + config.getServerPort());
 
@@ -31,13 +31,10 @@ public class ClientMain {
             int actualUdpPort = notificationService.getLocalPort();
             view.showMessage("Notification service active on port " + actualUdpPort);
 
-            // 2. Setup the Input provider
-            CommandProvider inputProvider = new ConsoleCommandProvider(scanner);
-
-            // 3. Setup the Game Engine (Connects Network, Input, and View)
+            // 2. Setup the Game Engine (Connects Network, Input, and View)
             GameEngine engine = new GameEngine(gateway, actualUdpPort, view, inputProvider);
             
-            // 4. Run the Engine
+            // 3. Run the Engine (Blocking call until exit)
             engine.run();
 
         } catch (IOException e) {

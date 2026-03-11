@@ -4,15 +4,17 @@ package com.connections.client.ui;
  * Interface for a source of user commands.
  * This can be a CLI loop with Scanner, or a GUI button event.
  */
-public interface CommandProvider {
+public interface CommandProvider extends AutoCloseable {
     /**
      * Starts providing commands to the listener.
-     * In CLI, this would be the while(true) loop.
      */
     void startProviding(CommandListener listener);
     
     /** Stops providing commands. */
     void stop();
+
+    @Override
+    void close();
 
     /** Listener interface to receive commands from the provider. */
     interface CommandListener {
