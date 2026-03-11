@@ -24,16 +24,16 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onLogout() {
-        ClientRequest request = engine.getIdentityAdapter().prepareLogout();
-        if (executeRequest(request, engine.getIdentityAdapter())) {
+        ClientRequest request = engine.getUserAdapter().prepareLogout();
+        if (executeRequest(request, engine.getUserAdapter())) {
             engine.changeState(new LoggedOutState(engine));
         }
     }
 
     @Override
     public void onUpdateCredentials(String oldPass, String newName, String newPass) {
-        ClientRequest request = engine.getIdentityAdapter().prepareUpdate(username, oldPass, newName, newPass);
-        if (executeRequest(request, engine.getIdentityAdapter())) {
+        ClientRequest request = engine.getUserAdapter().prepareUpdate(username, oldPass, newName, newPass);
+        if (executeRequest(request, engine.getUserAdapter())) {
             if (newName != null && !"-".equals(newName)) this.username = newName;
         }
     }
@@ -67,7 +67,7 @@ public class LoggedInState implements EngineState {
         if (request == null) return false;
         try {
             ServerResponse<?> response = engine.getGateway().sendRequest(request);
-            if (adapter instanceof com.connections.client.adapters.IdentityAdapter) ((com.connections.client.adapters.IdentityAdapter) adapter).handleResponse(response);
+            if (adapter instanceof com.connections.client.adapters.UserAdapter) ((com.connections.client.adapters.UserAdapter) adapter).handleResponse(response);
             else if (adapter instanceof com.connections.client.adapters.GameplayAdapter) ((com.connections.client.adapters.GameplayAdapter) adapter).handleResponse(response);
             else if (adapter instanceof com.connections.client.adapters.HistoryAdapter) ((com.connections.client.adapters.HistoryAdapter) adapter).handleResponse(response);
             return response.getStatus() == Status.OK;
@@ -86,5 +86,5 @@ public class LoggedInState implements EngineState {
     }
 
     @Override public String getPrompt() { return String.format("[%s] > ", username); }
-    @Override public void onExit() { try { engine.getGateway().sendRequest(engine.getIdentityAdapter().prepareLogout()); } catch (Exception ignored) {} }
+    @Override public void onExit() { try { engine.getGateway().sendRequest(engine.getUserAdapter().prepareLogout()); } catch (Exception ignored) {} }
 }

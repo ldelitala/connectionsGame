@@ -8,11 +8,11 @@ import com.connections.common.protocol.server_responses.ServerResponse;
 /**
  * Handles account-related operations like registration, login, and updates.
  */
-public class IdentityAdapter {
+public class UserAdapter {
 
     private final ClientView view;
 
-    public IdentityAdapter(ClientView view) {
+    public UserAdapter(ClientView view) {
         this.view = view;
     }
 

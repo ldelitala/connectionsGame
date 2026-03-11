@@ -23,7 +23,7 @@ public class GameEngine implements InputProvider.InputListener {
     private final ClientView view;
     private final InputProvider inputProvider;
     
-    private final IdentityAdapter identityAdapter;
+    private final UserAdapter userAdapter;
     private final GameplayAdapter gameplayAdapter;
     private final HistoryAdapter historyAdapter;
 
@@ -34,7 +34,7 @@ public class GameEngine implements InputProvider.InputListener {
         this.udpPort = udpPort;
         this.view = view;
         this.inputProvider = inputProvider;
-        this.identityAdapter = new IdentityAdapter(view);
+        this.userAdapter = new UserAdapter(view);
         this.gameplayAdapter = new GameplayAdapter(view);
         this.historyAdapter = new HistoryAdapter(view);
         this.currentState = new LoggedOutState(this);
@@ -139,7 +139,7 @@ public class GameEngine implements InputProvider.InputListener {
     public NetworkGateway getGateway() { return gateway; }
     public int getUdpPort() { return udpPort; }
     public ClientView getView() { return view; }
-    public IdentityAdapter getIdentityAdapter() { return identityAdapter; }
+    public UserAdapter getUserAdapter() { return userAdapter; }
     public GameplayAdapter getGameplayAdapter() { return gameplayAdapter; }
     public HistoryAdapter getHistoryAdapter() { return historyAdapter; }
 }

@@ -19,13 +19,13 @@ public class LoggedOutState implements EngineState {
 
     @Override
     public void onRegister(String username, String password) {
-        ClientRequest request = engine.getIdentityAdapter().prepareRegister(username, password);
+        ClientRequest request = engine.getUserAdapter().prepareRegister(username, password);
         executeRequest(request, false, username);
     }
 
     @Override
     public void onLogin(String username, String password) {
-        ClientRequest request = engine.getIdentityAdapter().prepareLogin(username, password, engine.getUdpPort());
+        ClientRequest request = engine.getUserAdapter().prepareLogin(username, password, engine.getUdpPort());
         executeRequest(request, true, username);
     }
 
@@ -33,7 +33,7 @@ public class LoggedOutState implements EngineState {
         if (request == null) return;
         try {
             ServerResponse<?> response = engine.getGateway().sendRequest(request);
-            engine.getIdentityAdapter().handleResponse(response);
+            engine.getUserAdapter().handleResponse(response);
             if (isLogin && response.getStatus() == Status.OK) {
                 engine.changeState(new LoggedInState(engine, username));
             }
