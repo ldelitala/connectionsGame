@@ -1,4 +1,4 @@
-package com.connections.client;
+package com.connections.client.network;
 
 import com.connections.client.ui.ClientView;
 import java.io.IOException;

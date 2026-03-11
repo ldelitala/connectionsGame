@@ -1,5 +1,8 @@
 package com.connections.client;
 
+import com.connections.client.network.UdpNotificationListener;
+import com.connections.client.network.TcpConnectionPort;
+import com.connections.client.controller.Controller;
 import com.connections.client.ui.*;
 import com.connections.client.ui.console.*;
 import java.io.IOException;

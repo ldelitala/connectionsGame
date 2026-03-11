@@ -1,6 +1,6 @@
-package com.connections.client.controller_state;
+package com.connections.client.controller.state;
 
-import com.connections.client.Controller;
+import com.connections.client.controller.Controller;
 import com.connections.common.protocol.client_requests.ClientRequest;
 import com.connections.common.protocol.client_requests.UserRequest;
 import com.connections.common.protocol.server_responses.ServerResponse;

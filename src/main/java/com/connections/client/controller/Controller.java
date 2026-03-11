@@ -1,7 +1,8 @@
-package com.connections.client;
+package com.connections.client.controller;
 
+import com.connections.client.network.TcpConnectionPort;
 import com.connections.client.modules.*;
-import com.connections.client.controller_state.*;
+import com.connections.client.controller.state.*;
 import com.connections.client.ui.ClientView;
 import com.connections.client.ui.CommandProvider;
 
@@ -42,18 +43,11 @@ public class Controller implements CommandProvider.CommandListener {
         this.currentState = new LoggedOutState(this);
     }
 
-    /**
-     * Starts the command flow by showing the initial prompt and 
-     * connecting the provider to this listener.
-     */
     public void run() {
         view.renderPrompt(currentState.getPrompt());
         commandProvider.startProviding(this);
     }
 
-    /**
-     * Callback method called every time a new command is received.
-     */
     @Override
     public void onCommand(String line) {
         if (line.equalsIgnoreCase(CMD_EXIT)) {
@@ -71,7 +65,6 @@ public class Controller implements CommandProvider.CommandListener {
             currentState.handleCommand(tokens);
         }
         
-        // After every command, render the next prompt
         view.renderPrompt(currentState.getPrompt());
     }
 
