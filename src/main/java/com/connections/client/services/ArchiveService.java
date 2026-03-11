@@ -1,4 +1,4 @@
-package com.connections.client.modules;
+package com.connections.client.services;
 
 import com.connections.client.ui.ClientView;
 import com.connections.common.dto.*;
@@ -8,7 +8,7 @@ import com.connections.common.protocol.server_responses.*;
 /**
  * Handles operations and display for past puzzles and global stats.
  */
-public class HistoryModule {
+public class ArchiveService {
 
     private static final int MIN_TOKENS_ARG = 2;
     private static final int INDEX_ARG_1 = 1;

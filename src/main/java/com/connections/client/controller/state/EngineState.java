@@ -1,12 +1,12 @@
 package com.connections.client.controller.state;
 
-import com.connections.client.controller.Controller;
+import com.connections.client.controller.GameEngine;
 
 /**
  * Interface for all client states (LoggedOut, LoggedIn).
  * Encapsulates behavior that changes based on session status.
  */
-public interface ControllerState {
+public interface EngineState {
     /**
      * Handles a user command.
      * 

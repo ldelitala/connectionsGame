@@ -1,4 +1,4 @@
-package com.connections.client.modules;
+package com.connections.client.services;
 
 import com.connections.client.ui.ClientView;
 import com.connections.common.protocol.client_requests.ClientRequest;
@@ -8,7 +8,7 @@ import com.connections.common.protocol.server_responses.ServerResponse;
 /**
  * Handles account-related request creation and response display.
  */
-public class UserModule {
+public class IdentityService {
 
     private static final String NO_CHANGE = "-";
     private static final int INDEX_USERNAME = 1;

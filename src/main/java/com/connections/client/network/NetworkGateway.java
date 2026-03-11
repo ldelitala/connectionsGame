@@ -14,7 +14,7 @@ import java.net.UnknownHostException;
 /**
  * Handles the low-level TCP connection and JSON communication with the server.
  */
-public class TcpConnectionPort implements AutoCloseable {
+public class NetworkGateway implements AutoCloseable {
 
     private static final String ERR_SERVER_CLOSED = "The server closed the connection.";
 
@@ -23,7 +23,7 @@ public class TcpConnectionPort implements AutoCloseable {
     private final BufferedReader in;
     private final Gson gson = new Gson();
 
-    public TcpConnectionPort(String host, int port) throws UnknownHostException, IOException {
+    public NetworkGateway(String host, int port) throws UnknownHostException, IOException {
         this.socket = new Socket(host, port);
         try {
             this.out = new PrintWriter(socket.getOutputStream(), true);

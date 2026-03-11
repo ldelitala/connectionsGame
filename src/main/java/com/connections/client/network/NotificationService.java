@@ -9,11 +9,11 @@ import java.net.SocketException;
 /**
  * Listens for asynchronous UDP notifications from the server.
  */
-public class UdpNotificationListener extends Thread implements AutoCloseable {
+public class NotificationService extends Thread implements AutoCloseable {
     private final DatagramSocket socket;
     private final ClientView view;
 
-    public UdpNotificationListener(int port, ClientView view) throws SocketException {
+    public NotificationService(int port, ClientView view) throws SocketException {
         this.socket = new DatagramSocket(port);
         this.view = view;
         setDaemon(true);

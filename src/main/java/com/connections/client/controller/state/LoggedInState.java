@@ -1,15 +1,15 @@
 package com.connections.client.controller.state;
 
-import com.connections.client.controller.Controller;
+import com.connections.client.controller.GameEngine;
 import com.connections.common.protocol.client_requests.ClientRequest;
 import com.connections.common.protocol.client_requests.UserRequest;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 
 /**
- * State for logged-in users.
+ * State for logged-in players.
  */
-public class LoggedInState implements ControllerState {
+public class LoggedInState implements EngineState {
 
     private static final String CMD_LOGOUT = "logout";
     private static final String CMD_UPDATE = "update";
@@ -25,22 +25,16 @@ public class LoggedInState implements ControllerState {
         "\n--- AVAILABLE COMMANDS (Logged In) ---\n" +
         "Active Puzzle:\n" +
         "  guess [w1-w4]     : Send a 4-word attempt\n" +
-        "  board             : View current puzzle board (mistakes, found categories)\n" +
-        "  stats             : View global participation stats for this puzzle\n" +
-        "\nHistory and Rankings:\n" +
-        "  info [id]         : View details and solution of a past puzzle\n" +
-        "  global [id]       : View global statistics of a past puzzle\n" +
-        "  ranking <u|-top k>: View rank of user <u> or top k players\n" +
-        "  history           : View your personal overall statistics\n" +
-        "\nAccount:\n" +
-        "  update <oP> <nU> <nP> : Change your username or password\n" + 
-        "  logout            : Sign out of your account\n";
+        "  board             : View current puzzle board\n" +
+        "  stats             : View global stats for this puzzle\n" +
+        "\nHistory: info, global, ranking, history\n" +
+        "Account: update, logout\n";
 
-    private final Controller controller;
+    private final GameEngine engine;
     private String username;
 
-    public LoggedInState(Controller controller, String username) {
-        this.controller = controller;
+    public LoggedInState(GameEngine engine, String username) {
+        this.engine = engine;
         this.username = username;
     }
 
@@ -48,77 +42,77 @@ public class LoggedInState implements ControllerState {
     public void handleCommand(String[] tokens) {
         String command = tokens[0].toLowerCase();
         ClientRequest request = null;
-        Object module = null;
+        Object service = null;
 
         switch (command) {
             case CMD_LOGOUT:
-                request = controller.getUserModule().prepareLogout();
-                module = controller.getUserModule();
+                request = engine.getIdentityService().prepareLogout();
+                service = engine.getIdentityService();
                 break;
             case CMD_UPDATE:
-                request = controller.getUserModule().prepareUpdate(username, tokens, controller.getView());
-                module = controller.getUserModule();
+                request = engine.getIdentityService().prepareUpdate(username, tokens, engine.getView());
+                service = engine.getIdentityService();
                 break;
             case CMD_GUESS:
-                request = controller.getGameModule().prepareSubmit(tokens, controller.getView());
-                module = controller.getGameModule();
+                request = engine.getGameplayService().prepareSubmit(tokens, engine.getView());
+                service = engine.getGameplayService();
                 break;
             case CMD_BOARD:
-                request = controller.getGameModule().prepareStatus();
-                module = controller.getGameModule();
+                request = engine.getGameplayService().prepareStatus();
+                service = engine.getGameplayService();
                 break;
             case CMD_STATS:
-                request = controller.getGameModule().prepareStats();
-                module = controller.getGameModule();
+                request = engine.getGameplayService().prepareStats();
+                service = engine.getGameplayService();
                 break;
             case CMD_INFO:
-                request = controller.getHistoryModule().preparePastInfo(tokens, controller.getView());
-                module = controller.getHistoryModule();
+                request = engine.getArchiveService().preparePastInfo(tokens, engine.getView());
+                service = engine.getArchiveService();
                 break;
             case CMD_GLOBAL:
-                request = controller.getHistoryModule().prepareGlobalStats(tokens, controller.getView());
-                module = controller.getHistoryModule();
+                request = engine.getArchiveService().prepareGlobalStats(tokens, engine.getView());
+                service = engine.getArchiveService();
                 break;
             case CMD_RANKING:
-                request = controller.getHistoryModule().prepareRanking(tokens, controller.getView());
-                module = controller.getHistoryModule();
+                request = engine.getArchiveService().prepareRanking(tokens, engine.getView());
+                service = engine.getArchiveService();
                 break;
             case CMD_HISTORY:
-                request = controller.getHistoryModule().prepareHistory();
-                module = controller.getHistoryModule();
+                request = engine.getArchiveService().prepareHistory();
+                service = engine.getArchiveService();
                 break;
             default:
-                controller.getView().showMessage("Unknown command. Type 'help' for assistance.");
+                engine.getView().showMessage("Unknown command.");
                 return;
         }
 
         if (request != null) {
             try {
-                ServerResponse<?> response = controller.getTcpPort().sendRequest(request);
+                ServerResponse<?> response = engine.getTcpPort().sendRequest(request);
                 
-                if (module instanceof com.connections.client.modules.UserModule) {
-                    ((com.connections.client.modules.UserModule) module).handleResponse(response, controller.getView());
+                if (service instanceof com.connections.client.services.IdentityService) {
+                    ((com.connections.client.services.IdentityService) service).handleResponse(response, engine.getView());
                     if (CMD_LOGOUT.equals(command) && response.getStatus() == Status.OK) {
-                        controller.changeState(new LoggedOutState(controller));
+                        engine.changeState(new LoggedOutState(engine));
                     } else if (CMD_UPDATE.equals(command) && response.getStatus() == Status.OK) {
                         UserRequest userReq = (UserRequest) request;
                         if (userReq.getNewName() != null) this.username = userReq.getNewName();
                     }
-                } else if (module instanceof com.connections.client.modules.GameModule) {
-                    ((com.connections.client.modules.GameModule) module).handleResponse(response, controller.getView());
-                } else if (module instanceof com.connections.client.modules.HistoryModule) {
-                    ((com.connections.client.modules.HistoryModule) module).handleResponse(response, controller.getView());
+                } else if (service instanceof com.connections.client.services.GameplayService) {
+                    ((com.connections.client.services.GameplayService) service).handleResponse(response, engine.getView());
+                } else if (service instanceof com.connections.client.services.ArchiveService) {
+                    ((com.connections.client.services.ArchiveService) service).handleResponse(response, engine.getView());
                 }
 
             } catch (Exception e) {
-                controller.getView().showError(e.getMessage());
+                engine.getView().showError(e.getMessage());
             }
         }
     }
 
     @Override
     public void printHelp() {
-        controller.getView().showMessage(HELP_MESSAGE);
+        engine.getView().showMessage(HELP_MESSAGE);
     }
 
     @Override
@@ -129,7 +123,7 @@ public class LoggedInState implements ControllerState {
     @Override
     public void onExit() {
         try {
-            controller.getTcpPort().sendRequest(controller.getUserModule().prepareLogout());
+            engine.getTcpPort().sendRequest(engine.getIdentityService().prepareLogout());
         } catch (Exception ignored) {}
     }
 }

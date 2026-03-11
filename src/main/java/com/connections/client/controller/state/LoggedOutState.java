@@ -1,6 +1,6 @@
 package com.connections.client.controller.state;
 
-import com.connections.client.controller.Controller;
+import com.connections.client.controller.GameEngine;
 import com.connections.common.protocol.client_requests.ClientRequest;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
@@ -8,7 +8,7 @@ import com.connections.common.protocol.server_responses.Status;
 /**
  * State for logged-out users.
  */
-public class LoggedOutState implements ControllerState {
+public class LoggedOutState implements EngineState {
 
     private static final String CMD_REGISTER = "register";
     private static final String CMD_LOGIN = "login";
@@ -18,10 +18,10 @@ public class LoggedOutState implements ControllerState {
         "  register <uP> <psw> : Create a new account\n" +
         "  login <uP> <psw>    : Sign in to your account\n";
 
-    private final Controller controller;
+    private final GameEngine engine;
 
-    public LoggedOutState(Controller controller) {
-        this.controller = controller;
+    public LoggedOutState(GameEngine engine) {
+        this.engine = engine;
     }
 
     @Override
@@ -32,34 +32,34 @@ public class LoggedOutState implements ControllerState {
 
         switch (command) {
             case CMD_REGISTER:
-                request = controller.getUserModule().prepareRegister(tokens, controller.getView());
+                request = engine.getIdentityService().prepareRegister(tokens, engine.getView());
                 break;
             case CMD_LOGIN:
-                request = controller.getUserModule().prepareLogin(tokens, controller.getUdpPort(), controller.getView());
+                request = engine.getIdentityService().prepareLogin(tokens, engine.getUdpPort(), engine.getView());
                 isLogin = true;
                 break;
             default:
-                controller.getView().showMessage("Please login or register first.");
+                engine.getView().showMessage("Please login or register first.");
                 return;
         }
 
         if (request != null) {
             try {
-                ServerResponse<?> response = controller.getTcpPort().sendRequest(request);
-                controller.getUserModule().handleResponse(response, controller.getView());
+                ServerResponse<?> response = engine.getTcpPort().sendRequest(request);
+                engine.getIdentityService().handleResponse(response, engine.getView());
 
                 if (isLogin && response.getStatus() == Status.OK) {
-                    controller.changeState(new LoggedInState(controller, tokens[1]));
+                    engine.changeState(new LoggedInState(engine, tokens[1]));
                 }
             } catch (Exception e) {
-                controller.getView().showError(e.getMessage());
+                engine.getView().showError(e.getMessage());
             }
         }
     }
 
     @Override
     public void printHelp() {
-        controller.getView().showMessage(HELP_MESSAGE);
+        engine.getView().showMessage(HELP_MESSAGE);
     }
 
     @Override

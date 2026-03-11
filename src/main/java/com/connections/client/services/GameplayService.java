@@ -1,4 +1,4 @@
-package com.connections.client.modules;
+package com.connections.client.services;
 
 import com.connections.client.ui.ClientView;
 import com.connections.common.dto.*;
@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Handles operations and display for the active puzzle session.
  */
-public class GameModule {
+public class GameplayService {
 
     private static final int MIN_TOKENS_SUBMIT = 2;
     private static final int INDEX_WORDS_START = 1;
