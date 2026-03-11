@@ -1,13 +1,29 @@
 package com.connections.common.notifications;
 
 /**
- * Common interface for all asynchronous UDP notifications.
+ * Base abstract class for all asynchronous UDP notifications.
+ * Ensures that every notification includes a mandatory 'type' field for protocol identification.
  */
-public interface Notification {
+public abstract class Notification {
+    
+    /** The identifier for the notification type. */
+    public final String type;
+
+    /**
+     * Constructs a new notification with the specified type.
+     * 
+     * @param type the unique string identifier for this notification type.
+     */
+    protected Notification(String type) {
+        this.type = type;
+    }
+
     /**
      * Returns the type identifier of the notification.
      * 
-     * @return a string identifying the notification type
+     * @return the notification type string.
      */
-    String getType();
+    public String getType() {
+        return type;
+    }
 }

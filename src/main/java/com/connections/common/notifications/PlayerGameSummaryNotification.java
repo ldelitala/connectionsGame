@@ -4,23 +4,17 @@ import com.connections.common.dto.PuzzleStateDTO;
 
 /**
  * Notification sent privately to a specific player when their puzzle ends.
- * Contains their personal results.
  */
-public class PlayerGameSummaryNotification implements Notification {
-    private final String type = "player_summary";
+public class PlayerGameSummaryNotification extends Notification {
     private final PuzzleStateDTO personalInfo;
 
     private PlayerGameSummaryNotification(PuzzleStateDTO personalInfo) {
+        super("player_summary");
         this.personalInfo = personalInfo;
     }
 
     public static PlayerGameSummaryNotification create(PuzzleStateDTO personalInfo) {
         return new PlayerGameSummaryNotification(personalInfo);
-    }
-
-    @Override
-    public String getType() {
-        return type;
     }
 
     public PuzzleStateDTO getPersonalInfo() {

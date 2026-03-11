@@ -13,6 +13,7 @@ import java.net.SocketException;
 
 /**
  * Listens for asynchronous UDP notifications and dispatches them to the UI layer.
+ * Leverages polymorphic DTOs for type-safe processing.
  */
 public class NotificationService extends Thread implements AutoCloseable {
 
@@ -56,6 +57,7 @@ public class NotificationService extends Thread implements AutoCloseable {
 
     /**
      * Identifies the notification type and triggers the specific view callback.
+     * Uses the mandatory 'type' field from the Notification abstract class.
      */
     private void processNotification(String json) {
         try {
@@ -64,6 +66,7 @@ public class NotificationService extends Thread implements AutoCloseable {
 
             String type = obj.get(FIELD_TYPE).getAsString();
 
+            // Deserialization must target the specific subclass to populate all fields
             switch (type) {
                 case "new_game":
                     view.onNewPuzzle(gson.fromJson(json, NewGameNotification.class));
@@ -75,7 +78,7 @@ public class NotificationService extends Thread implements AutoCloseable {
                     view.onPlayerSummary(gson.fromJson(json, PlayerGameSummaryNotification.class));
                     break;
                 default:
-                    // Unknown notification type, silently ignore or log if necessary
+                    // Unknown notification type
                     break;
             }
         } catch (Exception e) {

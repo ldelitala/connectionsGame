@@ -5,12 +5,12 @@ import java.util.List;
 /**
  * DTO for UDP notifications sent when a new puzzle starts.
  */
-public class NewGameNotification implements Notification {
-    private final String type = "new_game";
+public class NewGameNotification extends Notification {
     private final int gameId;
     private final List<String> words;
 
     private NewGameNotification(int gameId, List<String> words) {
+        super("new_game");
         this.gameId = gameId;
         this.words = words;
     }
@@ -26,7 +26,6 @@ public class NewGameNotification implements Notification {
         return new NewGameNotification(gameId, words);
     }
 
-    public String getType() { return type; }
     public int getGameId() { return gameId; }
     public List<String> getWords() { return words; }
 }
