@@ -1,20 +1,20 @@
 package com.connections.common.notifications;
 
-import com.connections.common.dto.GameInfoDTO;
+import com.connections.common.dto.PuzzleStateDTO;
 
 /**
- * Notification sent privately to a specific player when their game ends.
+ * Notification sent privately to a specific player when their puzzle ends.
  * Contains their personal results.
  */
 public class PlayerGameSummaryNotification implements Notification {
     private final String type = "player_summary";
-    private final GameInfoDTO personalInfo;
+    private final PuzzleStateDTO personalInfo;
 
-    private PlayerGameSummaryNotification(GameInfoDTO personalInfo) {
+    private PlayerGameSummaryNotification(PuzzleStateDTO personalInfo) {
         this.personalInfo = personalInfo;
     }
 
-    public static PlayerGameSummaryNotification create(GameInfoDTO personalInfo) {
+    public static PlayerGameSummaryNotification create(PuzzleStateDTO personalInfo) {
         return new PlayerGameSummaryNotification(personalInfo);
     }
 
@@ -23,7 +23,7 @@ public class PlayerGameSummaryNotification implements Notification {
         return type;
     }
 
-    public GameInfoDTO getPersonalInfo() {
+    public PuzzleStateDTO getPersonalInfo() {
         return personalInfo;
     }
 }

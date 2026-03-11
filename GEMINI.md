@@ -42,6 +42,7 @@
 - [x] **Full MVC Refactoring**: Decoupled Input (CommandProvider) and Output (ClientView) into a dedicated `ui` layer.
 - [x] **Implementation Isolation**: Console-specific logic moved to `ui.console` sub-package.
 - [x] **Thread-Safe UI**: Synchronized console output to prevent interleaved TCP/UDP messages.
+- [x] **Semantic Rebranding**: Renamed core concepts to classic game terminology (`WordGroup` -> `Category`, `Game` -> `Puzzle`, `Proposal` -> `Guess`) for better readability and UX.
 
 ## Latest Session Improvements (March 11, 2026)
 - **MVC Architecture**: Transitioned the client to a clean Model-View-Controller pattern.

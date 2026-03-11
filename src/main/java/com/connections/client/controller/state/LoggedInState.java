@@ -13,8 +13,8 @@ public class LoggedInState implements ControllerState {
 
     private static final String CMD_LOGOUT = "logout";
     private static final String CMD_UPDATE = "update";
-    private static final String CMD_SUBMIT = "submit";
-    private static final String CMD_STATUS = "status";
+    private static final String CMD_GUESS = "guess";
+    private static final String CMD_BOARD = "board";
     private static final String CMD_STATS = "stats";
     private static final String CMD_INFO = "info";
     private static final String CMD_GLOBAL = "global";
@@ -23,9 +23,18 @@ public class LoggedInState implements ControllerState {
 
     private static final String HELP_MESSAGE = 
         "\n--- AVAILABLE COMMANDS (Logged In) ---\n" +
-        "Active Game: submit, status, stats\n" +
-        "History: info, global, ranking, history\n" +
-        "Account: update, logout\n";
+        "Active Puzzle:\n" +
+        "  guess [w1-w4]     : Send a 4-word attempt\n" +
+        "  board             : View current puzzle board (mistakes, found categories)\n" +
+        "  stats             : View global participation stats for this puzzle\n" +
+        "\nHistory and Rankings:\n" +
+        "  info [id]         : View details and solution of a past puzzle\n" +
+        "  global [id]       : View global statistics of a past puzzle\n" +
+        "  ranking <u|-top k>: View rank of user <u> or top k players\n" +
+        "  history           : View your personal overall statistics\n" +
+        "\nAccount:\n" +
+        "  update <oP> <nU> <nP> : Change your username or password\n" + 
+        "  logout            : Sign out of your account\n";
 
     private final Controller controller;
     private String username;
@@ -50,11 +59,11 @@ public class LoggedInState implements ControllerState {
                 request = controller.getUserModule().prepareUpdate(username, tokens, controller.getView());
                 module = controller.getUserModule();
                 break;
-            case CMD_SUBMIT:
+            case CMD_GUESS:
                 request = controller.getGameModule().prepareSubmit(tokens, controller.getView());
                 module = controller.getGameModule();
                 break;
-            case CMD_STATUS:
+            case CMD_BOARD:
                 request = controller.getGameModule().prepareStatus();
                 module = controller.getGameModule();
                 break;
@@ -79,7 +88,7 @@ public class LoggedInState implements ControllerState {
                 module = controller.getHistoryModule();
                 break;
             default:
-                controller.getView().showMessage("Unknown command.");
+                controller.getView().showMessage("Unknown command. Type 'help' for assistance.");
                 return;
         }
 

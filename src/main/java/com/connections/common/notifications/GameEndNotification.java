@@ -1,23 +1,23 @@
 package com.connections.common.notifications;
 
 import com.connections.common.dto.LeaderboardDTO;
-import com.connections.common.dto.GameStatsDTO;
+import com.connections.common.dto.PuzzleStatsDTO;
 
 /**
- * Notification sent to all participants when a game ends.
- * Contains global information about the game outcome.
+ * Notification sent to all participants when a puzzle ends.
+ * Contains global information about the puzzle outcome.
  */
 public class GameEndNotification implements Notification {
     private final String type = "game_end";
     private final LeaderboardDTO leaderboard;
-    private final GameStatsDTO stats;
+    private final PuzzleStatsDTO stats;
 
-    private GameEndNotification(LeaderboardDTO leaderboard, GameStatsDTO stats) {
+    private GameEndNotification(LeaderboardDTO leaderboard, PuzzleStatsDTO stats) {
         this.leaderboard = leaderboard;
         this.stats = stats;
     }
 
-    public static GameEndNotification create(LeaderboardDTO leaderboard, GameStatsDTO stats) {
+    public static GameEndNotification create(LeaderboardDTO leaderboard, PuzzleStatsDTO stats) {
         return new GameEndNotification(leaderboard, stats);
     }
 
@@ -30,7 +30,7 @@ public class GameEndNotification implements Notification {
         return leaderboard;
     }
 
-    public GameStatsDTO getStats() {
+    public PuzzleStatsDTO getStats() {
         return stats;
     }
 }

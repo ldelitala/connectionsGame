@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * High-performance NIO TCP Server for the Connections game.
+ * High-performance NIO TCP Server for the Connections puzzle.
  * Uses a thread pool to handle request processing while the main thread manages I/O selection.
  */
 public class ConnectionsServer {

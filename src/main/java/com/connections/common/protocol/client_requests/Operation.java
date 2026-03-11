@@ -27,15 +27,15 @@ public enum Operation {
     @SerializedName("updateCredentials")
     UPDATE_CREDENTIALS,
 
-    /** Submit a 4-word grouping proposal for the current game. */
+    /** Submit a 4-word grouping proposal for the current puzzle. */
     @SerializedName("submitProposal")
     SUBMIT_PROPOSAL,
 
-    /** Request detailed information about a specific game or the current game. */
+    /** Request detailed information about a specific puzzle or the current puzzle. */
     @SerializedName("requestGameInfo")
     GET_GAME_INFO,
 
-    /** Request global statistics for a specific game. */
+    /** Request global statistics for a specific puzzle. */
     @SerializedName("requestGameStats")
     GET_GAME_STATS,
 

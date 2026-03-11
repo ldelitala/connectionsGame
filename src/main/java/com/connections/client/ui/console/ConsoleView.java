@@ -2,7 +2,7 @@ package com.connections.client.ui.console;
 
 import com.connections.client.ui.ClientView;
 import com.connections.common.dto.*;
-import com.connections.common.models.WordGroup;
+import com.connections.common.models.Category;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import java.util.List;
 
@@ -23,24 +23,24 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
-    public void showGameInfo(GameInfoDTO info) {
+    public void showGameInfo(PuzzleStateDTO info) {
         synchronized (consoleLock) {
             if (info.isFinished()) {
-                System.out.println("Game is over. Use 'history' or 'info' for details.");
+                System.out.println("Puzzle is solved or expired. Use 'history' or 'info' for details.");
                 return;
             }
-            System.out.println("--- Game Status ---");
+            System.out.println("--- Puzzle Board ---");
             System.out.println("Time remaining: " + (info.getRemainingTime() / MS_TO_S_RATIO) + "s");
-            System.out.println(String.format("Mistakes: %d/%d", info.getMistakes(), MAX_MISTAKES));
+            System.out.println(String.format("Mistakes made: %d/%d", info.getMistakes(), MAX_MISTAKES));
             
             if (info.getFoundGroups() != null && !info.getFoundGroups().isEmpty()) {
-                System.out.println("Groups found:");
-                for (WordGroup group : info.getFoundGroups()) {
-                    System.out.println("  - " + group.getTheme() + ": " + String.join(", ", group.getWords()));
+                System.out.println("Categories found:");
+                for (Category category : info.getFoundGroups()) {
+                    System.out.println("  - " + category.getTheme() + ": " + String.join(", ", category.getWords()));
                 }
             }
             
-            if (info.getRemainingWords() != null) {
+            if (info.getRemainingWords() != null && !info.getRemainingWords().isEmpty()) {
                 System.out.println("Remaining words: " + String.join(", ", info.getRemainingWords()));
             }
             System.out.println("Current score: " + info.getScore());
@@ -48,9 +48,9 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
-    public void showGameStats(GameStatsDTO stats) {
+    public void showGameStats(PuzzleStatsDTO stats) {
         synchronized (consoleLock) {
-            System.out.println("--- Global Game Stats ---");
+            System.out.println("--- Global Puzzle Statistics ---");
             System.out.println("Active players: " + stats.getActivePlayers());
             System.out.println("Players finished: " + stats.getFinishedPlayers());
             System.out.println("Winners: " + stats.getWonPlayers());
@@ -63,7 +63,7 @@ public class ConsoleView implements ClientView {
     @Override
     public void showPlayerStats(PlayerStatsDTO stats) {
         synchronized (consoleLock) {
-            System.out.println("--- Your Global Statistics ---");
+            System.out.println("--- Your Career Statistics ---");
             System.out.println("Puzzles completed: " + stats.getPuzzlesCompleted());
             System.out.println("Win rate: " + String.format("%.2f%%", stats.getWinRate()));
             System.out.println("Total score: " + stats.getTotalScore());
@@ -87,7 +87,7 @@ public class ConsoleView implements ClientView {
     public void showNotification(String message) {
         synchronized (consoleLock) {
             System.out.println("\n[NOTIFICATION] " + message);
-            System.out.print("> "); // Quick prompt restore
+            System.out.print("> "); 
         }
     }
 

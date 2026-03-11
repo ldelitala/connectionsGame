@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Handles operations and display for the active game session.
+ * Handles operations and display for the active puzzle session.
  */
 public class GameModule {
 
@@ -17,28 +17,28 @@ public class GameModule {
 
     public ClientRequest prepareSubmit(String[] tokens, ClientView view) {
         if (tokens.length < MIN_TOKENS_SUBMIT) {
-            view.showMessage("Usage: submit <w1> <w2> <w3> <w4>");
+            view.showMessage("Usage: guess <w1> <w2> <w3> <w4>");
             return null;
         }
         List<String> words = Arrays.asList(Arrays.copyOfRange(tokens, INDEX_WORDS_START, tokens.length));
-        return GameRequest.submitProposal(words);
+        return GuessRequest.submitProposal(words);
     }
 
     public ClientRequest prepareStatus() {
-        return GameRequest.getCurrentInfo();
+        return GuessRequest.getCurrentInfo();
     }
 
     public ClientRequest prepareStats() {
-        return GameRequest.getCurrentStats();
+        return GuessRequest.getCurrentStats();
     }
 
     public void handleResponse(ServerResponse<?> response, ClientView view) {
         view.showResponse(response);
         Object data = response.getData();
-        if (data instanceof GameInfoDTO) {
-            view.showGameInfo((GameInfoDTO) data);
-        } else if (data instanceof GameStatsDTO) {
-            view.showGameStats((GameStatsDTO) data);
+        if (data instanceof PuzzleStateDTO) {
+            view.showGameInfo((PuzzleStateDTO) data);
+        } else if (data instanceof PuzzleStatsDTO) {
+            view.showGameStats((PuzzleStatsDTO) data);
         }
     }
 }

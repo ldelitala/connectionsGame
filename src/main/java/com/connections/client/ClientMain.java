@@ -19,7 +19,7 @@ public class ClientMain {
         // 1. Setup the VIEW (Modular)
         ClientView view = new ConsoleView();
 
-        view.showMessage("Welcome to Connections Game!");
+        view.showMessage("Welcome to Connections Puzzle!");
 
         try (Scanner scanner = new Scanner(System.in);
                 TcpConnectionPort tcpPort = new TcpConnectionPort(config.getServerHost(), config.getServerPort());

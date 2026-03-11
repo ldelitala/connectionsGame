@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Represents a group of words with a common theme.
  */
-public class WordGroup {
+public class Category {
 
     /** The common theme that connects the words. */
     private String theme;
@@ -13,13 +13,13 @@ public class WordGroup {
     private List<String> words;
 
     /**
-     * Constructs a WordGroup with a theme and a list of words.
+     * Constructs a Category with a theme and a list of words.
      * 
      * @param theme the theme of the group
      * @param words the list of words
      * @throws IllegalArgumentException if words is null or empty
      */
-    public WordGroup(String theme, List<String> words) {
+    public Category(String theme, List<String> words) {
         if (words == null || words.isEmpty()) {
             throw new IllegalArgumentException("A word group must contain at least one word.");
         }

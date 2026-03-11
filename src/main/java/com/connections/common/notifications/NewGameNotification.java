@@ -3,7 +3,7 @@ package com.connections.common.notifications;
 import java.util.List;
 
 /**
- * DTO for UDP notifications sent when a new game starts.
+ * DTO for UDP notifications sent when a new puzzle starts.
  */
 public class NewGameNotification implements Notification {
     private final String type = "new_game";
@@ -16,10 +16,10 @@ public class NewGameNotification implements Notification {
     }
 
     /**
-     * Factory method to create a new game notification.
+     * Factory method to create a new puzzle notification.
      * 
-     * @param gameId the ID of the new game
-     * @param words the 16 words for the game
+     * @param gameId the ID of the new puzzle
+     * @param words the 16 words for the puzzle
      * @return a new NewGameNotification
      */
     public static NewGameNotification create(int gameId, List<String> words) {

@@ -1,30 +1,30 @@
 package com.connections.common.dto;
 
-import com.connections.common.models.WordGroup;
+import com.connections.common.models.Category;
 import java.util.List;
 
 /**
- * DTO for personal game information (both current and past).
+ * DTO for personal puzzle information (both current and past).
  * Follows the project's specific requirements for what info to return for active vs finished games.
  */
-public class GameInfoDTO implements DTO {
+public class PuzzleStateDTO implements DTO {
     private final int gameId;
     private final boolean finished;
     private final int mistakes;
     private final int score;
 
-    // Fields used in ACTIVE game
+    // Fields used in ACTIVE puzzle
     private final Long remainingTime;
-    private final List<WordGroup> foundGroups;
+    private final List<Category> foundGroups;
     private final List<String> remainingWords;
 
-    // Fields used in FINISHED game
-    private final List<WordGroup> allGroups; // All 16 words assigned to 4 groups
+    // Fields used in FINISHED puzzle
+    private final List<Category> allGroups; // All 16 words assigned to 4 groups
     private final Integer correctGroupsCount;
 
-    private GameInfoDTO(int gameId, boolean finished, int mistakes, int score,
-            Long remainingTime, List<WordGroup> foundGroups, List<String> remainingWords,
-            List<WordGroup> allGroups, Integer correctGroupsCount) {
+    private PuzzleStateDTO(int gameId, boolean finished, int mistakes, int score,
+            Long remainingTime, List<Category> foundGroups, List<String> remainingWords,
+            List<Category> allGroups, Integer correctGroupsCount) {
 
         this.gameId = gameId;
         this.finished = finished;
@@ -38,35 +38,35 @@ public class GameInfoDTO implements DTO {
     }
 
     /**
-     * Factory method for active (in progress) game info.
+     * Factory method for active (in progress) puzzle info.
      * 
-     * @param gameId game ID
+     * @param gameId puzzle ID
      * @param remainingTime time left in milliseconds
      * @param foundGroups list of groups already found
      * @param remainingWords list of words not yet grouped
      * @param mistakes current number of mistakes
      * @param score current player score
-     * @return a new GameInfoDTO for the active session
+     * @return a new PuzzleStateDTO for the active session
      */
-    public static GameInfoDTO active(int gameId, long remainingTime, List<WordGroup> foundGroups,
+    public static PuzzleStateDTO active(int gameId, long remainingTime, List<Category> foundGroups,
             List<String> remainingWords, int mistakes, int score) {
-        return new GameInfoDTO(gameId, false, mistakes, score, remainingTime, foundGroups,
+        return new PuzzleStateDTO(gameId, false, mistakes, score, remainingTime, foundGroups,
                 remainingWords, null, null);
     }
 
     /**
-     * Factory method for concluded (past) game info.
+     * Factory method for concluded (past) puzzle info.
      * 
-     * @param gameId past game ID
+     * @param gameId past puzzle ID
      * @param allGroups all 16 words assigned to their 4 groups
      * @param correctGroupsCount number of groups correctly guessed
      * @param mistakes final mistakes
      * @param score final score
-     * @return a new GameInfoDTO for a historical game
+     * @return a new PuzzleStateDTO for a historical puzzle
      */
-    public static GameInfoDTO concluded(int gameId, List<WordGroup> allGroups,
+    public static PuzzleStateDTO concluded(int gameId, List<Category> allGroups,
             int correctGroupsCount, int mistakes, int score) {
-        return new GameInfoDTO(gameId, true, mistakes, score, null, null, null, allGroups,
+        return new PuzzleStateDTO(gameId, true, mistakes, score, null, null, null, allGroups,
                 correctGroupsCount);
     }
 
@@ -91,7 +91,7 @@ public class GameInfoDTO implements DTO {
         return remainingTime;
     }
 
-    public List<WordGroup> getFoundGroups() {
+    public List<Category> getFoundGroups() {
         return foundGroups;
     }
 
@@ -99,7 +99,7 @@ public class GameInfoDTO implements DTO {
         return remainingWords;
     }
 
-    public List<WordGroup> getAllGroups() {
+    public List<Category> getAllGroups() {
         return allGroups;
     }
 

@@ -9,8 +9,8 @@ import com.connections.common.protocol.server_responses.ServerResponse;
  */
 public interface ClientView {
     void showResponse(ServerResponse<?> response);
-    void showGameInfo(GameInfoDTO info);
-    void showGameStats(GameStatsDTO stats);
+    void showGameInfo(PuzzleStateDTO info);
+    void showGameStats(PuzzleStatsDTO stats);
     void showPlayerStats(PlayerStatsDTO stats);
     void showLeaderboard(LeaderboardDTO leaderboard);
     void showNotification(String message);

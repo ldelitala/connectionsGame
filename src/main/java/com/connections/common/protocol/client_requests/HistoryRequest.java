@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 /**
  * Request subclass for historical and global statistics operations.
- * Handles past game info/stats, player statistics, and leaderboard.
+ * Handles past puzzle info/stats, player statistics, and leaderboard.
  */
 public class HistoryRequest extends ClientRequest {
     private final Integer gameId;
@@ -23,14 +23,14 @@ public class HistoryRequest extends ClientRequest {
     }
 
     /**
-     * Creates a request for info about a past game.
+     * Creates a request for info about a past puzzle.
      */
     public static HistoryRequest getGameInfo(int gameId) {
         return new HistoryRequest(Operation.GET_GAME_INFO, gameId, null, null);
     }
 
     /**
-     * Creates a request for stats about a past game.
+     * Creates a request for stats about a past puzzle.
      */
     public static HistoryRequest getGameStats(int gameId) {
         return new HistoryRequest(Operation.GET_GAME_STATS, gameId, null, null);

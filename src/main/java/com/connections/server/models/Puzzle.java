@@ -1,17 +1,17 @@
 package com.connections.server.models;
 
-import com.connections.common.models.WordGroup;
+import com.connections.common.models.Category;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a game consisting of 16 words in 4 groups.
+ * Represents a puzzle consisting of 16 words in 4 groups.
  */
-public class Game {
+public class Puzzle {
     private int gameId;
-    private List<WordGroup> groups;
+    private List<Category> groups;
 
-    public Game(int gameId, List<WordGroup> groups) {
+    public Puzzle(int gameId, List<Category> groups) {
         this.gameId = gameId;
         this.groups = groups;
     }
@@ -20,13 +20,13 @@ public class Game {
         return gameId;
     }
 
-    public List<WordGroup> getGroups() {
+    public List<Category> getGroups() {
         return groups;
     }
 
     public List<String> getAllWords() {
         List<String> allWords = new ArrayList<>();
-        for (WordGroup group : groups) {
+        for (Category group : groups) {
             allWords.addAll(group.getWords());
         }
         return allWords;

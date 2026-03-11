@@ -6,7 +6,7 @@ import com.connections.common.protocol.client_requests.*;
 import com.connections.common.protocol.server_responses.*;
 
 /**
- * Handles operations and display for past games and global stats.
+ * Handles operations and display for past puzzles and global stats.
  */
 public class HistoryModule {
 
@@ -23,7 +23,7 @@ public class HistoryModule {
         try {
             return HistoryRequest.getGameInfo(Integer.parseInt(tokens[INDEX_ARG_1]));
         } catch (NumberFormatException e) {
-            view.showError("Invalid game ID.");
+            view.showError("Invalid puzzle ID.");
             return null;
         }
     }
@@ -36,7 +36,7 @@ public class HistoryModule {
         try {
             return HistoryRequest.getGameStats(Integer.parseInt(tokens[INDEX_ARG_1]));
         } catch (NumberFormatException e) {
-            view.showError("Invalid game ID.");
+            view.showError("Invalid puzzle ID.");
             return null;
         }
     }
@@ -65,10 +65,10 @@ public class HistoryModule {
     public void handleResponse(ServerResponse<?> response, ClientView view) {
         view.showResponse(response);
         Object data = response.getData();
-        if (data instanceof GameInfoDTO) {
-            view.showGameInfo((GameInfoDTO) data);
-        } else if (data instanceof GameStatsDTO) {
-            view.showGameStats((GameStatsDTO) data);
+        if (data instanceof PuzzleStateDTO) {
+            view.showGameInfo((PuzzleStateDTO) data);
+        } else if (data instanceof PuzzleStatsDTO) {
+            view.showGameStats((PuzzleStatsDTO) data);
         } else if (data instanceof PlayerStatsDTO) {
             view.showPlayerStats((PlayerStatsDTO) data);
         } else if (data instanceof LeaderboardDTO) {

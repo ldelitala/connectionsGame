@@ -1,6 +1,6 @@
 package com.connections.server;
 
-import com.connections.server.models.Game;
+import com.connections.server.models.Puzzle;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Data Access Object for Game data.
+ * Data Access Object for Puzzle data.
  * Optimized with an index of file offsets for large JSON files.
  */
 public class GamesDAO {
@@ -26,16 +26,16 @@ public class GamesDAO {
     }
 
     private void buildIndex() {
-        System.out.println("Building game index from " + filePath + "...");
+        System.out.println("Building puzzle index from " + filePath + "...");
         try (RandomAccessFile raf = new RandomAccessFile(filePath, "r")) {
             long pos = 0;
             String line;
             while ((line = raf.readLine()) != null) {
                 String trimmed = line.trim();
-                // A game object in the provided JSON format starts with '{'
-                // We look for the start of an object that is likely a Game (contains gameId on next lines)
+                // A puzzle object in the provided JSON format starts with '{'
+                // We look for the start of an object that is likely a Puzzle (contains gameId on next lines)
                 // To be safe and fast, we just index every line starting with '{' 
-                // and verify it's a game when reading.
+                // and verify it's a puzzle when reading.
                 if (trimmed.equals("{")) {
                     gameOffsets.add(pos);
                 }
@@ -43,36 +43,36 @@ public class GamesDAO {
             }
             System.out.println("Indexed " + gameOffsets.size() + " potential games.");
         } catch (IOException e) {
-            System.err.println("Critical error building game index: " + e.getMessage());
+            System.err.println("Critical error building puzzle index: " + e.getMessage());
         }
     }
 
-    public synchronized Game getNextGame() {
+    public synchronized Puzzle getNextGame() {
         if (gameOffsets.isEmpty()) return null;
         
-        Game game = null;
+        Puzzle puzzle = null;
         int attempts = 0;
-        while (game == null && attempts < gameOffsets.size()) {
+        while (puzzle == null && attempts < gameOffsets.size()) {
             if (nextGameIndex >= gameOffsets.size()) {
-                System.out.println("End of game list. Restarting from the first game.");
+                System.out.println("End of puzzle list. Restarting from the first puzzle.");
                 nextGameIndex = 0;
             }
-            game = getGameByOffset(gameOffsets.get(nextGameIndex));
+            puzzle = getGameByOffset(gameOffsets.get(nextGameIndex));
             nextGameIndex++;
             attempts++;
         }
-        return game;
+        return puzzle;
     }
 
-    public Game getGameById(int id) {
+    public Puzzle getGameById(int id) {
         for (Long offset : gameOffsets) {
-            Game g = getGameByOffset(offset);
+            Puzzle g = getGameByOffset(offset);
             if (g != null && g.getGameId() == id) return g;
         }
         return null;
     }
 
-    private Game getGameByOffset(long offset) {
+    private Puzzle getGameByOffset(long offset) {
         try (RandomAccessFile raf = new RandomAccessFile(filePath, "r")) {
             raf.seek(offset);
             
@@ -95,16 +95,16 @@ public class GamesDAO {
             
             String json = sb.toString();
             if (json.contains("\"gameId\"")) {
-                return gson.fromJson(json, Game.class);
+                return gson.fromJson(json, Puzzle.class);
             }
             return null;
         } catch (IOException e) {
-            System.err.println("Error reading game at offset " + offset + ": " + e.getMessage());
+            System.err.println("Error reading puzzle at offset " + offset + ": " + e.getMessage());
             return null;
         }
     }
 
-    public Game getGame(int gameId) {
+    public Puzzle getGame(int gameId) {
         return getGameById(gameId);
     }
 
@@ -120,7 +120,7 @@ public class GamesDAO {
         return gameOffsets.stream()
                 .map(this::getGameByOffset)
                 .filter(java.util.Objects::nonNull)
-                .map(Game::getGameId)
+                .map(Puzzle::getGameId)
                 .collect(Collectors.toList());
     }
 }
