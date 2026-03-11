@@ -50,11 +50,11 @@ public class LoggedInState implements EngineState {
                 service = engine.getIdentityService();
                 break;
             case CMD_UPDATE:
-                request = engine.getIdentityService().prepareUpdate(username, tokens, engine.getView());
+                request = engine.getIdentityService().prepareUpdate(username, tokens);
                 service = engine.getIdentityService();
                 break;
             case CMD_GUESS:
-                request = engine.getGameplayService().prepareSubmit(tokens, engine.getView());
+                request = engine.getGameplayService().prepareSubmit(tokens);
                 service = engine.getGameplayService();
                 break;
             case CMD_BOARD:
@@ -66,15 +66,15 @@ public class LoggedInState implements EngineState {
                 service = engine.getGameplayService();
                 break;
             case CMD_INFO:
-                request = engine.getArchiveService().preparePastInfo(tokens, engine.getView());
+                request = engine.getArchiveService().preparePastInfo(tokens);
                 service = engine.getArchiveService();
                 break;
             case CMD_GLOBAL:
-                request = engine.getArchiveService().prepareGlobalStats(tokens, engine.getView());
+                request = engine.getArchiveService().prepareGlobalStats(tokens);
                 service = engine.getArchiveService();
                 break;
             case CMD_RANKING:
-                request = engine.getArchiveService().prepareRanking(tokens, engine.getView());
+                request = engine.getArchiveService().prepareRanking(tokens);
                 service = engine.getArchiveService();
                 break;
             case CMD_HISTORY:
@@ -91,7 +91,7 @@ public class LoggedInState implements EngineState {
                 ServerResponse<?> response = engine.getGateway().sendRequest(request);
                 
                 if (service instanceof com.connections.client.services.IdentityService) {
-                    ((com.connections.client.services.IdentityService) service).handleResponse(response, engine.getView());
+                    ((com.connections.client.services.IdentityService) service).handleResponse(response);
                     if (CMD_LOGOUT.equals(command) && response.getStatus() == Status.OK) {
                         engine.changeState(new LoggedOutState(engine));
                     } else if (CMD_UPDATE.equals(command) && response.getStatus() == Status.OK) {
@@ -99,9 +99,9 @@ public class LoggedInState implements EngineState {
                         if (userReq.getNewName() != null) this.username = userReq.getNewName();
                     }
                 } else if (service instanceof com.connections.client.services.GameplayService) {
-                    ((com.connections.client.services.GameplayService) service).handleResponse(response, engine.getView());
+                    ((com.connections.client.services.GameplayService) service).handleResponse(response);
                 } else if (service instanceof com.connections.client.services.ArchiveService) {
-                    ((com.connections.client.services.ArchiveService) service).handleResponse(response, engine.getView());
+                    ((com.connections.client.services.ArchiveService) service).handleResponse(response);
                 }
 
             } catch (Exception e) {

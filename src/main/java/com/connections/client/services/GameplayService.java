@@ -15,7 +15,13 @@ public class GameplayService {
     private static final int MIN_TOKENS_SUBMIT = 2;
     private static final int INDEX_WORDS_START = 1;
 
-    public ClientRequest prepareSubmit(String[] tokens, ClientView view) {
+    private final ClientView view;
+
+    public GameplayService(ClientView view) {
+        this.view = view;
+    }
+
+    public ClientRequest prepareSubmit(String[] tokens) {
         if (tokens.length < MIN_TOKENS_SUBMIT) {
             view.showMessage("Usage: guess <w1> <w2> <w3> <w4>");
             return null;
@@ -32,7 +38,7 @@ public class GameplayService {
         return GuessRequest.getCurrentStats();
     }
 
-    public void handleResponse(ServerResponse<?> response, ClientView view) {
+    public void handleResponse(ServerResponse<?> response) {
         view.showResponse(response);
         Object data = response.getData();
         if (data instanceof PuzzleStateDTO) {

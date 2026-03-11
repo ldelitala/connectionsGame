@@ -20,7 +20,13 @@ public class IdentityService {
     private static final int MIN_TOKENS_AUTH = 3;
     private static final int MIN_TOKENS_UPDATE = 4;
 
-    public ClientRequest prepareRegister(String[] tokens, ClientView view) {
+    private final ClientView view;
+
+    public IdentityService(ClientView view) {
+        this.view = view;
+    }
+
+    public ClientRequest prepareRegister(String[] tokens) {
         if (tokens.length < MIN_TOKENS_AUTH) {
             view.showMessage("Usage: register <username> <password>");
             return null;
@@ -28,7 +34,7 @@ public class IdentityService {
         return UserRequest.register(tokens[INDEX_USERNAME], tokens[INDEX_PASSWORD]);
     }
 
-    public ClientRequest prepareLogin(String[] tokens, int udpPort, ClientView view) {
+    public ClientRequest prepareLogin(String[] tokens, int udpPort) {
         if (tokens.length < MIN_TOKENS_AUTH) {
             view.showMessage("Usage: login <username> <password>");
             return null;
@@ -40,7 +46,7 @@ public class IdentityService {
         return UserRequest.logout();
     }
 
-    public ClientRequest prepareUpdate(String currentUsername, String[] tokens, ClientView view) {
+    public ClientRequest prepareUpdate(String currentUsername, String[] tokens) {
         if (tokens.length < MIN_TOKENS_UPDATE) {
             view.showMessage("Usage: update <oldPassword> <newUsername> <newPassword>\n" +
                              "Use '" + NO_CHANGE + "' to keep a value unchanged.");
@@ -62,7 +68,7 @@ public class IdentityService {
         return UserRequest.updateCredentials(currentUsername, oldPassword, newUsername, newPassword);
     }
 
-    public void handleResponse(ServerResponse<?> response, ClientView view) {
+    public void handleResponse(ServerResponse<?> response) {
         view.showResponse(response);
     }
 }

@@ -32,10 +32,10 @@ public class LoggedOutState implements EngineState {
 
         switch (command) {
             case CMD_REGISTER:
-                request = engine.getIdentityService().prepareRegister(tokens, engine.getView());
+                request = engine.getIdentityService().prepareRegister(tokens);
                 break;
             case CMD_LOGIN:
-                request = engine.getIdentityService().prepareLogin(tokens, engine.getUdpPort(), engine.getView());
+                request = engine.getIdentityService().prepareLogin(tokens, engine.getUdpPort());
                 isLogin = true;
                 break;
             default:
@@ -46,7 +46,7 @@ public class LoggedOutState implements EngineState {
         if (request != null) {
             try {
                 ServerResponse<?> response = engine.getGateway().sendRequest(request);
-                engine.getIdentityService().handleResponse(response, engine.getView());
+                engine.getIdentityService().handleResponse(response);
 
                 if (isLogin && response.getStatus() == Status.OK) {
                     engine.changeState(new LoggedInState(engine, tokens[1]));

@@ -15,7 +15,13 @@ public class ArchiveService {
     private static final int INDEX_ARG_2 = 2;
     private static final String FLAG_TOP = "-top";
 
-    public ClientRequest preparePastInfo(String[] tokens, ClientView view) {
+    private final ClientView view;
+
+    public ArchiveService(ClientView view) {
+        this.view = view;
+    }
+
+    public ClientRequest preparePastInfo(String[] tokens) {
         if (tokens.length < MIN_TOKENS_ARG) {
             view.showMessage("Usage: info [id]");
             return null;
@@ -28,7 +34,7 @@ public class ArchiveService {
         }
     }
 
-    public ClientRequest prepareGlobalStats(String[] tokens, ClientView view) {
+    public ClientRequest prepareGlobalStats(String[] tokens) {
         if (tokens.length < MIN_TOKENS_ARG) {
             view.showMessage("Usage: global [id]");
             return null;
@@ -41,7 +47,7 @@ public class ArchiveService {
         }
     }
 
-    public ClientRequest prepareRanking(String[] tokens, ClientView view) {
+    public ClientRequest prepareRanking(String[] tokens) {
         if (tokens.length < MIN_TOKENS_ARG) {
             view.showMessage("Usage:\n" +
                              "  ranking <username>      : View a specific player's rank\n" +
@@ -62,7 +68,7 @@ public class ArchiveService {
         return HistoryRequest.getPlayerStats();
     }
 
-    public void handleResponse(ServerResponse<?> response, ClientView view) {
+    public void handleResponse(ServerResponse<?> response) {
         view.showResponse(response);
         Object data = response.getData();
         if (data instanceof PuzzleStateDTO) {
