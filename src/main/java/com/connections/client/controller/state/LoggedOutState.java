@@ -24,13 +24,13 @@ public class LoggedOutState implements EngineState {
 
     @Override
     public void onRegister(String username, String password) {
-        ClientRequest request = engine.getIdentityService().prepareRegister(new String[]{"register", username, password});
+        ClientRequest request = engine.getIdentityService().prepareRegister(username, password);
         executeRequest(request, false, username);
     }
 
     @Override
     public void onLogin(String username, String password) {
-        ClientRequest request = engine.getIdentityService().prepareLogin(new String[]{"login", username, password}, engine.getUdpPort());
+        ClientRequest request = engine.getIdentityService().prepareLogin(username, password, engine.getUdpPort());
         executeRequest(request, true, username);
     }
 

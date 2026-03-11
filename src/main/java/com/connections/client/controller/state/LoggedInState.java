@@ -38,22 +38,18 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onUpdateCredentials(String oldPass, String newName, String newPass) {
-        String[] tokens = new String[]{"update", oldPass, newName, newPass};
-        ClientRequest request = engine.getIdentityService().prepareUpdate(username, tokens);
+        ClientRequest request = engine.getIdentityService().prepareUpdate(username, oldPass, newName, newPass);
         if (executeRequest(request, engine.getIdentityService()) && lastStatusOk(request)) {
-            UserRequest userReq = (UserRequest) request;
-            if (userReq.getNewName() != null) this.username = userReq.getNewName();
+            // If the name was updated successfully, keep track of it
+            if (newName != null && !"-".equals(newName)) {
+                this.username = newName;
+            }
         }
     }
 
     @Override
     public void onGuess(List<String> words) {
-        // Mocking tokens for legacy preparation method
-        String[] tokens = new String[words.size() + 1];
-        tokens[0] = "guess";
-        for(int i=0; i<words.size(); i++) tokens[i+1] = words.get(i);
-        
-        ClientRequest request = engine.getGameplayService().prepareSubmit(tokens);
+        ClientRequest request = engine.getGameplayService().prepareGuess(words);
         executeRequest(request, engine.getGameplayService());
     }
 
@@ -62,21 +58,17 @@ public class LoggedInState implements EngineState {
     
     @Override
     public void onRequestPastInfo(int puzzleId) {
-        ClientRequest request = engine.getArchiveService().preparePastInfo(new String[]{"info", String.valueOf(puzzleId)});
-        executeRequest(request, engine.getArchiveService());
+        executeRequest(engine.getArchiveService().preparePastInfo(puzzleId), engine.getArchiveService());
     }
 
     @Override
     public void onRequestGlobalStats(int puzzleId) {
-        ClientRequest request = engine.getArchiveService().prepareGlobalStats(new String[]{"global", String.valueOf(puzzleId)});
-        executeRequest(request, engine.getArchiveService());
+        executeRequest(engine.getArchiveService().prepareGlobalStats(puzzleId), engine.getArchiveService());
     }
 
     @Override
     public void onRequestRanking(String username, Integer topK) {
-        String[] tokens = (topK != null) ? new String[]{"ranking", "-top", String.valueOf(topK)} : new String[]{"ranking", username};
-        ClientRequest request = engine.getArchiveService().prepareRanking(tokens);
-        executeRequest(request, engine.getArchiveService());
+        executeRequest(engine.getArchiveService().prepareRanking(username, topK), engine.getArchiveService());
     }
 
     @Override public void onRequestHistory() { executeRequest(engine.getArchiveService().prepareHistory(), engine.getArchiveService()); }
@@ -86,9 +78,13 @@ public class LoggedInState implements EngineState {
         if (request == null) return false;
         try {
             ServerResponse<?> response = engine.getGateway().sendRequest(request);
-            if (service instanceof com.connections.client.services.IdentityService) ((com.connections.client.services.IdentityService) service).handleResponse(response);
-            else if (service instanceof com.connections.client.services.GameplayService) ((com.connections.client.services.GameplayService) service).handleResponse(response);
-            else if (service instanceof com.connections.client.services.ArchiveService) ((com.connections.client.services.ArchiveService) service).handleResponse(response);
+            if (service instanceof com.connections.client.services.IdentityService) {
+                ((com.connections.client.services.IdentityService) service).handleResponse(response);
+            } else if (service instanceof com.connections.client.services.GameplayService) {
+                ((com.connections.client.services.GameplayService) service).handleResponse(response);
+            } else if (service instanceof com.connections.client.services.ArchiveService) {
+                ((com.connections.client.services.ArchiveService) service).handleResponse(response);
+            }
             return response.getStatus() == Status.OK;
         } catch (Exception e) {
             engine.getView().showError(e.getMessage());
@@ -96,7 +92,7 @@ public class LoggedInState implements EngineState {
         }
     }
 
-    private boolean lastStatusOk(ClientRequest request) { return true; /* Already checked in executeRequest */ }
+    private boolean lastStatusOk(ClientRequest request) { return true; }
 
     @Override public void onRegister(String u, String p) { engine.getView().showMessage("Already logged in."); }
     @Override public void onLogin(String u, String p) { engine.getView().showMessage("Already logged in."); }
