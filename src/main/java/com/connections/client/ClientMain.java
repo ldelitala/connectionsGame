@@ -1,17 +1,18 @@
 package com.connections.client;
 
-import com.connections.client.view.ClientView;
-import com.connections.client.view.ConsoleView;
+import com.connections.client.view.*;
 import java.io.IOException;
 import java.util.Scanner;
 
 /**
- * Main entry point for the MVC Client.
+ * Main entry point for the 100% Modular MVC Client.
  */
 public class ClientMain {
 
     public static void main(String[] args) {
         ClientConfig config = (args.length > 0) ? new ClientConfig(args[0]) : new ClientConfig();
+        
+        // 1. Setup the VIEW (Modular)
         ClientView view = new ConsoleView();
 
         view.showMessage("Welcome to Connections Game!");
@@ -26,8 +27,14 @@ public class ClientMain {
             int actualUdpPort = udpListener.getLocalPort();
             view.showMessage("UDP Notification listener started on port " + actualUdpPort);
 
-            Controller controller = new Controller(tcpPort, scanner, actualUdpPort, view);
-            controller.start();
+            // 2. Setup the INPUT (Modular)
+            CommandProvider inputProvider = new ConsoleCommandProvider(scanner);
+
+            // 3. Setup the CONTROLLER (The Brain, connects Input and View)
+            Controller controller = new Controller(tcpPort, actualUdpPort, view, inputProvider);
+            
+            // 4. Start the engine
+            controller.run();
 
         } catch (IOException e) {
             view.showError("Network error: " + e.getMessage());

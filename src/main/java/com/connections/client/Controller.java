@@ -3,12 +3,13 @@ package com.connections.client;
 import com.connections.client.modules.*;
 import com.connections.client.controller_state.*;
 import com.connections.client.view.ClientView;
-import java.util.Scanner;
+import com.connections.client.view.CommandProvider;
 
 /**
- * Context for the Client State Pattern (Controller).
+ * The Brain of the client. It no longer contains the loop.
+ * It simply reacts to commands received from a CommandProvider.
  */
-public class Controller {
+public class Controller implements CommandProvider.CommandListener {
 
     private static final String CMD_EXIT = "exit";
     private static final String CMD_HELP = "help";
@@ -20,9 +21,9 @@ public class Controller {
         "  exit              : Close the application\n";
 
     private final TcpConnectionPort tcpPort;
-    private final Scanner scanner;
     private final int udpPort;
     private final ClientView view;
+    private final CommandProvider commandProvider;
     
     private final UserModule userModule;
     private final GameModule gameModule;
@@ -30,40 +31,48 @@ public class Controller {
 
     private ControllerState currentState;
 
-    public Controller(TcpConnectionPort tcpPort, Scanner scanner, int udpPort, ClientView view) {
+    public Controller(TcpConnectionPort tcpPort, int udpPort, ClientView view, CommandProvider provider) {
         this.tcpPort = tcpPort;
-        this.scanner = scanner;
         this.udpPort = udpPort;
         this.view = view;
+        this.commandProvider = provider;
         this.userModule = new UserModule();
         this.gameModule = new GameModule();
         this.historyModule = new HistoryModule();
         this.currentState = new LoggedOutState(this);
     }
 
-    public void start() {
-        while (true) {
-            view.renderPrompt(currentState.getPrompt());
+    /**
+     * Starts the command flow by showing the initial prompt and 
+     * connecting the provider to this listener.
+     */
+    public void run() {
+        view.renderPrompt(currentState.getPrompt());
+        commandProvider.startProviding(this);
+    }
 
-            if (!scanner.hasNextLine()) break;
-            String line = scanner.nextLine().trim();
-            if (line.isEmpty()) continue;
+    /**
+     * Callback method called every time a new command is received.
+     */
+    @Override
+    public void onCommand(String line) {
+        if (line.equalsIgnoreCase(CMD_EXIT)) {
+            view.showMessage("Exiting...");
+            currentState.onExit();
+            commandProvider.stop();
+            return;
+        }
 
-            if (line.equalsIgnoreCase(CMD_EXIT)) {
-                view.showMessage("Exiting...");
-                currentState.onExit();
-                break;
-            }
-
-            if (line.equalsIgnoreCase(CMD_HELP)) {
-                currentState.printHelp();
-                view.showMessage(SYSTEM_HELP);
-                continue;
-            }
-
+        if (line.equalsIgnoreCase(CMD_HELP)) {
+            currentState.printHelp();
+            view.showMessage(SYSTEM_HELP);
+        } else {
             String[] tokens = line.split(REGEX_WHITESPACE);
             currentState.handleCommand(tokens);
         }
+        
+        // After every command, render the next prompt
+        view.renderPrompt(currentState.getPrompt());
     }
 
     public void changeState(ControllerState newState) {
