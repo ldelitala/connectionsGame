@@ -1,5 +1,6 @@
-package com.connections.client.view;
+package com.connections.client.ui.console;
 
+import com.connections.client.ui.CommandProvider;
 import java.util.Scanner;
 
 /**

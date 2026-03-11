@@ -1,6 +1,6 @@
 package com.connections.client.modules;
 
-import com.connections.client.view.ClientView;
+import com.connections.client.ui.ClientView;
 import com.connections.common.dto.*;
 import com.connections.common.protocol.client_requests.*;
 import com.connections.common.protocol.server_responses.*;

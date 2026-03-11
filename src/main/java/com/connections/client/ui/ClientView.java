@@ -1,4 +1,4 @@
-package com.connections.client.view;
+package com.connections.client.ui;
 
 import com.connections.common.dto.*;
 import com.connections.common.protocol.server_responses.ServerResponse;

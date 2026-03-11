@@ -1,6 +1,6 @@
 package com.connections.client;
 
-import com.connections.client.view.ClientView;
+import com.connections.client.ui.ClientView;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;

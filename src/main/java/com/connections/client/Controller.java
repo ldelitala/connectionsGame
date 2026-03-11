@@ -2,8 +2,8 @@ package com.connections.client;
 
 import com.connections.client.modules.*;
 import com.connections.client.controller_state.*;
-import com.connections.client.view.ClientView;
-import com.connections.client.view.CommandProvider;
+import com.connections.client.ui.ClientView;
+import com.connections.client.ui.CommandProvider;
 
 /**
  * The Brain of the client. It no longer contains the loop.

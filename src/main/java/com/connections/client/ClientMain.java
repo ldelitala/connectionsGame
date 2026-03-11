@@ -1,6 +1,7 @@
 package com.connections.client;
 
-import com.connections.client.view.*;
+import com.connections.client.ui.*;
+import com.connections.client.ui.console.*;
 import java.io.IOException;
 import java.util.Scanner;
 

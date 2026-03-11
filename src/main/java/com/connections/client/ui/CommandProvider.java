@@ -1,4 +1,4 @@
-package com.connections.client.view;
+package com.connections.client.ui;
 
 /**
  * Interface for a source of user commands.
