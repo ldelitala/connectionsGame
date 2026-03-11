@@ -1,52 +1,84 @@
 package com.connections.client.adapters;
 
+import com.connections.client.network.NetworkGateway;
 import com.connections.client.ui.ClientView;
-import com.connections.common.protocol.client_requests.ClientRequest;
-import com.connections.common.protocol.client_requests.UserRequest;
-import com.connections.common.protocol.server_responses.ServerResponse;
+import com.connections.common.dto.DTO;
+import com.connections.common.protocol.client_requests.*;
+import com.connections.common.protocol.server_responses.*;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
- * Handles account-related operations like registration, login, and updates.
+ * Coordinator for account-related operations.
+ * Handles network logic, JSON parsing, and view updates for identity actions.
  */
 public class UserAdapter {
 
     private final ClientView view;
+    private final Gson gson = new Gson();
 
     public UserAdapter(ClientView view) {
         this.view = view;
     }
 
-    /** Prepares a registration request. */
-    public ClientRequest prepareRegister(String username, String password) {
-        return UserRequest.register(username, password);
+    /**
+     * Executes a registration request.
+     */
+    public Status handleRegister(String username, String password, NetworkGateway gateway) {
+        ClientRequest request = UserRequest.register(username, password);
+        return callAndProcess(request, gateway);
     }
 
-    /** Prepares a login request. */
-    public ClientRequest prepareLogin(String username, String password, int udpPort) {
-        return UserRequest.login(username, password, udpPort);
+    /**
+     * Executes a login request.
+     */
+    public Status handleLogin(String username, String password, int udpPort, NetworkGateway gateway) {
+        ClientRequest request = UserRequest.login(username, password, udpPort);
+        return callAndProcess(request, gateway);
     }
 
-    /** Prepares a logout request. */
-    public ClientRequest prepareLogout() {
-        return UserRequest.logout();
+    /**
+     * Executes a logout request.
+     */
+    public Status handleLogout(NetworkGateway gateway) {
+        ClientRequest request = UserRequest.logout();
+        return callAndProcess(request, gateway);
     }
 
-    /** Prepares a credential update request. */
-    public ClientRequest prepareUpdate(String oldName, String oldPass, String newName, String newPass) {
-        // Normalize placeholders if provided via UI
+    /**
+     * Executes a credential update request.
+     */
+    public Status handleUpdate(String oldName, String oldPass, String newName, String newPass, NetworkGateway gateway) {
         String finalName = ("-".equals(newName)) ? null : newName;
         String finalPass = ("-".equals(newPass)) ? null : newPass;
 
         if (finalName == null && finalPass == null) {
             view.showMessage("No changes provided.");
-            return null;
+            return Status.ERROR;
         }
 
-        return UserRequest.updateCredentials(oldName, oldPass, finalName, finalPass);
+        ClientRequest request = UserRequest.updateCredentials(oldName, oldPass, finalName, finalPass);
+        return callAndProcess(request, gateway);
     }
 
-    /** Displays the server response for identity operations. */
-    public void handleResponse(ServerResponse<?> response) {
-        view.showResponse(response);
+    /**
+     * Generic helper for identity operations that don't return specific DTO data.
+     */
+    private Status callAndProcess(ClientRequest request, NetworkGateway gateway) {
+        try {
+            String json = gateway.sendRequest(request);
+            // Define the specific type for parsing to ensure GSON knows what to do
+            Type type = new TypeToken<ServerResponse<DTO>>(){}.getType();
+            ServerResponse<DTO> response = gson.fromJson(json, type);
+            
+            view.showResponse(response);
+            return response.getStatus();
+            
+        } catch (IOException e) {
+            view.showError("Network error: " + e.getMessage());
+            return Status.ERROR;
+        }
     }
 }

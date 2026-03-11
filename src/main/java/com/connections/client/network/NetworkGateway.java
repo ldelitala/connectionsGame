@@ -1,7 +1,6 @@
 package com.connections.client.network;
 
 import com.connections.common.protocol.client_requests.ClientRequest;
-import com.connections.common.protocol.server_responses.ServerResponse;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;
@@ -12,7 +11,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 /**
- * Handles the low-level TCP connection and JSON communication with the server.
+ * Handles the low-level TCP connection and raw JSON communication with the server.
+ * Acting as a simple "postman", it sends request objects as JSON and returns raw response strings.
  */
 public class NetworkGateway implements AutoCloseable {
 
@@ -25,11 +25,6 @@ public class NetworkGateway implements AutoCloseable {
 
     /**
      * Creates a new TCP connection to the specified server.
-     *
-     * @param host Server hostname or IP address.
-     * @param port Server TCP port.
-     * @throws UnknownHostException If the host cannot be resolved.
-     * @throws IOException          If a connection error occurs.
      */
     public NetworkGateway(String host, int port) throws UnknownHostException, IOException {
         this.socket = new Socket(host, port);
@@ -43,27 +38,23 @@ public class NetworkGateway implements AutoCloseable {
     }
 
     /**
-     * Sends a request to the server and waits for a response.
+     * Sends a request and returns the raw JSON response string.
+     * The caller (Adapter) is responsible for parsing this string into the correct DTO.
      *
      * @param request The request object to send.
-     * @return The server's response.
+     * @return The raw JSON response from the server.
      * @throws IOException If the connection is closed or a network error occurs.
      */
-    public ServerResponse<?> sendRequest(ClientRequest request) throws IOException {
+    public String sendRequest(ClientRequest request) throws IOException {
         String json = gson.toJson(request);
         out.println(json);
         String responseJson = in.readLine();
         if (responseJson == null) {
             throw new IOException(ERR_SERVER_CLOSED);
         }
-        return gson.fromJson(responseJson, ServerResponse.class);
+        return responseJson;
     }
 
-    /**
-     * Closes the underlying TCP socket and associated streams.
-     *
-     * @throws IOException If an error occurs during closure.
-     */
     @Override
     public void close() throws IOException {
         if (socket != null) {

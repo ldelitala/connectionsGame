@@ -1,13 +1,12 @@
 package com.connections.client.controller.state;
 
 import com.connections.client.controller.GameEngine;
-import com.connections.common.protocol.client_requests.ClientRequest;
-import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 import java.util.List;
 
 /**
  * State for players who are not authenticated.
+ * Actions are delegated to the UserAdapter with the network gateway.
  */
 public class LoggedOutState implements EngineState {
 
@@ -19,26 +18,14 @@ public class LoggedOutState implements EngineState {
 
     @Override
     public void onRegister(String username, String password) {
-        ClientRequest request = engine.getUserAdapter().prepareRegister(username, password);
-        executeRequest(request, false, username);
+        engine.getUserAdapter().handleRegister(username, password, engine.getGateway());
     }
 
     @Override
     public void onLogin(String username, String password) {
-        ClientRequest request = engine.getUserAdapter().prepareLogin(username, password, engine.getUdpPort());
-        executeRequest(request, true, username);
-    }
-
-    private void executeRequest(ClientRequest request, boolean isLogin, String username) {
-        if (request == null) return;
-        try {
-            ServerResponse<?> response = engine.getGateway().sendRequest(request);
-            engine.getUserAdapter().handleResponse(response);
-            if (isLogin && response.getStatus() == Status.OK) {
-                engine.changeState(new LoggedInState(engine, username));
-            }
-        } catch (Exception e) {
-            engine.getView().showError(e.getMessage());
+        Status status = engine.getUserAdapter().handleLogin(username, password, engine.getUdpPort(), engine.getGateway());
+        if (status == Status.OK) {
+            engine.changeState(new LoggedInState(engine, username));
         }
     }
 

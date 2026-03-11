@@ -1,13 +1,12 @@
 package com.connections.client.controller.state;
 
 import com.connections.client.controller.GameEngine;
-import com.connections.common.protocol.client_requests.*;
-import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 import java.util.List;
 
 /**
- * State for players who are authenticated and can participate in puzzles.
+ * State for players who are authenticated.
+ * Actions are delegated to the appropriate Adapter with the network gateway.
  */
 public class LoggedInState implements EngineState {
 
@@ -24,57 +23,53 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onLogout() {
-        ClientRequest request = engine.getUserAdapter().prepareLogout();
-        if (executeRequest(request, engine.getUserAdapter())) {
+        Status status = engine.getUserAdapter().handleLogout(engine.getGateway());
+        if (status == Status.OK) {
             engine.changeState(new LoggedOutState(engine));
         }
     }
 
     @Override
     public void onUpdateCredentials(String oldPass, String newName, String newPass) {
-        ClientRequest request = engine.getUserAdapter().prepareUpdate(username, oldPass, newName, newPass);
-        if (executeRequest(request, engine.getUserAdapter())) {
-            if (newName != null && !"-".equals(newName)) this.username = newName;
+        Status status = engine.getUserAdapter().handleUpdate(username, oldPass, newName, newPass, engine.getGateway());
+        if (status == Status.OK && newName != null && !"-".equals(newName)) {
+            this.username = newName;
         }
     }
 
     @Override
     public void onGuess(List<String> words) {
-        executeRequest(engine.getGameplayAdapter().prepareGuess(words), engine.getGameplayAdapter());
+        engine.getGameplayAdapter().handleGuess(words, engine.getGateway());
     }
 
-    @Override public void onRequestBoard() { executeRequest(engine.getGameplayAdapter().prepareStatus(), engine.getGameplayAdapter()); }
-    @Override public void onRequestStats() { executeRequest(engine.getGameplayAdapter().prepareStats(), engine.getGameplayAdapter()); }
-    
+    @Override
+    public void onRequestBoard() {
+        engine.getGameplayAdapter().handleStatus(engine.getGateway());
+    }
+
+    @Override
+    public void onRequestStats() {
+        engine.getGameplayAdapter().handleStats(engine.getGateway());
+    }
+
     @Override
     public void onRequestPastInfo(int puzzleId) {
-        executeRequest(engine.getHistoryAdapter().preparePastInfo(puzzleId), engine.getHistoryAdapter());
+        engine.getHistoryAdapter().handlePastInfo(puzzleId, engine.getGateway());
     }
 
     @Override
     public void onRequestGlobalStats(int puzzleId) {
-        executeRequest(engine.getHistoryAdapter().prepareGlobalStats(puzzleId), engine.getHistoryAdapter());
+        engine.getHistoryAdapter().handleGlobalStats(puzzleId, engine.getGateway());
     }
 
     @Override
     public void onRequestRanking(String username, Integer topK) {
-        executeRequest(engine.getHistoryAdapter().prepareRanking(username, topK), engine.getHistoryAdapter());
+        engine.getHistoryAdapter().handleRanking(username, topK, engine.getGateway());
     }
 
-    @Override public void onRequestHistory() { executeRequest(engine.getHistoryAdapter().prepareHistory(), engine.getHistoryAdapter()); }
-
-    private boolean executeRequest(ClientRequest request, Object adapter) {
-        if (request == null) return false;
-        try {
-            ServerResponse<?> response = engine.getGateway().sendRequest(request);
-            if (adapter instanceof com.connections.client.adapters.UserAdapter) ((com.connections.client.adapters.UserAdapter) adapter).handleResponse(response);
-            else if (adapter instanceof com.connections.client.adapters.GameplayAdapter) ((com.connections.client.adapters.GameplayAdapter) adapter).handleResponse(response);
-            else if (adapter instanceof com.connections.client.adapters.HistoryAdapter) ((com.connections.client.adapters.HistoryAdapter) adapter).handleResponse(response);
-            return response.getStatus() == Status.OK;
-        } catch (Exception e) {
-            engine.getView().showError(e.getMessage());
-            return false;
-        }
+    @Override
+    public void onRequestHistory() {
+        engine.getHistoryAdapter().handleHistory(engine.getGateway());
     }
 
     @Override
@@ -86,5 +81,9 @@ public class LoggedInState implements EngineState {
     }
 
     @Override public String getPrompt() { return String.format("[%s] > ", username); }
-    @Override public void onExit() { try { engine.getGateway().sendRequest(engine.getUserAdapter().prepareLogout()); } catch (Exception ignored) {} }
+    
+    @Override 
+    public void onExit() { 
+        engine.getUserAdapter().handleLogout(engine.getGateway());
+    }
 }
