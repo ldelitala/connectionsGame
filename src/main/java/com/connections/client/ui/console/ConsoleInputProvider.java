@@ -1,30 +1,29 @@
 package com.connections.client.ui.console;
 
-import com.connections.client.ui.CommandProvider;
+import com.connections.client.ui.InputProvider;
 import java.util.Scanner;
 
 /**
- * CLI implementation of CommandProvider. Self-manages its own Scanner for System.in.
+ * CLI implementation of InputProvider. Self-manages its own Scanner for System.in.
  */
-public class ConsoleCommandProvider implements CommandProvider {
+public class ConsoleInputProvider implements InputProvider {
 
     private final Scanner scanner;
     private volatile boolean running = true;
 
     /**
-     * Constructs a new ConsoleCommandProvider and opens System.in via Scanner.
+     * Constructs a new ConsoleInputProvider and opens System.in via Scanner.
      */
-    public ConsoleCommandProvider() {
+    public ConsoleInputProvider() {
         this.scanner = new Scanner(System.in);
     }
 
     @Override
-    public void startProviding(CommandListener listener) {
-        // while the provider is active and has next lines...
+    public void startListening(InputListener listener) {
         while (running && scanner.hasNextLine()) {
             String line = scanner.nextLine().trim();
             if (!line.isEmpty()) {
-                listener.onCommand(line);
+                listener.onInput(line);
             }
         }
     }
@@ -34,9 +33,6 @@ public class ConsoleCommandProvider implements CommandProvider {
         this.running = false;
     }
 
-    /**
-     * Closes the underlying scanner and System.in.
-     */
     @Override
     public void close() {
         stop();

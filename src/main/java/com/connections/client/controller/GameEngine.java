@@ -4,13 +4,13 @@ import com.connections.client.network.NetworkGateway;
 import com.connections.client.services.*;
 import com.connections.client.controller.state.*;
 import com.connections.client.ui.ClientView;
-import com.connections.client.ui.CommandProvider;
+import com.connections.client.ui.InputProvider;
 
 /**
- * The Brain of the client. It no longer contains the loop.
- * It simply reacts to commands received from a CommandProvider.
+ * The Brain of the client (Game Engine).
+ * It reacts to inputs received from an InputProvider.
  */
-public class GameEngine implements CommandProvider.CommandListener {
+public class GameEngine implements InputProvider.InputListener {
 
     private static final String CMD_EXIT = "exit";
     private static final String CMD_HELP = "help";
@@ -21,10 +21,10 @@ public class GameEngine implements CommandProvider.CommandListener {
         "  help              : Show this list\n" +
         "  exit              : Close the application\n";
 
-    private final NetworkGateway tcpPort;
+    private final NetworkGateway gateway;
     private final int udpPort;
     private final ClientView view;
-    private final CommandProvider commandProvider;
+    private final InputProvider inputProvider;
     
     private final IdentityService identityService;
     private final GameplayService gameplayService;
@@ -32,11 +32,11 @@ public class GameEngine implements CommandProvider.CommandListener {
 
     private EngineState currentState;
 
-    public GameEngine(NetworkGateway tcpPort, int udpPort, ClientView view, CommandProvider provider) {
-        this.tcpPort = tcpPort;
+    public GameEngine(NetworkGateway gateway, int udpPort, ClientView view, InputProvider inputProvider) {
+        this.gateway = gateway;
         this.udpPort = udpPort;
         this.view = view;
-        this.commandProvider = provider;
+        this.inputProvider = inputProvider;
         this.identityService = new IdentityService();
         this.gameplayService = new GameplayService();
         this.archiveService = new ArchiveService();
@@ -44,22 +44,22 @@ public class GameEngine implements CommandProvider.CommandListener {
     }
 
     /**
-     * Starts the engine flow.
+     * Starts the Game Engine flow.
      */
     public void run() {
         view.renderPrompt(currentState.getPrompt());
-        commandProvider.startProviding(this);
+        inputProvider.startListening(this);
     }
 
     /**
-     * Callback method called every time a new command is received.
+     * Callback method called every time a new input is received from the provider.
      */
     @Override
-    public void onCommand(String line) {
+    public void onInput(String line) {
         if (line.equalsIgnoreCase(CMD_EXIT)) {
             view.showMessage("Exiting...");
             currentState.onExit();
-            commandProvider.stop();
+            inputProvider.stop();
             return;
         }
 
@@ -71,7 +71,7 @@ public class GameEngine implements CommandProvider.CommandListener {
             currentState.handleCommand(tokens);
         }
         
-        // After every command, render the next prompt
+        // After processing input, render the next prompt
         view.renderPrompt(currentState.getPrompt());
     }
 
@@ -79,7 +79,7 @@ public class GameEngine implements CommandProvider.CommandListener {
         this.currentState = newState;
     }
 
-    public NetworkGateway getTcpPort() { return tcpPort; }
+    public NetworkGateway getGateway() { return gateway; }
     public int getUdpPort() { return udpPort; }
     public ClientView getView() { return view; }
     public IdentityService getIdentityService() { return identityService; }

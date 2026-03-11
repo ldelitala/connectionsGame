@@ -88,7 +88,7 @@ public class LoggedInState implements EngineState {
 
         if (request != null) {
             try {
-                ServerResponse<?> response = engine.getTcpPort().sendRequest(request);
+                ServerResponse<?> response = engine.getGateway().sendRequest(request);
                 
                 if (service instanceof com.connections.client.services.IdentityService) {
                     ((com.connections.client.services.IdentityService) service).handleResponse(response, engine.getView());
@@ -123,7 +123,7 @@ public class LoggedInState implements EngineState {
     @Override
     public void onExit() {
         try {
-            engine.getTcpPort().sendRequest(engine.getIdentityService().prepareLogout());
+            engine.getGateway().sendRequest(engine.getIdentityService().prepareLogout());
         } catch (Exception ignored) {}
     }
 }

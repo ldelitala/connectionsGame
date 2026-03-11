@@ -45,7 +45,7 @@ public class LoggedOutState implements EngineState {
 
         if (request != null) {
             try {
-                ServerResponse<?> response = engine.getTcpPort().sendRequest(request);
+                ServerResponse<?> response = engine.getGateway().sendRequest(request);
                 engine.getIdentityService().handleResponse(response, engine.getView());
 
                 if (isLogin && response.getStatus() == Status.OK) {

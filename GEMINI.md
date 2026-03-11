@@ -39,19 +39,20 @@
 - [x] Refactoring Modulare: Separazione delle logiche Client (User, Game, History) in moduli indipendenti.
 - [x] Raffinamento Protocollo: Specializzazione di GameInfo/Stats DTO per aderenza rigorosa alle specifiche (Corrente vs Passato).
 - [x] Allineamento Specifiche (Allegato 1): Correzione dei nomi dei campi JSON (`name` vs `username`, `psw`) e ripristino dei nomi operazione originali (`requestGameInfo`, `requestLeaderboard`, etc.) per garantire la piena conformità.
-- [x] **Full MVC Refactoring**: Decoupled Input (CommandProvider) and Output (ClientView) into a dedicated `ui` layer.
-- [x] **Implementation Isolation**: Console-specific logic moved to `ui.console` sub-package.
-- [x] **Thread-Safe UI**: Synchronized console output to prevent interleaved TCP/UDP messages.
-- [x] **Semantic Rebranding**: Renamed core concepts to classic game terminology (`WordGroup` -> `Category`, `Game` -> `Puzzle`, `Proposal` -> `Guess`) for better readability and UX.
+- [x] **Full MVC Refactoring**: Decoupled Input (InputProvider) and Output (ClientView) into a dedicated `ui` layer.
+- [x] **Game Engine Architecture**: Transitioned the client to a reactive engine-based design (`GameEngine`, `EngineState`, `Services`).
+- [x] **Network Infrastructure**: Isolated TCP/UDP communication into a specialized `network` layer (`NetworkGateway`, `NotificationService`).
+- [x] **Semantic Rebranding**: Renamed core concepts to classic game terminology (`Category`, `Puzzle`, `Guess`, `Board`).
 
 ## Latest Session Improvements (March 11, 2026)
-- **MVC Architecture**: Transitioned the client to a clean Model-View-Controller pattern.
-    - **View**: Introduced `ClientView` interface and `ConsoleView` implementation.
-    - **Logic**: Refactored `GameModule`, `UserModule`, and `HistoryModule` to be purely data-driven.
-    - **Controller**: Updated to coordinate between States, Modules, and the View.
-- **Output Synchronization**: Added an atomic locking mechanism in `ConsoleView` so that multi-line responses (like leaderboards) are never interrupted by asynchronous UDP notifications.
-- **GUI-Ready**: The core logic is now entirely decoupled from `System.out`, allowing for a seamless transition to a graphical interface by simply providing a new `ClientView` implementation.
-- **Cleanup**: Removed legacy `ResponseView` and specialized ModuleView classes.
+- **Engine-Level Refactoring**:
+    - **Controller** $\rightarrow$ **GameEngine**: The central hub that reacts to external inputs.
+    - **States** $\rightarrow$ **EngineStates**: Context-specific behaviors for the engine.
+    - **Modules** $\rightarrow$ **Services**: Specialized subsystems (`IdentityService`, `GameplayService`, `ArchiveService`).
+    - **Network** $\rightarrow$ **Infrastructure**: Introduced `NetworkGateway` for TCP and `NotificationService` for UDP.
+- **Input Evolution**: Replaced "Commands" with the more appropriate **Input** terminology (`InputProvider`, `InputListener`).
+- **Resource Management**: Encapsulated the `Scanner` within `ConsoleInputProvider` and implemented `AutoCloseable` for safe resource cleanup via try-with-resources.
+- **Output Synchronization**: Synchronized `ConsoleView` to ensure multi-line puzzle boards and career stats are never interrupted by asynchronous notifications.
 
 ## Recent Improvements
 - **Clean Architecture**: Moved sensitive entities (`User`, `Game`) to server-private packages.
