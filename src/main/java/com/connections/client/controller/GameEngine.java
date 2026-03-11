@@ -1,7 +1,7 @@
 package com.connections.client.controller;
 
 import com.connections.client.network.NetworkGateway;
-import com.connections.client.services.*;
+import com.connections.client.adapters.*;
 import com.connections.client.controller.state.*;
 import com.connections.client.ui.ClientView;
 import com.connections.client.ui.InputProvider;
@@ -23,9 +23,9 @@ public class GameEngine implements InputProvider.InputListener {
     private final ClientView view;
     private final InputProvider inputProvider;
     
-    private final IdentityService identityService;
-    private final GameplayService gameplayService;
-    private final ArchiveService archiveService;
+    private final IdentityAdapter identityAdapter;
+    private final GameplayAdapter gameplayAdapter;
+    private final HistoryAdapter historyAdapter;
 
     private EngineState currentState;
 
@@ -34,9 +34,9 @@ public class GameEngine implements InputProvider.InputListener {
         this.udpPort = udpPort;
         this.view = view;
         this.inputProvider = inputProvider;
-        this.identityService = new IdentityService(view);
-        this.gameplayService = new GameplayService(view);
-        this.archiveService = new ArchiveService(view);
+        this.identityAdapter = new IdentityAdapter(view);
+        this.gameplayAdapter = new GameplayAdapter(view);
+        this.historyAdapter = new HistoryAdapter(view);
         this.currentState = new LoggedOutState(this);
     }
 
@@ -127,7 +127,6 @@ public class GameEngine implements InputProvider.InputListener {
         inputProvider.stop();
     }
 
-    /** Helper to restore prompt after an action */
     private void postAction() {
         view.renderPrompt(currentState.getPrompt());
     }
@@ -136,11 +135,11 @@ public class GameEngine implements InputProvider.InputListener {
         this.currentState = newState;
     }
 
-    // Getters for infrastructure
+    // --- Getters for Adapters and Infrastructure ---
     public NetworkGateway getGateway() { return gateway; }
     public int getUdpPort() { return udpPort; }
     public ClientView getView() { return view; }
-    public IdentityService getIdentityService() { return identityService; }
-    public GameplayService getGameplayService() { return gameplayService; }
-    public ArchiveService getArchiveService() { return archiveService; }
+    public IdentityAdapter getIdentityAdapter() { return identityAdapter; }
+    public GameplayAdapter getGameplayAdapter() { return gameplayAdapter; }
+    public HistoryAdapter getHistoryAdapter() { return historyAdapter; }
 }

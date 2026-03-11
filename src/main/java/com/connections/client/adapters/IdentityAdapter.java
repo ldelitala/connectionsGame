@@ -1,4 +1,4 @@
-package com.connections.client.services;
+package com.connections.client.adapters;
 
 import com.connections.client.ui.ClientView;
 import com.connections.common.protocol.client_requests.ClientRequest;
@@ -8,11 +8,11 @@ import com.connections.common.protocol.server_responses.ServerResponse;
 /**
  * Handles account-related operations like registration, login, and updates.
  */
-public class IdentityService {
+public class IdentityAdapter {
 
     private final ClientView view;
 
-    public IdentityService(ClientView view) {
+    public IdentityAdapter(ClientView view) {
         this.view = view;
     }
 

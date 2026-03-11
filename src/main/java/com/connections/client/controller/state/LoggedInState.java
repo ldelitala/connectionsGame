@@ -11,15 +11,6 @@ import java.util.List;
  */
 public class LoggedInState implements EngineState {
 
-    private static final String HELP_MESSAGE = 
-        "\n--- AVAILABLE COMMANDS (Logged In) ---\n" +
-        "Active Puzzle:\n" +
-        "  guess [w1-w4]     : Send a 4-word attempt\n" +
-        "  board             : View current puzzle board\n" +
-        "  stats             : View global stats for this puzzle\n" +
-        "\nHistory: info, global, ranking, history\n" +
-        "Account: update, logout\n";
-
     private final GameEngine engine;
     private String username;
 
@@ -28,63 +19,57 @@ public class LoggedInState implements EngineState {
         this.username = username;
     }
 
+    @Override public void onRegister(String u, String p) { engine.getView().showMessage("Already logged in."); }
+    @Override public void onLogin(String u, String p) { engine.getView().showMessage("Already logged in."); }
+
     @Override
     public void onLogout() {
-        ClientRequest request = engine.getIdentityService().prepareLogout();
-        if (executeRequest(request, engine.getIdentityService()) && lastStatusOk(request)) {
+        ClientRequest request = engine.getIdentityAdapter().prepareLogout();
+        if (executeRequest(request, engine.getIdentityAdapter())) {
             engine.changeState(new LoggedOutState(engine));
         }
     }
 
     @Override
     public void onUpdateCredentials(String oldPass, String newName, String newPass) {
-        ClientRequest request = engine.getIdentityService().prepareUpdate(username, oldPass, newName, newPass);
-        if (executeRequest(request, engine.getIdentityService()) && lastStatusOk(request)) {
-            // If the name was updated successfully, keep track of it
-            if (newName != null && !"-".equals(newName)) {
-                this.username = newName;
-            }
+        ClientRequest request = engine.getIdentityAdapter().prepareUpdate(username, oldPass, newName, newPass);
+        if (executeRequest(request, engine.getIdentityAdapter())) {
+            if (newName != null && !"-".equals(newName)) this.username = newName;
         }
     }
 
     @Override
     public void onGuess(List<String> words) {
-        ClientRequest request = engine.getGameplayService().prepareGuess(words);
-        executeRequest(request, engine.getGameplayService());
+        executeRequest(engine.getGameplayAdapter().prepareGuess(words), engine.getGameplayAdapter());
     }
 
-    @Override public void onRequestBoard() { executeRequest(engine.getGameplayService().prepareStatus(), engine.getGameplayService()); }
-    @Override public void onRequestStats() { executeRequest(engine.getGameplayService().prepareStats(), engine.getGameplayService()); }
+    @Override public void onRequestBoard() { executeRequest(engine.getGameplayAdapter().prepareStatus(), engine.getGameplayAdapter()); }
+    @Override public void onRequestStats() { executeRequest(engine.getGameplayAdapter().prepareStats(), engine.getGameplayAdapter()); }
     
     @Override
     public void onRequestPastInfo(int puzzleId) {
-        executeRequest(engine.getArchiveService().preparePastInfo(puzzleId), engine.getArchiveService());
+        executeRequest(engine.getHistoryAdapter().preparePastInfo(puzzleId), engine.getHistoryAdapter());
     }
 
     @Override
     public void onRequestGlobalStats(int puzzleId) {
-        executeRequest(engine.getArchiveService().prepareGlobalStats(puzzleId), engine.getArchiveService());
+        executeRequest(engine.getHistoryAdapter().prepareGlobalStats(puzzleId), engine.getHistoryAdapter());
     }
 
     @Override
     public void onRequestRanking(String username, Integer topK) {
-        executeRequest(engine.getArchiveService().prepareRanking(username, topK), engine.getArchiveService());
+        executeRequest(engine.getHistoryAdapter().prepareRanking(username, topK), engine.getHistoryAdapter());
     }
 
-    @Override public void onRequestHistory() { executeRequest(engine.getArchiveService().prepareHistory(), engine.getArchiveService()); }
+    @Override public void onRequestHistory() { executeRequest(engine.getHistoryAdapter().prepareHistory(), engine.getHistoryAdapter()); }
 
-    // Helpers
-    private boolean executeRequest(ClientRequest request, Object service) {
+    private boolean executeRequest(ClientRequest request, Object adapter) {
         if (request == null) return false;
         try {
             ServerResponse<?> response = engine.getGateway().sendRequest(request);
-            if (service instanceof com.connections.client.services.IdentityService) {
-                ((com.connections.client.services.IdentityService) service).handleResponse(response);
-            } else if (service instanceof com.connections.client.services.GameplayService) {
-                ((com.connections.client.services.GameplayService) service).handleResponse(response);
-            } else if (service instanceof com.connections.client.services.ArchiveService) {
-                ((com.connections.client.services.ArchiveService) service).handleResponse(response);
-            }
+            if (adapter instanceof com.connections.client.adapters.IdentityAdapter) ((com.connections.client.adapters.IdentityAdapter) adapter).handleResponse(response);
+            else if (adapter instanceof com.connections.client.adapters.GameplayAdapter) ((com.connections.client.adapters.GameplayAdapter) adapter).handleResponse(response);
+            else if (adapter instanceof com.connections.client.adapters.HistoryAdapter) ((com.connections.client.adapters.HistoryAdapter) adapter).handleResponse(response);
             return response.getStatus() == Status.OK;
         } catch (Exception e) {
             engine.getView().showError(e.getMessage());
@@ -92,11 +77,14 @@ public class LoggedInState implements EngineState {
         }
     }
 
-    private boolean lastStatusOk(ClientRequest request) { return true; }
+    @Override
+    public void printHelp() {
+        engine.getView().showMessage("\n--- AVAILABLE COMMANDS (Logged In) ---\n" +
+                                     "Active Puzzle: guess, board, stats\n" +
+                                     "History: info, global, ranking, history\n" +
+                                     "Account: update, logout\n");
+    }
 
-    @Override public void onRegister(String u, String p) { engine.getView().showMessage("Already logged in."); }
-    @Override public void onLogin(String u, String p) { engine.getView().showMessage("Already logged in."); }
-    @Override public void printHelp() { engine.getView().showMessage(HELP_MESSAGE); }
     @Override public String getPrompt() { return String.format("[%s] > ", username); }
-    @Override public void onExit() { try { engine.getGateway().sendRequest(engine.getIdentityService().prepareLogout()); } catch (Exception ignored) {} }
+    @Override public void onExit() { try { engine.getGateway().sendRequest(engine.getIdentityAdapter().prepareLogout()); } catch (Exception ignored) {} }
 }

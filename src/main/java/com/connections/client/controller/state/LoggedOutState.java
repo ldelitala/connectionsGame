@@ -11,11 +11,6 @@ import java.util.List;
  */
 public class LoggedOutState implements EngineState {
 
-    private static final String HELP_MESSAGE = 
-        "\n--- AVAILABLE COMMANDS (Logged Out) ---\n" +
-        "  register <uP> <psw> : Create a new account\n" +
-        "  login <uP> <psw>    : Sign in to your account\n";
-
     private final GameEngine engine;
 
     public LoggedOutState(GameEngine engine) {
@@ -24,13 +19,13 @@ public class LoggedOutState implements EngineState {
 
     @Override
     public void onRegister(String username, String password) {
-        ClientRequest request = engine.getIdentityService().prepareRegister(username, password);
+        ClientRequest request = engine.getIdentityAdapter().prepareRegister(username, password);
         executeRequest(request, false, username);
     }
 
     @Override
     public void onLogin(String username, String password) {
-        ClientRequest request = engine.getIdentityService().prepareLogin(username, password, engine.getUdpPort());
+        ClientRequest request = engine.getIdentityAdapter().prepareLogin(username, password, engine.getUdpPort());
         executeRequest(request, true, username);
     }
 
@@ -38,7 +33,7 @@ public class LoggedOutState implements EngineState {
         if (request == null) return;
         try {
             ServerResponse<?> response = engine.getGateway().sendRequest(request);
-            engine.getIdentityService().handleResponse(response);
+            engine.getIdentityAdapter().handleResponse(response);
             if (isLogin && response.getStatus() == Status.OK) {
                 engine.changeState(new LoggedInState(engine, username));
             }
@@ -47,7 +42,7 @@ public class LoggedOutState implements EngineState {
         }
     }
 
-    @Override public void onLogout() { engine.getView().showMessage("You are not logged in."); }
+    @Override public void onLogout() { engine.getView().showMessage("Please login first."); }
     @Override public void onUpdateCredentials(String oP, String nU, String nP) { engine.getView().showMessage("Please login first."); }
     @Override public void onGuess(List<String> words) { engine.getView().showMessage("Please login first."); }
     @Override public void onRequestBoard() { engine.getView().showMessage("Please login first."); }
@@ -57,7 +52,12 @@ public class LoggedOutState implements EngineState {
     @Override public void onRequestRanking(String u, Integer k) { engine.getView().showMessage("Please login first."); }
     @Override public void onRequestHistory() { engine.getView().showMessage("Please login first."); }
 
-    @Override public void printHelp() { engine.getView().showMessage(HELP_MESSAGE); }
+    @Override
+    public void printHelp() {
+        engine.getView().showMessage("\n--- AVAILABLE COMMANDS (Logged Out) ---\n" +
+                                     "  register <uP> <psw>\n  login <uP> <psw>\n");
+    }
+
     @Override public String getPrompt() { return "> "; }
     @Override public void onExit() {}
 }

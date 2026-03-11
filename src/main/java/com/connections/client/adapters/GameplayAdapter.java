@@ -1,4 +1,4 @@
-package com.connections.client.services;
+package com.connections.client.adapters;
 
 import com.connections.client.ui.ClientView;
 import com.connections.common.dto.*;
@@ -9,27 +9,27 @@ import java.util.List;
 /**
  * Handles operations related to active puzzle gameplay (guessing, status).
  */
-public class GameplayService {
+public class GameplayAdapter {
 
     private final ClientView view;
 
-    public GameplayService(ClientView view) {
+    public GameplayAdapter(ClientView view) {
         this.view = view;
     }
 
     /** Prepares a guess (proposal) request. */
     public ClientRequest prepareGuess(List<String> words) {
-        return GuessRequest.submitProposal(words);
+        return GameplayRequest.submitProposal(words);
     }
 
     /** Prepares a request for current puzzle state. */
     public ClientRequest prepareStatus() {
-        return GuessRequest.getCurrentInfo();
+        return GameplayRequest.getCurrentInfo();
     }
 
     /** Prepares a request for current puzzle global stats. */
     public ClientRequest prepareStats() {
-        return GuessRequest.getCurrentStats();
+        return GameplayRequest.getCurrentStats();
     }
 
     /** Interprets and displays gameplay-related responses. */

@@ -1,4 +1,4 @@
-package com.connections.client.services;
+package com.connections.client.adapters;
 
 import com.connections.client.ui.ClientView;
 import com.connections.common.dto.*;
@@ -8,11 +8,11 @@ import com.connections.common.protocol.server_responses.*;
 /**
  * Handles operations related to past puzzles, statistics, and leaderboards.
  */
-public class ArchiveService {
+public class HistoryAdapter {
 
     private final ClientView view;
 
-    public ArchiveService(ClientView view) {
+    public HistoryAdapter(ClientView view) {
         this.view = view;
     }
 
