@@ -4,12 +4,12 @@ import com.connections.client.ui.ClientView;
 import com.connections.common.dto.*;
 import com.connections.common.models.Category;
 import com.connections.common.protocol.server_responses.ServerResponse;
+import com.connections.common.notifications.*;
 import java.util.List;
 
 /**
  * CLI implementation of ClientView. 
- * Methods are synchronized to ensure atomic console output, preventing 
- * interleaved messages between TCP responses and asynchronous UDP notifications.
+ * Methods are synchronized to ensure atomic console output.
  */
 public class ConsoleView implements ClientView {
 
@@ -75,9 +75,41 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
-    public synchronized void showNotification(String message) {
-        System.out.println("\n[NOTIFICATION] " + message);
+    public synchronized void showNotification(Notification notification) {
+        System.out.println("\n[NOTIFICATION] Type: " + notification.getType());
+        
+        if (notification instanceof NewGameNotification) {
+            displayNewGame((NewGameNotification) notification);
+        } else if (notification instanceof GameEndNotification) {
+            displayGameEnd((GameEndNotification) notification);
+        } else if (notification instanceof PlayerGameSummaryNotification) {
+            displayPlayerSummary((PlayerGameSummaryNotification) notification);
+        }
+        
         System.out.print("> "); 
+    }
+
+    private void displayNewGame(NewGameNotification n) {
+        System.out.println("A new Puzzle has started! ID: " + n.getGameId());
+        System.out.println("Words: " + String.join(", ", n.getWords()));
+        System.out.println("Type 'board' to start playing.");
+    }
+
+    private void displayGameEnd(GameEndNotification n) {
+        System.out.println("The current Puzzle has ended.");
+        if (n.getStats() != null) {
+            showGameStats(n.getStats());
+        }
+        if (n.getLeaderboard() != null) {
+            showLeaderboard(n.getLeaderboard());
+        }
+    }
+
+    private void displayPlayerSummary(PlayerGameSummaryNotification n) {
+        System.out.println("Your personal summary for the concluded puzzle:");
+        if (n.getPersonalInfo() != null) {
+            showGameInfo(n.getPersonalInfo());
+        }
     }
 
     @Override

@@ -1,6 +1,11 @@
 package com.connections.client.network;
 
 import com.connections.client.ui.ClientView;
+import com.connections.common.notifications.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -8,23 +13,17 @@ import java.net.SocketException;
 
 /**
  * Listens for asynchronous UDP notifications from the server.
- * Operates in a background daemon thread.
+ * Handles polymorphic deserialization of different notification types.
  */
 public class NotificationService extends Thread implements AutoCloseable {
 
-    /** Buffer size for incoming UDP packets (4KB to handle large JSON notifications). */
     private static final int BUFFER_SIZE = 4096;
+    private static final String FIELD_TYPE = "type";
 
     private final DatagramSocket socket;
     private final ClientView view;
+    private final Gson gson = new Gson();
 
-    /**
-     * Constructs a new NotificationService on the specified port.
-     * 
-     * @param port the local UDP port to bind to.
-     * @param view the UI view to display notifications.
-     * @throws SocketException if the socket could not be opened or bound.
-     */
     public NotificationService(int port, ClientView view) throws SocketException {
         this.socket = new DatagramSocket(port);
         this.view = view;
@@ -32,18 +31,10 @@ public class NotificationService extends Thread implements AutoCloseable {
         setName("NotificationService-Thread");
     }
 
-    /**
-     * Returns the actual local port this service is bound to.
-     * 
-     * @return the local UDP port.
-     */
     public int getLocalPort() {
         return socket.getLocalPort();
     }
 
-    /**
-     * Continuously listens for UDP packets until interrupted or the socket is closed.
-     */
     @Override
     public void run() {
         byte[] buffer = new byte[BUFFER_SIZE];
@@ -52,11 +43,8 @@ public class NotificationService extends Thread implements AutoCloseable {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 
-                // Convert packet data to string, ensuring we only read the actual bytes received
-                String message = new String(packet.getData(), 0, packet.getLength());
-                
-                // Dispatch notification to the UI view
-                view.showNotification(message);
+                String json = new String(packet.getData(), 0, packet.getLength());
+                processNotification(json);
                 
             } catch (IOException e) {
                 if (!socket.isClosed()) {
@@ -68,8 +56,37 @@ public class NotificationService extends Thread implements AutoCloseable {
     }
 
     /**
-     * Gracefully stops the service and closes the UDP socket.
+     * Parses the JSON to identify the notification type and deserializes it 
+     * into the appropriate DTO.
      */
+    private void processNotification(String json) {
+        try {
+            JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+            if (!obj.has(FIELD_TYPE)) return;
+
+            String type = obj.get(FIELD_TYPE).getAsString();
+            Notification notification = null;
+
+            switch (type) {
+                case "new_game":
+                    notification = gson.fromJson(json, NewGameNotification.class);
+                    break;
+                case "game_end":
+                    notification = gson.fromJson(json, GameEndNotification.class);
+                    break;
+                case "player_summary":
+                    notification = gson.fromJson(json, PlayerGameSummaryNotification.class);
+                    break;
+            }
+
+            if (notification != null) {
+                view.showNotification(notification);
+            }
+        } catch (Exception e) {
+            view.showError("Failed to parse notification: " + e.getMessage());
+        }
+    }
+
     @Override
     public void close() {
         interrupt();
