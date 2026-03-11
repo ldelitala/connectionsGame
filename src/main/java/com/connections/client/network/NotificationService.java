@@ -8,49 +8,59 @@ import java.net.SocketException;
 
 /**
  * Listens for asynchronous UDP notifications from the server.
+ * Operates in a background daemon thread.
  */
 public class NotificationService extends Thread implements AutoCloseable {
+
+    /** Buffer size for incoming UDP packets (4KB to handle large JSON notifications). */
+    private static final int BUFFER_SIZE = 4096;
+
     private final DatagramSocket socket;
     private final ClientView view;
 
     /**
-     * Initializes the UDP notification service.
-     *
-     * @param port Preferred UDP port. Use 0 for an ephemeral port.
-     * @param view UI view to display received notifications.
-     * @throws SocketException If the UDP socket cannot be opened.
+     * Constructs a new NotificationService on the specified port.
+     * 
+     * @param port the local UDP port to bind to.
+     * @param view the UI view to display notifications.
+     * @throws SocketException if the socket could not be opened or bound.
      */
     public NotificationService(int port, ClientView view) throws SocketException {
         this.socket = new DatagramSocket(port);
         this.view = view;
         setDaemon(true);
+        setName("NotificationService-Thread");
     }
 
     /**
-     * Returns the actual port being used by the notification service.
-     *
-     * @return The local UDP port.
+     * Returns the actual local port this service is bound to.
+     * 
+     * @return the local UDP port.
      */
     public int getLocalPort() {
         return socket.getLocalPort();
     }
 
     /**
-     * The service's execution loop. Continuously waits for incoming UDP packets
-     * and forwards them to the UI view.
+     * Continuously listens for UDP packets until interrupted or the socket is closed.
      */
     @Override
     public void run() {
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[BUFFER_SIZE];
         while (!isInterrupted() && !socket.isClosed()) {
             try {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
+                
+                // Convert packet data to string, ensuring we only read the actual bytes received
                 String message = new String(packet.getData(), 0, packet.getLength());
+                
+                // Dispatch notification to the UI view
                 view.showNotification(message);
+                
             } catch (IOException e) {
                 if (!socket.isClosed()) {
-                    view.showError("UDP Listener error: " + e.getMessage());
+                    view.showError("Notification service error: " + e.getMessage());
                 }
                 break;
             }
@@ -58,7 +68,7 @@ public class NotificationService extends Thread implements AutoCloseable {
     }
 
     /**
-     * Stops the notification thread and closes the socket.
+     * Gracefully stops the service and closes the UDP socket.
      */
     @Override
     public void close() {
