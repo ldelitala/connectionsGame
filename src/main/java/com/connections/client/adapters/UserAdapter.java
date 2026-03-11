@@ -12,7 +12,7 @@ import java.lang.reflect.Type;
 
 /**
  * Coordinator for account-related operations.
- * Handles network logic, JSON parsing, and view updates for identity actions.
+ * Handles network logic, JSON parsing, and direct view updates.
  */
 public class UserAdapter {
 
@@ -23,33 +23,21 @@ public class UserAdapter {
         this.view = view;
     }
 
-    /**
-     * Executes a registration request.
-     */
     public Status handleRegister(String username, String password, NetworkGateway gateway) {
         ClientRequest request = UserRequest.register(username, password);
         return callAndProcess(request, gateway);
     }
 
-    /**
-     * Executes a login request.
-     */
     public Status handleLogin(String username, String password, int udpPort, NetworkGateway gateway) {
         ClientRequest request = UserRequest.login(username, password, udpPort);
         return callAndProcess(request, gateway);
     }
 
-    /**
-     * Executes a logout request.
-     */
     public Status handleLogout(NetworkGateway gateway) {
         ClientRequest request = UserRequest.logout();
         return callAndProcess(request, gateway);
     }
 
-    /**
-     * Executes a credential update request.
-     */
     public Status handleUpdate(String oldName, String oldPass, String newName, String newPass, NetworkGateway gateway) {
         String finalName = ("-".equals(newName)) ? null : newName;
         String finalPass = ("-".equals(newPass)) ? null : newPass;
@@ -64,14 +52,16 @@ public class UserAdapter {
     }
 
     /**
-     * Generic helper for identity operations that don't return specific DTO data.
+     * Executes a request by converting it to JSON, sending it through the gateway,
+     * and displaying the response status/message.
      */
     private Status callAndProcess(ClientRequest request, NetworkGateway gateway) {
         try {
-            String json = gateway.sendRequest(request);
-            // Define the specific type for parsing to ensure GSON knows what to do
+            String requestJson = gson.toJson(request);
+            String responseJson = gateway.sendRequest(requestJson);
+            
             Type type = new TypeToken<ServerResponse<DTO>>(){}.getType();
-            ServerResponse<DTO> response = gson.fromJson(json, type);
+            ServerResponse<DTO> response = gson.fromJson(responseJson, type);
             
             view.showResponse(response);
             return response.getStatus();

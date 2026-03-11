@@ -1,8 +1,5 @@
 package com.connections.client.network;
 
-import com.connections.common.protocol.client_requests.ClientRequest;
-import com.google.gson.Gson;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,8 +8,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 /**
- * Handles the low-level TCP connection and raw JSON communication with the server.
- * Acting as a simple "postman", it sends request objects as JSON and returns raw response strings.
+ * Handles the low-level TCP connection.
+ * Acts as a raw string tunnel: sends a JSON string and returns a JSON string.
  */
 public class NetworkGateway implements AutoCloseable {
 
@@ -21,7 +18,6 @@ public class NetworkGateway implements AutoCloseable {
     private final Socket socket;
     private final PrintWriter out;
     private final BufferedReader in;
-    private final Gson gson = new Gson();
 
     /**
      * Creates a new TCP connection to the specified server.
@@ -38,16 +34,14 @@ public class NetworkGateway implements AutoCloseable {
     }
 
     /**
-     * Sends a request and returns the raw JSON response string.
-     * The caller (Adapter) is responsible for parsing this string into the correct DTO.
+     * Sends a raw JSON string and returns the raw JSON response from the server.
      *
-     * @param request The request object to send.
-     * @return The raw JSON response from the server.
+     * @param jsonRequest The JSON string to send.
+     * @return The raw JSON response string.
      * @throws IOException If the connection is closed or a network error occurs.
      */
-    public String sendRequest(ClientRequest request) throws IOException {
-        String json = gson.toJson(request);
-        out.println(json);
+    public String sendRequest(String jsonRequest) throws IOException {
+        out.println(jsonRequest);
         String responseJson = in.readLine();
         if (responseJson == null) {
             throw new IOException(ERR_SERVER_CLOSED);

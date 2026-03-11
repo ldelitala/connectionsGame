@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Coordinator for active puzzle gameplay actions.
- * Manages request creation, raw JSON parsing for specific DTOs, and view updates.
+ * Converts actions to JSON and dispatches responses directly to specific view methods.
  */
 public class GameplayAdapter {
 
@@ -24,43 +24,46 @@ public class GameplayAdapter {
         this.view = view;
     }
 
-    /**
-     * Submits a guess (proposal) and updates the board view.
-     */
+    /** Submits a guess and displays the puzzle board. */
     public void handleGuess(List<String> words, NetworkGateway gateway) {
-        ClientRequest request = GameplayRequest.submitProposal(words);
-        callAndProcess(request, gateway, new TypeToken<ServerResponse<PuzzleStateDTO>>(){}.getType());
+        String jsonReq = gson.toJson(GameplayRequest.submitProposal(words));
+        processPuzzleState(jsonReq, gateway);
     }
 
-    /**
-     * Requests the current puzzle state and renders the board.
-     */
+    /** Requests and displays the puzzle board. */
     public void handleStatus(NetworkGateway gateway) {
-        ClientRequest request = GameplayRequest.getCurrentInfo();
-        callAndProcess(request, gateway, new TypeToken<ServerResponse<PuzzleStateDTO>>(){}.getType());
+        String jsonReq = gson.toJson(GameplayRequest.getCurrentInfo());
+        processPuzzleState(jsonReq, gateway);
     }
 
-    /**
-     * Requests current puzzle global statistics.
-     */
+    /** Requests and displays puzzle global statistics. */
     public void handleStats(NetworkGateway gateway) {
-        ClientRequest request = GameplayRequest.getCurrentStats();
-        callAndProcess(request, gateway, new TypeToken<ServerResponse<PuzzleStatsDTO>>(){}.getType());
-    }
-
-    /**
-     * Internal helper to execute a request, parse the typed response, and update the view.
-     */
-    private <T extends DTO> void callAndProcess(ClientRequest request, NetworkGateway gateway, Type type) {
         try {
-            String json = gateway.sendRequest(request);
-            ServerResponse<T> response = gson.fromJson(json, type);
+            String jsonReq = gson.toJson(GameplayRequest.getCurrentStats());
+            String jsonRes = gateway.sendRequest(jsonReq);
+            
+            Type type = new TypeToken<ServerResponse<PuzzleStatsDTO>>(){}.getType();
+            ServerResponse<PuzzleStatsDTO> response = gson.fromJson(jsonRes, type);
             
             view.showResponse(response);
             if (response.getStatus() == Status.OK && response.getData() != null) {
-                T data = response.getData();
-                if (data instanceof PuzzleStateDTO) view.showGameInfo((PuzzleStateDTO) data);
-                else if (data instanceof PuzzleStatsDTO) view.showGameStats((PuzzleStatsDTO) data);
+                view.showGameStats(response.getData());
+            }
+        } catch (IOException e) {
+            view.showError("Network error: " + e.getMessage());
+        }
+    }
+
+    /** Helper for actions returning a PuzzleStateDTO. */
+    private void processPuzzleState(String jsonRequest, NetworkGateway gateway) {
+        try {
+            String jsonResponse = gateway.sendRequest(jsonRequest);
+            Type type = new TypeToken<ServerResponse<PuzzleStateDTO>>(){}.getType();
+            ServerResponse<PuzzleStateDTO> response = gson.fromJson(jsonResponse, type);
+            
+            view.showResponse(response);
+            if (response.getStatus() == Status.OK && response.getData() != null) {
+                view.showGameInfo(response.getData());
             }
         } catch (IOException e) {
             view.showError("Network error: " + e.getMessage());
