@@ -42,17 +42,23 @@
 - [x] **Full MVC Refactoring**: Decoupled Input (InputProvider) and Output (ClientView) into a dedicated `ui` layer.
 - [x] **Game Engine Architecture**: Transitioned the client to a reactive engine-based design (`GameEngine`, `EngineState`, `Services`).
 - [x] **Network Infrastructure**: Isolated TCP/UDP communication into a specialized `network` layer (`NetworkGateway`, `NotificationService`).
-- [x] **Semantic Rebranding**: Renamed core concepts to classic game terminology (`Category`, `Puzzle`, `Guess`, `Board`).
+- [x] **Action-Based Protocol**: Replaced raw string parsing in states with explicit action methods (`onGuess`, `onLogin`, etc.), isolating CLI parsing in the UI layer.
+- [x] **Dependency Injection**: Services now receive the `ClientView` at construction, simplifying method signatures and improving encapsulation.
 
 ## Latest Session Improvements (March 11, 2026)
-- **Engine-Level Refactoring**:
-    - **Controller** $\rightarrow$ **GameEngine**: The central hub that reacts to external inputs.
-    - **States** $\rightarrow$ **EngineStates**: Context-specific behaviors for the engine.
-    - **Modules** $\rightarrow$ **Services**: Specialized subsystems (`IdentityService`, `GameplayService`, `ArchiveService`).
-    - **Network** $\rightarrow$ **Infrastructure**: Introduced `NetworkGateway` for TCP and `NotificationService` for UDP.
-- **Input Evolution**: Replaced "Commands" with the more appropriate **Input** terminology (`InputProvider`, `InputListener`).
-- **Resource Management**: Encapsulated the `Scanner` within `ConsoleInputProvider` and implemented `AutoCloseable` for safe resource cleanup via try-with-resources.
-- **Output Synchronization**: Synchronized `ConsoleView` to ensure multi-line puzzle boards and career stats are never interrupted by asynchronous notifications.
+- **MVC 2.0 (Action-Based)**: 
+    - The `GameEngine` now acts as an **Action Listener**, receiving high-level events from the UI.
+    - `ConsoleInputProvider` now handles all CLI-specific parsing, making the Engine completely UI-agnostic (ready for GUI).
+- **Service Layer Refinement**:
+    - Refactored `IdentityService`, `GameplayService`, and `ArchiveService` to accept typed parameters (List, int, String) instead of raw CLI tokens.
+    - Implemented **Dependency Injection** for the `ClientView` across all services.
+- **Polymorphic Notifications**: 
+    - The `NotificationService` now performs polymorphic deserialization of UDP JSON packets.
+    - Dispatches directly to specialized methods in `ClientView` (`onNewPuzzle`, `onPuzzleEnd`), removing redundant type checks.
+- **Robustness & Docs**:
+    - Increased UDP buffer to **4KB** to prevent truncation of large notifications.
+    - Added comprehensive **professional Javadoc** to the entire client codebase.
+    - Standardized naming: **Puzzle**, **Category**, **Guess**, **Board**.
 
 ## Recent Improvements
 - **Clean Architecture**: Moved sensitive entities (`User`, `Game`) to server-private packages.
