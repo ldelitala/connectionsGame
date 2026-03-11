@@ -75,41 +75,32 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
-    public synchronized void showNotification(Notification notification) {
-        System.out.println("\n[NOTIFICATION] Type: " + notification.getType());
-        
-        if (notification instanceof NewGameNotification) {
-            displayNewGame((NewGameNotification) notification);
-        } else if (notification instanceof GameEndNotification) {
-            displayGameEnd((GameEndNotification) notification);
-        } else if (notification instanceof PlayerGameSummaryNotification) {
-            displayPlayerSummary((PlayerGameSummaryNotification) notification);
-        }
-        
+    public synchronized void onNewPuzzle(NewGameNotification n) {
+        System.out.println("\n[NOTIFICATION] A new Puzzle has started! ID: " + n.getGameId());
+        System.out.println("Words: " + String.join(", ", n.getWords()));
+        System.out.println("Type 'board' to view the game state.");
         System.out.print("> "); 
     }
 
-    private void displayNewGame(NewGameNotification n) {
-        System.out.println("A new Puzzle has started! ID: " + n.getGameId());
-        System.out.println("Words: " + String.join(", ", n.getWords()));
-        System.out.println("Type 'board' to start playing.");
-    }
-
-    private void displayGameEnd(GameEndNotification n) {
-        System.out.println("The current Puzzle has ended.");
+    @Override
+    public synchronized void onPuzzleEnd(GameEndNotification n) {
+        System.out.println("\n[NOTIFICATION] The current Puzzle has ended.");
         if (n.getStats() != null) {
             showGameStats(n.getStats());
         }
         if (n.getLeaderboard() != null) {
             showLeaderboard(n.getLeaderboard());
         }
+        System.out.print("> "); 
     }
 
-    private void displayPlayerSummary(PlayerGameSummaryNotification n) {
-        System.out.println("Your personal summary for the concluded puzzle:");
+    @Override
+    public synchronized void onPlayerSummary(PlayerGameSummaryNotification n) {
+        System.out.println("\n[NOTIFICATION] Personal summary for the concluded puzzle:");
         if (n.getPersonalInfo() != null) {
             showGameInfo(n.getPersonalInfo());
         }
+        System.out.print("> "); 
     }
 
     @Override
