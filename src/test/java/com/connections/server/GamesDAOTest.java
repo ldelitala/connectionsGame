@@ -1,7 +1,7 @@
 package com.connections.server;
 
-import com.connections.server.models.Game;
-import com.connections.common.models.WordGroup;
+import com.connections.server.models.Puzzle;
+import com.connections.common.models.Category;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,13 +29,13 @@ public class GamesDAOTest {
         gameFile = tempDir.resolve("games.json").toString();
         
         // Create a small test games file with pretty printing to ensure each '{' starts a line
-        List<Game> games = Arrays.asList(
-            new Game(101, Arrays.asList(new WordGroup("G1", Arrays.asList("A", "B", "C", "D")))),
-            new Game(202, Arrays.asList(new WordGroup("G2", Arrays.asList("X", "Y", "Z", "W"))))
+        List<Puzzle> puzzles = Arrays.asList(
+            new Puzzle(101, Arrays.asList(new Category("G1", Arrays.asList("A", "B", "C", "D")))),
+            new Puzzle(202, Arrays.asList(new Category("G2", Arrays.asList("X", "Y", "Z", "W"))))
         );
         
         try (FileWriter writer = new FileWriter(gameFile)) {
-            new GsonBuilder().setPrettyPrinting().create().toJson(games, writer);
+            new GsonBuilder().setPrettyPrinting().create().toJson(puzzles, writer);
         }
         
         gamesDAO = new GamesDAO(gameFile);
@@ -50,26 +50,26 @@ public class GamesDAOTest {
 
     @Test
     public void testOnDemandReading() {
-        Game g1 = gamesDAO.getGame(101);
-        assertNotNull(g1);
-        assertEquals(101, g1.getGameId());
-        assertEquals("G1", g1.getGroups().get(0).getTheme());
+        Puzzle p1 = gamesDAO.getGame(101);
+        assertNotNull(p1);
+        assertEquals(101, p1.getGameId());
+        assertEquals("G1", p1.getGroups().get(0).getTheme());
         
-        Game g2 = gamesDAO.getGame(202);
-        assertNotNull(g2);
-        assertEquals(202, g2.getGameId());
-        assertEquals("G2", g2.getGroups().get(0).getTheme());
+        Puzzle p2 = gamesDAO.getGame(202);
+        assertNotNull(p2);
+        assertEquals(202, p2.getGameId());
+        assertEquals("G2", p2.getGroups().get(0).getTheme());
     }
 
     @Test
     public void testSequentialGame() {
-        Game g1 = gamesDAO.getNextGame();
-        assertEquals(101, g1.getGameId());
+        Puzzle p1 = gamesDAO.getNextGame();
+        assertEquals(101, p1.getGameId());
         
-        Game g2 = gamesDAO.getNextGame();
-        assertEquals(202, g2.getGameId());
+        Puzzle p2 = gamesDAO.getNextGame();
+        assertEquals(202, p2.getGameId());
         
-        Game g3 = gamesDAO.getNextGame(); // Wraps around
-        assertEquals(101, g3.getGameId());
+        Puzzle p3 = gamesDAO.getNextGame(); // Wraps around
+        assertEquals(101, p3.getGameId());
     }
 }

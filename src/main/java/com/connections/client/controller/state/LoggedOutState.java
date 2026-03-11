@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * State for players who are not authenticated.
- * Actions are delegated to the UserAdapter with the network gateway.
+ * Actions are delegated to the UserAdapter which now maintains its own gateway.
  */
 public class LoggedOutState implements EngineState {
 
@@ -18,12 +18,12 @@ public class LoggedOutState implements EngineState {
 
     @Override
     public void onRegister(String username, String password) {
-        engine.getUserAdapter().handleRegister(username, password, engine.getGateway());
+        engine.getUserAdapter().handleRegister(username, password);
     }
 
     @Override
     public void onLogin(String username, String password) {
-        Status status = engine.getUserAdapter().handleLogin(username, password, engine.getUdpPort(), engine.getGateway());
+        Status status = engine.getUserAdapter().handleLogin(username, password, engine.getUdpPort());
         if (status == Status.OK) {
             engine.changeState(new LoggedInState(engine, username));
         }

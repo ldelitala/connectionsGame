@@ -1,10 +1,10 @@
 package com.connections.server;
 
-import com.connections.server.models.Game;
+import com.connections.server.models.Puzzle;
 import com.connections.server.models.User;
-import com.connections.common.models.WordGroup;
-import com.connections.common.dto.GameInfoDTO;
-import com.connections.common.dto.ProposalResultDTO;
+import com.connections.common.models.Category;
+import com.connections.common.dto.PuzzleStateDTO;
+import com.connections.common.dto.GuessResultDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -28,16 +28,16 @@ public class GameSessionManagerTest {
         userManager = mock(UserManager.class);
         udpNotifier = mock(UdpNotifier.class);
 
-        // Mock a single game
-        WordGroup group1 = new WordGroup("Animals", Arrays.asList("CAT", "DOG", "FISH", "BIRD"));
-        WordGroup group2 = new WordGroup("Colors", Arrays.asList("RED", "GREEN", "BLUE", "YELLOW"));
-        WordGroup group3 = new WordGroup("Cities", Arrays.asList("LONDON", "PARIS", "ROME", "BERLIN"));
-        WordGroup group4 = new WordGroup("Foods", Arrays.asList("PIZZA", "PASTA", "BURGER", "SUSHI"));
-        Game game = new Game(1, Arrays.asList(group1, group2, group3, group4));
+        // Mock a single puzzle
+        Category group1 = new Category("Animals", Arrays.asList("CAT", "DOG", "FISH", "BIRD"));
+        Category group2 = new Category("Colors", Arrays.asList("RED", "GREEN", "BLUE", "YELLOW"));
+        Category group3 = new Category("Cities", Arrays.asList("LONDON", "PARIS", "ROME", "BERLIN"));
+        Category group4 = new Category("Foods", Arrays.asList("PIZZA", "PASTA", "BURGER", "SUSHI"));
+        Puzzle puzzle = new Puzzle(1, Arrays.asList(group1, group2, group3, group4));
 
         when(gamesDAO.getNumGames()).thenReturn(1);
-        when(gamesDAO.getNextGame()).thenReturn(game);
-        when(gamesDAO.getGame(anyInt())).thenReturn(game);
+        when(gamesDAO.getNextGame()).thenReturn(puzzle);
+        when(gamesDAO.getGame(anyInt())).thenReturn(puzzle);
 
         sessionManager = new GameSessionManager(gamesDAO, userManager, udpNotifier, 300000);
     }
@@ -48,7 +48,7 @@ public class GameSessionManagerTest {
         when(userManager.getUser("test")).thenReturn(user);
 
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "BIRD");
-        ProposalResultDTO result = sessionManager.submitProposal("test", words);
+        GuessResultDTO result = sessionManager.submitProposal("test", words);
 
         assertNotNull(result);
         assertEquals("success", result.getStatus());
@@ -63,7 +63,7 @@ public class GameSessionManagerTest {
         when(userManager.getUser("test")).thenReturn(user);
 
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "RED"); // Mixed
-        ProposalResultDTO result = sessionManager.submitProposal("test", words);
+        GuessResultDTO result = sessionManager.submitProposal("test", words);
 
         assertNotNull(result);
         assertEquals("wrong", result.getStatus());
@@ -80,7 +80,7 @@ public class GameSessionManagerTest {
         sessionManager.submitProposal("test", Arrays.asList("CAT", "DOG", "FISH", "BIRD"));
         sessionManager.submitProposal("test", Arrays.asList("RED", "GREEN", "BLUE", "YELLOW"));
         
-        ProposalResultDTO result = sessionManager.submitProposal("test", Arrays.asList("LONDON", "PARIS", "ROME", "BERLIN"));
+        GuessResultDTO result = sessionManager.submitProposal("test", Arrays.asList("LONDON", "PARIS", "ROME", "BERLIN"));
 
         assertNotNull(result);
         assertEquals("success", result.getStatus());
@@ -97,7 +97,7 @@ public class GameSessionManagerTest {
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "BIRD");
         sessionManager.submitProposal("test", words);
 
-        GameInfoDTO status = sessionManager.getPersonalGameStatus("test", 1);
+        PuzzleStateDTO status = sessionManager.getPersonalGameStatus("test", 1);
         
         assertNotNull(status);
         assertFalse(status.isFinished());
