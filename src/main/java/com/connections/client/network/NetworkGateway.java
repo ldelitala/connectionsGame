@@ -23,6 +23,14 @@ public class NetworkGateway implements AutoCloseable {
     private final BufferedReader in;
     private final Gson gson = new Gson();
 
+    /**
+     * Creates a new TCP connection to the specified server.
+     *
+     * @param host Server hostname or IP address.
+     * @param port Server TCP port.
+     * @throws UnknownHostException If the host cannot be resolved.
+     * @throws IOException          If a connection error occurs.
+     */
     public NetworkGateway(String host, int port) throws UnknownHostException, IOException {
         this.socket = new Socket(host, port);
         try {
@@ -34,6 +42,13 @@ public class NetworkGateway implements AutoCloseable {
         }
     }
 
+    /**
+     * Sends a request to the server and waits for a response.
+     *
+     * @param request The request object to send.
+     * @return The server's response.
+     * @throws IOException If the connection is closed or a network error occurs.
+     */
     public ServerResponse<?> sendRequest(ClientRequest request) throws IOException {
         String json = gson.toJson(request);
         out.println(json);
@@ -44,6 +59,11 @@ public class NetworkGateway implements AutoCloseable {
         return gson.fromJson(responseJson, ServerResponse.class);
     }
 
+    /**
+     * Closes the underlying TCP socket and associated streams.
+     *
+     * @throws IOException If an error occurs during closure.
+     */
     @Override
     public void close() throws IOException {
         if (socket != null) {

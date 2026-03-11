@@ -22,10 +22,21 @@ public class IdentityService {
 
     private final ClientView view;
 
+    /**
+     * Initializes the identity service with a view for user feedback.
+     *
+     * @param view The UI view to display usage instructions and responses.
+     */
     public IdentityService(ClientView view) {
         this.view = view;
     }
 
+    /**
+     * Prepares a registration request based on user input.
+     *
+     * @param tokens The command tokens (expected: "register", username, password).
+     * @return A {@link ClientRequest} for registration, or null if input is invalid.
+     */
     public ClientRequest prepareRegister(String[] tokens) {
         if (tokens.length < MIN_TOKENS_AUTH) {
             view.showMessage("Usage: register <username> <password>");
@@ -34,6 +45,13 @@ public class IdentityService {
         return UserRequest.register(tokens[INDEX_USERNAME], tokens[INDEX_PASSWORD]);
     }
 
+    /**
+     * Prepares a login request based on user input.
+     *
+     * @param tokens  The command tokens (expected: "login", username, password).
+     * @param udpPort The local UDP port to register for notifications.
+     * @return A {@link ClientRequest} for login, or null if input is invalid.
+     */
     public ClientRequest prepareLogin(String[] tokens, int udpPort) {
         if (tokens.length < MIN_TOKENS_AUTH) {
             view.showMessage("Usage: login <username> <password>");
@@ -42,10 +60,22 @@ public class IdentityService {
         return UserRequest.login(tokens[INDEX_USERNAME], tokens[INDEX_PASSWORD], udpPort);
     }
 
+    /**
+     * Prepares a logout request.
+     *
+     * @return A {@link ClientRequest} for logout.
+     */
     public ClientRequest prepareLogout() {
         return UserRequest.logout();
     }
 
+    /**
+     * Prepares an account update request based on user input.
+     *
+     * @param currentUsername The current authenticated username.
+     * @param tokens          The command tokens (expected: "update", oldPassword, newUsername, newPassword).
+     * @return A {@link ClientRequest} for updating credentials, or null if input is invalid or no changes provided.
+     */
     public ClientRequest prepareUpdate(String currentUsername, String[] tokens) {
         if (tokens.length < MIN_TOKENS_UPDATE) {
             view.showMessage("Usage: update <oldPassword> <newUsername> <newPassword>\n" +
@@ -68,6 +98,11 @@ public class IdentityService {
         return UserRequest.updateCredentials(currentUsername, oldPassword, newUsername, newPassword);
     }
 
+    /**
+     * Displays the status of an identity operation to the user.
+     *
+     * @param response The server response to display.
+     */
     public void handleResponse(ServerResponse<?> response) {
         view.showResponse(response);
     }

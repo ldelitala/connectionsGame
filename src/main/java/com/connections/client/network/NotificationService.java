@@ -13,16 +13,32 @@ public class NotificationService extends Thread implements AutoCloseable {
     private final DatagramSocket socket;
     private final ClientView view;
 
+    /**
+     * Initializes the UDP notification service.
+     *
+     * @param port Preferred UDP port. Use 0 for an ephemeral port.
+     * @param view UI view to display received notifications.
+     * @throws SocketException If the UDP socket cannot be opened.
+     */
     public NotificationService(int port, ClientView view) throws SocketException {
         this.socket = new DatagramSocket(port);
         this.view = view;
         setDaemon(true);
     }
 
+    /**
+     * Returns the actual port being used by the notification service.
+     *
+     * @return The local UDP port.
+     */
     public int getLocalPort() {
         return socket.getLocalPort();
     }
 
+    /**
+     * The service's execution loop. Continuously waits for incoming UDP packets
+     * and forwards them to the UI view.
+     */
     @Override
     public void run() {
         byte[] buffer = new byte[1024];
@@ -41,6 +57,9 @@ public class NotificationService extends Thread implements AutoCloseable {
         }
     }
 
+    /**
+     * Stops the notification thread and closes the socket.
+     */
     @Override
     public void close() {
         interrupt();

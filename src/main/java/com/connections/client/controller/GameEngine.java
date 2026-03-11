@@ -33,6 +33,14 @@ public class GameEngine implements InputProvider.InputListener {
 
     private EngineState currentState;
 
+    /**
+     * Initializes a new GameEngine with necessary infrastructure components.
+     *
+     * @param gateway The network gateway for server communication.
+     * @param udpPort The local UDP port used for incoming notifications.
+     * @param view The UI component for displaying information.
+     * @param inputProvider The source of user input.
+     */
     public GameEngine(NetworkGateway gateway, int udpPort, ClientView view, InputProvider inputProvider) {
         this.gateway = gateway;
         this.udpPort = udpPort;
@@ -44,11 +52,22 @@ public class GameEngine implements InputProvider.InputListener {
         this.currentState = new LoggedOutState(this);
     }
 
+    /**
+     * Starts the game engine's main execution loop.
+     * Displays the initial prompt and starts the input listener.
+     */
     public void run() {
         view.renderPrompt(currentState.getPrompt());
         inputProvider.startListening(this);
     }
 
+    /**
+     * Processes input strings received from the {@link InputProvider}.
+     * Handles system-level commands like 'help' and 'exit' before delegating
+     * state-specific commands to the current {@link EngineState}.
+     *
+     * @param data The raw input line from the user.
+     */
     @Override
     public void onInput(String data) {
         String line = data.trim();
@@ -72,14 +91,30 @@ public class GameEngine implements InputProvider.InputListener {
         view.renderPrompt(currentState.getPrompt());
     }
 
+    /**
+     * Changes the current active state of the game engine.
+     *
+     * @param newState The new {@link EngineState} to transition to.
+     */
     public void changeState(EngineState newState) {
         this.currentState = newState;
     }
 
+    /** @return The network gateway used by the engine. */
     public NetworkGateway getGateway() { return gateway; }
+    
+    /** @return The local UDP port used for server notifications. */
     public int getUdpPort() { return udpPort; }
+    
+    /** @return The UI view interface. */
     public ClientView getView() { return view; }
+    
+    /** @return The service for identity and account management. */
     public IdentityService getIdentityService() { return identityService; }
+    
+    /** @return The service for active game logic and status. */
     public GameplayService getGameplayService() { return gameplayService; }
+    
+    /** @return The service for historical data and rankings. */
     public ArchiveService getArchiveService() { return archiveService; }
 }

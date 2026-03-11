@@ -17,10 +17,21 @@ public class ArchiveService {
 
     private final ClientView view;
 
+    /**
+     * Initializes the archive service.
+     *
+     * @param view The UI view to display historical data and rankings.
+     */
     public ArchiveService(ClientView view) {
         this.view = view;
     }
 
+    /**
+     * Prepares a request for detailed information about a past puzzle.
+     *
+     * @param tokens The command tokens (expected: "info", puzzleId).
+     * @return A {@link ClientRequest} for puzzle info, or null if ID is invalid.
+     */
     public ClientRequest preparePastInfo(String[] tokens) {
         if (tokens.length < MIN_TOKENS_ARG) {
             view.showMessage("Usage: info [id]");
@@ -34,6 +45,12 @@ public class ArchiveService {
         }
     }
 
+    /**
+     * Prepares a request for global statistics of a past puzzle.
+     *
+     * @param tokens The command tokens (expected: "global", puzzleId).
+     * @return A {@link ClientRequest} for puzzle stats, or null if ID is invalid.
+     */
     public ClientRequest prepareGlobalStats(String[] tokens) {
         if (tokens.length < MIN_TOKENS_ARG) {
             view.showMessage("Usage: global [id]");
@@ -47,6 +64,13 @@ public class ArchiveService {
         }
     }
 
+    /**
+     * Prepares a leaderboard ranking request.
+     * Supports fetching a specific player's rank or the top K players.
+     *
+     * @param tokens The command tokens.
+     * @return A {@link ClientRequest} for the leaderboard, or null if usage is incorrect.
+     */
     public ClientRequest prepareRanking(String[] tokens) {
         if (tokens.length < MIN_TOKENS_ARG) {
             view.showMessage("Usage:\n" +
@@ -64,10 +88,20 @@ public class ArchiveService {
         }
     }
 
+    /**
+     * Prepares a request for the current user's historical career statistics.
+     *
+     * @return A {@link ClientRequest} for player stats.
+     */
     public ClientRequest prepareHistory() {
         return HistoryRequest.getPlayerStats();
     }
 
+    /**
+     * Processes a server response related to historical data and updates the view.
+     *
+     * @param response The server response to handle.
+     */
     public void handleResponse(ServerResponse<?> response) {
         view.showResponse(response);
         Object data = response.getData();

@@ -15,6 +15,11 @@ public class ConsoleView implements ClientView {
     private static final int MAX_MISTAKES = 4;
     private final Object consoleLock = new Object();
 
+    /**
+     * Prints the server response status and message to the standard output.
+     *
+     * @param response The response received from the server.
+     */
     @Override
     public void showResponse(ServerResponse<?> response) {
         synchronized (consoleLock) {
@@ -22,6 +27,12 @@ public class ConsoleView implements ClientView {
         }
     }
 
+    /**
+     * Renders a textual representation of the active puzzle board, including remaining time,
+     * mistakes, found categories, and remaining words.
+     *
+     * @param info DTO containing the puzzle state.
+     */
     @Override
     public void showGameInfo(PuzzleStateDTO info) {
         synchronized (consoleLock) {
@@ -47,6 +58,11 @@ public class ConsoleView implements ClientView {
         }
     }
 
+    /**
+     * Prints global statistics for a puzzle (active players, winners, average score).
+     *
+     * @param stats DTO containing puzzle statistics.
+     */
     @Override
     public void showGameStats(PuzzleStatsDTO stats) {
         synchronized (consoleLock) {
@@ -60,6 +76,11 @@ public class ConsoleView implements ClientView {
         }
     }
 
+    /**
+     * Prints the career statistics of the current player.
+     *
+     * @param stats DTO containing player statistics.
+     */
     @Override
     public void showPlayerStats(PlayerStatsDTO stats) {
         synchronized (consoleLock) {
@@ -71,6 +92,11 @@ public class ConsoleView implements ClientView {
         }
     }
 
+    /**
+     * Prints a formatted leaderboard table.
+     *
+     * @param leaderboard DTO containing leaderboard entries.
+     */
     @Override
     public void showLeaderboard(LeaderboardDTO leaderboard) {
         synchronized (consoleLock) {
@@ -83,6 +109,11 @@ public class ConsoleView implements ClientView {
         }
     }
 
+    /**
+     * Prints a notification message with a prefix and resets the cursor to the prompt.
+     *
+     * @param message The notification message.
+     */
     @Override
     public void showNotification(String message) {
         synchronized (consoleLock) {
@@ -91,6 +122,11 @@ public class ConsoleView implements ClientView {
         }
     }
 
+    /**
+     * Prints an error description to the standard error stream.
+     *
+     * @param error The error message.
+     */
     @Override
     public void showError(String error) {
         synchronized (consoleLock) {
@@ -98,6 +134,11 @@ public class ConsoleView implements ClientView {
         }
     }
 
+    /**
+     * Prints a message to the standard output.
+     *
+     * @param message The message text.
+     */
     @Override
     public void showMessage(String message) {
         synchronized (consoleLock) {
@@ -105,6 +146,11 @@ public class ConsoleView implements ClientView {
         }
     }
 
+    /**
+     * Prints the command prompt without a trailing newline.
+     *
+     * @param prompt The prompt string.
+     */
     @Override
     public void renderPrompt(String prompt) {
         synchronized (consoleLock) {

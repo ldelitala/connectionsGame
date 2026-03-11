@@ -76,15 +76,30 @@ public class ClientConfig {
         }
     }
 
-    // --- GETTERS ---
+    /**
+     * Retrieves the server hostname from the configuration.
+     *
+     * @return The configured server host (e.g., "localhost").
+     */
     public String getServerHost() {
         return props.getProperty(KEY_SERVER_HOST);
     }
 
+    /**
+     * Retrieves the server TCP port from the configuration.
+     *
+     * @return The configured server port (e.g., 8080).
+     */
     public int getServerPort() {
         return Integer.parseInt(props.getProperty(KEY_SERVER_PORT));
     }
 
+    /**
+     * Retrieves the preferred UDP port for notifications from the configuration.
+     * A value of 0 indicates that any available port should be used.
+     *
+     * @return The configured UDP port.
+     */
     public int getUdpPort() {
         return Integer.parseInt(props.getProperty(KEY_UDP_PORT));
     }

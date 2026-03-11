@@ -33,11 +33,23 @@ public class LoggedInState implements EngineState {
     private final GameEngine engine;
     private String username;
 
+    /**
+     * Initializes a new state for a logged-in user.
+     *
+     * @param engine   The parent GameEngine.
+     * @param username The username of the authenticated player.
+     */
     public LoggedInState(GameEngine engine, String username) {
         this.engine = engine;
         this.username = username;
     }
 
+    /**
+     * Handles commands available to authenticated users, delegating to the appropriate service.
+     * Supports gameplay, account updates, and history queries.
+     *
+     * @param tokens The command split into tokens.
+     */
     @Override
     public void handleCommand(String[] tokens) {
         String command = tokens[0].toLowerCase();
@@ -110,16 +122,27 @@ public class LoggedInState implements EngineState {
         }
     }
 
+    /**
+     * Displays the authenticated user's command menu.
+     */
     @Override
     public void printHelp() {
         engine.getView().showMessage(HELP_MESSAGE);
     }
 
+    /**
+     * Returns a prompt including the current username.
+     *
+     * @return The user-specific prompt.
+     */
     @Override
     public String getPrompt() {
         return String.format("[%s] > ", username);
     }
 
+    /**
+     * Attempts to gracefully log out the user from the server before exiting.
+     */
     @Override
     public void onExit() {
         try {

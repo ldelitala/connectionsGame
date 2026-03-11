@@ -20,10 +20,21 @@ public class LoggedOutState implements EngineState {
 
     private final GameEngine engine;
 
+    /**
+     * Initializes a new state for a guest user.
+     *
+     * @param engine The parent GameEngine.
+     */
     public LoggedOutState(GameEngine engine) {
         this.engine = engine;
     }
 
+    /**
+     * Handles commands for registration and login.
+     * Switches state to {@link LoggedInState} upon successful authentication.
+     *
+     * @param tokens The command split into tokens.
+     */
     @Override
     public void handleCommand(String[] tokens) {
         String command = tokens[0].toLowerCase();
@@ -57,16 +68,27 @@ public class LoggedOutState implements EngineState {
         }
     }
 
+    /**
+     * Displays the guest user's command menu.
+     */
     @Override
     public void printHelp() {
         engine.getView().showMessage(HELP_MESSAGE);
     }
 
+    /**
+     * Returns the generic guest prompt.
+     *
+     * @return The guest prompt.
+     */
     @Override
     public String getPrompt() {
         return "> ";
     }
 
+    /**
+     * No cleanup required for guest users.
+     */
     @Override
     public void onExit() {}
 }

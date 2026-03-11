@@ -8,10 +8,19 @@ import com.connections.client.ui.console.*;
 import java.io.IOException;
 
 /**
- * Main entry point for the 100% Modular MVC Game Client.
+ * Main entry point for the Client. Initializes configuration, sets up network communication, starts
+ * the notification service, and launches the game engine. Handles exceptions gracefully and ensures
+ * resources are cleaned up on shutdown.
  */
 public class ClientMain {
 
+    /**
+     * The application entry point.
+     * Parses command-line arguments for configuration, initializes core components,
+     * and enters the game loop.
+     *
+     * @param args Command-line arguments. The first argument can be a custom path to a properties file.
+     */
     public static void main(String[] args) {
 
         ClientConfig config = (args.length > 0) ? new ClientConfig(args[0]) : new ClientConfig();
@@ -32,8 +41,9 @@ public class ClientMain {
 
         ) {
 
-            view.showMessage("Connected to server: " + config.getServerHost() + ":"
-                    + config.getServerPort());
+            view.showMessage(
+                    "Connected to server: " + config.getServerHost() +
+                            ":" + config.getServerPort());
 
             notificationService.start();
             int actualUdpPort = notificationService.getLocalPort();

@@ -6,26 +6,31 @@ package com.connections.client.ui;
  */
 public interface InputProvider extends AutoCloseable {
     /**
-     * Starts listening for inputs.
+     * Starts listening for user inputs in a blocking or non-blocking way.
      * 
-     * @param listener the GameEngine or component that will process the normalized commands.
+     * @param listener The component that will process the received command lines.
      */
     void startListening(InputListener listener);
     
-    /** Stops the input listener. */
+    /** 
+     * Signals the input provider to stop listening and terminate any background threads. 
+     */
     void stop();
 
+    /**
+     * Releases any resources (e.g., System.in, Scanner) held by the provider.
+     */
     @Override
     void close();
 
     /**
-     * Listener interface for normalized game commands.
+     * Functional interface for receiving processed user input.
      */
     interface InputListener {
         /**
-         * Called when a new command is ready.
+         * Invoked when a new command line is ready for processing.
          * 
-         * @param data A space-separated string representing a game command (e.g., "guess w1 w2 w3 w4").
+         * @param data The raw or trimmed command string.
          */
         void onInput(String data);
     }
