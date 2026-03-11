@@ -2,11 +2,13 @@ package com.connections.client.ui;
 
 /**
  * Interface for a source of user inputs.
- * This can be a CLI loop with Scanner, or a GUI button event.
+ * Acting as an Adapter between external events (CLI, GUI) and the Game Engine.
  */
 public interface InputProvider extends AutoCloseable {
     /**
-     * Starts listening for inputs and sends them to the listener.
+     * Starts listening for inputs.
+     * 
+     * @param listener the GameEngine or component that will process the normalized commands.
      */
     void startListening(InputListener listener);
     
@@ -16,8 +18,15 @@ public interface InputProvider extends AutoCloseable {
     @Override
     void close();
 
-    /** Listener interface to receive inputs from the provider. */
+    /**
+     * Listener interface for normalized game commands.
+     */
     interface InputListener {
+        /**
+         * Called when a new command is ready.
+         * 
+         * @param data A space-separated string representing a game command (e.g., "guess w1 w2 w3 w4").
+         */
         void onInput(String data);
     }
 }
