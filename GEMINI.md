@@ -39,17 +39,17 @@
 - [x] Refactoring Modulare: Separazione delle logiche Client (User, Game, History) in moduli indipendenti.
 - [x] Raffinamento Protocollo: Specializzazione di GameInfo/Stats DTO per aderenza rigorosa alle specifiche (Corrente vs Passato).
 - [x] Allineamento Specifiche (Allegato 1): Correzione dei nomi dei campi JSON (`name` vs `username`, `psw`) e ripristino dei nomi operazione originali (`requestGameInfo`, `requestLeaderboard`, etc.) per garantire la piena conformità.
+- [x] **MVC Client Refactoring**: Separated Logic (Modules) from View (ClientView/ConsoleView).
+- [x] **Thread-Safe Console**: Implemented `ConsoleView` with synchronization to prevent interleaved TCP/UDP output.
 
-## Latest Session Improvements (March 10, 2026)
-- **Global Localization**: Standardized the entire project to **English** for all user-facing outputs, logs, and error messages.
-- **Clean Code & Magic Values**: Extracted all hardcoded logical values (commands, scoring rules, timeouts) into `private static final` constants. Organized them by category (Commands, Scoring, Config).
-- **Security Fixes**: Updated `UserModuleView` to strictly require the old password for credential updates, aligning the client with the server protocol.
-- **Auto-Logout on Exit**: Implemented a graceful exit strategy where the client attempts to notify the server (logout) before terminating the process.
-- **Architectural Cleanup**:
-    - Centralized System-level commands (`help`, `exit`) in the `Controller`.
-    - Renamed the `state` package to `controller_state` for better role clarity.
-    - Added comprehensive **Javadoc** (English) to the core client logic.
-- **Tooling optimization**: Configured `eclipse-formatter.xml` and used `@formatter` tags to preserve manual alignment of multi-line string constants (CLI help blocks).
+## Latest Session Improvements (March 11, 2026)
+- **MVC Architecture**: Transitioned the client to a clean Model-View-Controller pattern.
+    - **View**: Introduced `ClientView` interface and `ConsoleView` implementation.
+    - **Logic**: Refactored `GameModule`, `UserModule`, and `HistoryModule` to be purely data-driven.
+    - **Controller**: Updated to coordinate between States, Modules, and the View.
+- **Output Synchronization**: Added an atomic locking mechanism in `ConsoleView` so that multi-line responses (like leaderboards) are never interrupted by asynchronous UDP notifications.
+- **GUI-Ready**: The core logic is now entirely decoupled from `System.out`, allowing for a seamless transition to a graphical interface by simply providing a new `ClientView` implementation.
+- **Cleanup**: Removed legacy `ResponseView` and specialized ModuleView classes.
 
 ## Recent Improvements
 - **Clean Architecture**: Moved sensitive entities (`User`, `Game`) to server-private packages.

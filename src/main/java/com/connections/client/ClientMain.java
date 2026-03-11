@@ -1,51 +1,40 @@
 package com.connections.client;
 
+import com.connections.client.view.ClientView;
+import com.connections.client.view.ConsoleView;
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.Scanner;
 
 /**
- * Main entry point for the CLI client. Orchestrates configuration, network setup, and starts the
- * command controller.
+ * Main entry point for the MVC Client.
  */
 public class ClientMain {
 
-    /**
-     * Entry point of the client application.
-     * 
-     * @param args command line arguments (optional: config path)
-     */
     public static void main(String[] args) {
-
-        System.out.println("Configuring...");
         ClientConfig config = (args.length > 0) ? new ClientConfig(args[0]) : new ClientConfig();
+        ClientView view = new ConsoleView();
 
-        System.out.println("Welcome to Connections Game!");
+        view.showMessage("Welcome to Connections Game!");
 
         try (Scanner scanner = new Scanner(System.in);
-                TcpConnectionPort tcpPort =
-                        new TcpConnectionPort(config.getServerHost(), config.getServerPort());
-                UdpNotificationListener udpListener =
-                        new UdpNotificationListener(config.getUdpPort())) {
+                TcpConnectionPort tcpPort = new TcpConnectionPort(config.getServerHost(), config.getServerPort());
+                UdpNotificationListener udpListener = new UdpNotificationListener(config.getUdpPort(), view)) {
 
-            System.out.println("Connected to server: " + config.getServerHost() + ":" + config.getServerPort());
+            view.showMessage("Connected to server: " + config.getServerHost() + ":" + config.getServerPort());
 
             udpListener.start();
             int actualUdpPort = udpListener.getLocalPort();
-            System.out.println("UDP Notification listener started on port " + actualUdpPort);
+            view.showMessage("UDP Notification listener started on port " + actualUdpPort);
 
-            Controller controller = new Controller(tcpPort, scanner, actualUdpPort);
+            Controller controller = new Controller(tcpPort, scanner, actualUdpPort, view);
             controller.start();
 
-        } catch (SocketException e) {
-            System.err.println("UDP Connection error: " + e.getMessage());
         } catch (IOException e) {
-            System.err.println("Communication error: " + e.getMessage());
+            view.showError("Network error: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Unexpected error: " + e.getMessage());
+            view.showError("Unexpected error: " + e.getMessage());
         } finally {
-            System.out.println("Closing connections...");
-            System.out.println("Application terminated.");
+            view.showMessage("Application terminated.");
         }
     }
 }

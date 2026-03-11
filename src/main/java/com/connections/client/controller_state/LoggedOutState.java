@@ -1,102 +1,72 @@
 package com.connections.client.controller_state;
 
-import java.io.IOException;
 import com.connections.client.Controller;
 import com.connections.common.protocol.client_requests.ClientRequest;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.Status;
 
 /**
- * Represents the client state when the user is not authenticated (Logged Out). In this state, the
- * user can only register or log in.
+ * State for logged-out users.
  */
 public class LoggedOutState implements ControllerState {
 
-    // --- Commands ---
     private static final String CMD_REGISTER = "register";
     private static final String CMD_LOGIN = "login";
 
-    // --- Messages ---
-    // @formatter:off
     private static final String HELP_MESSAGE = 
         "\n--- AVAILABLE COMMANDS (Logged Out) ---\n" +
-        "  register [u] [p]  : Register a new account\n" +
-        "  login [u] [p]     : Sign in to the game\n";
-    // @formatter:on
+        "  register <uP> <psw> : Create a new account\n" +
+        "  login <uP> <psw>    : Sign in to your account\n";
 
-    // --- Configuration ---
-    private static final String PROMPT = "> ";
-    private static final int CMD_INDEX = 0;
-    private static final int USERNAME_INDEX = 1;
-
-    /** The main controller acting as the context for the state. */
     private final Controller controller;
 
     public LoggedOutState(Controller controller) {
         this.controller = controller;
     }
 
-    /**
-     * Handles registration and login commands. Transitions to LoggedInState if login is successful.
-     * 
-     * @param tokens the command split into tokens.
-     */
     @Override
     public void handleCommand(String[] tokens) {
-        String command = tokens[CMD_INDEX].toLowerCase();
+        String command = tokens[0].toLowerCase();
         ClientRequest request = null;
-        boolean tryLogin = false;
+        boolean isLogin = false;
 
         switch (command) {
             case CMD_REGISTER:
-                request = controller.getUserModule().prepareRegister(tokens);
+                request = controller.getUserModule().prepareRegister(tokens, controller.getView());
                 break;
-
             case CMD_LOGIN:
-                request = controller.getUserModule().prepareLogin(tokens, controller.getUdpPort());
-                tryLogin = true;
+                request = controller.getUserModule().prepareLogin(tokens, controller.getUdpPort(), controller.getView());
+                isLogin = true;
                 break;
-
             default:
-                System.out.println("Command not available. Please login to play.");
+                controller.getView().showMessage("Please login or register first.");
                 return;
         }
 
         if (request != null) {
             try {
                 ServerResponse<?> response = controller.getTcpPort().sendRequest(request);
+                controller.getUserModule().handleResponse(response, controller.getView());
 
-                controller.getUserModule().displayResponse(response);
-
-                if (tryLogin && response.getStatus() == Status.OK)
-                    controller.changeState(new LoggedInState(controller, tokens[USERNAME_INDEX]));
-
-            } catch (IOException e) {
-                System.err.println("Communication error: " + e.getMessage());
+                if (isLogin && response.getStatus() == Status.OK) {
+                    controller.changeState(new LoggedInState(controller, tokens[1]));
+                }
+            } catch (Exception e) {
+                controller.getView().showError(e.getMessage());
             }
         }
     }
 
-    /**
-     * Prints help documentation specific to the logged-out state.
-     */
     @Override
     public void printHelp() {
-        System.out.println(HELP_MESSAGE);
+        controller.getView().showMessage(HELP_MESSAGE);
     }
 
-    /**
-     * Returns the static prompt for the logged-out state.
-     * 
-     * @return the "> " prompt string.
-     */
     @Override
     public String getPrompt() {
-        return PROMPT;
+        return "> ";
     }
 
     @Override
-    public void onExit() {
-        // No session cleanup needed when logged out
-    }
+    public void onExit() {}
 }
