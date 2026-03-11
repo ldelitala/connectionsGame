@@ -13,31 +13,33 @@ import java.util.List;
 
 /**
  * Coordinator for active puzzle gameplay actions.
- * Converts actions to JSON and dispatches responses directly to specific view methods.
+ * Maintains a persistent network connection to dispatch responses directly to view methods.
  */
 public class GameplayAdapter {
 
     private final ClientView view;
+    private final NetworkGateway gateway;
     private final Gson gson = new Gson();
 
-    public GameplayAdapter(ClientView view) {
+    public GameplayAdapter(ClientView view, NetworkGateway gateway) {
         this.view = view;
+        this.gateway = gateway;
     }
 
     /** Submits a guess and displays the puzzle board. */
-    public void handleGuess(List<String> words, NetworkGateway gateway) {
+    public void handleGuess(List<String> words) {
         String jsonReq = gson.toJson(GameplayRequest.submitProposal(words));
-        processPuzzleState(jsonReq, gateway);
+        processPuzzleState(jsonReq);
     }
 
     /** Requests and displays the puzzle board. */
-    public void handleStatus(NetworkGateway gateway) {
+    public void handleStatus() {
         String jsonReq = gson.toJson(GameplayRequest.getCurrentInfo());
-        processPuzzleState(jsonReq, gateway);
+        processPuzzleState(jsonReq);
     }
 
     /** Requests and displays puzzle global statistics. */
-    public void handleStats(NetworkGateway gateway) {
+    public void handleStats() {
         try {
             String jsonReq = gson.toJson(GameplayRequest.getCurrentStats());
             String jsonRes = gateway.sendRequest(jsonReq);
@@ -54,8 +56,7 @@ public class GameplayAdapter {
         }
     }
 
-    /** Helper for actions returning a PuzzleStateDTO. */
-    private void processPuzzleState(String jsonRequest, NetworkGateway gateway) {
+    private void processPuzzleState(String jsonRequest) {
         try {
             String jsonResponse = gateway.sendRequest(jsonRequest);
             Type type = new TypeToken<ServerResponse<PuzzleStateDTO>>(){}.getType();

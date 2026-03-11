@@ -34,9 +34,9 @@ public class GameEngine implements InputProvider.InputListener {
         this.udpPort = udpPort;
         this.view = view;
         this.inputProvider = inputProvider;
-        this.userAdapter = new UserAdapter(view);
-        this.gameplayAdapter = new GameplayAdapter(view);
-        this.historyAdapter = new HistoryAdapter(view);
+        this.userAdapter = new UserAdapter(view, gateway);
+        this.gameplayAdapter = new GameplayAdapter(view, gateway);
+        this.historyAdapter = new HistoryAdapter(view, gateway);
         this.currentState = new LoggedOutState(this);
     }
 

@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * State for players who are authenticated.
- * Actions are delegated to the appropriate Adapter with the network gateway.
+ * Actions are delegated to the appropriate Adapter which maintains its own gateway.
  */
 public class LoggedInState implements EngineState {
 
@@ -23,7 +23,7 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onLogout() {
-        Status status = engine.getUserAdapter().handleLogout(engine.getGateway());
+        Status status = engine.getUserAdapter().handleLogout();
         if (status == Status.OK) {
             engine.changeState(new LoggedOutState(engine));
         }
@@ -31,7 +31,7 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onUpdateCredentials(String oldPass, String newName, String newPass) {
-        Status status = engine.getUserAdapter().handleUpdate(username, oldPass, newName, newPass, engine.getGateway());
+        Status status = engine.getUserAdapter().handleUpdate(username, oldPass, newName, newPass);
         if (status == Status.OK && newName != null && !"-".equals(newName)) {
             this.username = newName;
         }
@@ -39,37 +39,37 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onGuess(List<String> words) {
-        engine.getGameplayAdapter().handleGuess(words, engine.getGateway());
+        engine.getGameplayAdapter().handleGuess(words);
     }
 
     @Override
     public void onRequestBoard() {
-        engine.getGameplayAdapter().handleStatus(engine.getGateway());
+        engine.getGameplayAdapter().handleStatus();
     }
 
     @Override
     public void onRequestStats() {
-        engine.getGameplayAdapter().handleStats(engine.getGateway());
+        engine.getGameplayAdapter().handleStats();
     }
 
     @Override
     public void onRequestPastInfo(int puzzleId) {
-        engine.getHistoryAdapter().handlePastInfo(puzzleId, engine.getGateway());
+        engine.getHistoryAdapter().handlePastInfo(puzzleId);
     }
 
     @Override
     public void onRequestGlobalStats(int puzzleId) {
-        engine.getHistoryAdapter().handleGlobalStats(puzzleId, engine.getGateway());
+        engine.getHistoryAdapter().handleGlobalStats(puzzleId);
     }
 
     @Override
     public void onRequestRanking(String username, Integer topK) {
-        engine.getHistoryAdapter().handleRanking(username, topK, engine.getGateway());
+        engine.getHistoryAdapter().handleRanking(username, topK);
     }
 
     @Override
     public void onRequestHistory() {
-        engine.getHistoryAdapter().handleHistory(engine.getGateway());
+        engine.getHistoryAdapter().handleHistory();
     }
 
     @Override
@@ -84,6 +84,6 @@ public class LoggedInState implements EngineState {
     
     @Override 
     public void onExit() { 
-        engine.getUserAdapter().handleLogout(engine.getGateway());
+        engine.getUserAdapter().handleLogout();
     }
 }

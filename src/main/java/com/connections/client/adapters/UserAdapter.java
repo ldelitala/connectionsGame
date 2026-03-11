@@ -12,33 +12,35 @@ import java.lang.reflect.Type;
 
 /**
  * Coordinator for account-related operations.
- * Handles network logic, JSON parsing, and direct view updates.
+ * Uses a persistent NetworkGateway to handle identity actions.
  */
 public class UserAdapter {
 
     private final ClientView view;
+    private final NetworkGateway gateway;
     private final Gson gson = new Gson();
 
-    public UserAdapter(ClientView view) {
+    public UserAdapter(ClientView view, NetworkGateway gateway) {
         this.view = view;
+        this.gateway = gateway;
     }
 
-    public Status handleRegister(String username, String password, NetworkGateway gateway) {
+    public Status handleRegister(String username, String password) {
         ClientRequest request = UserRequest.register(username, password);
-        return callAndProcess(request, gateway);
+        return callAndProcess(request);
     }
 
-    public Status handleLogin(String username, String password, int udpPort, NetworkGateway gateway) {
+    public Status handleLogin(String username, String password, int udpPort) {
         ClientRequest request = UserRequest.login(username, password, udpPort);
-        return callAndProcess(request, gateway);
+        return callAndProcess(request);
     }
 
-    public Status handleLogout(NetworkGateway gateway) {
+    public Status handleLogout() {
         ClientRequest request = UserRequest.logout();
-        return callAndProcess(request, gateway);
+        return callAndProcess(request);
     }
 
-    public Status handleUpdate(String oldName, String oldPass, String newName, String newPass, NetworkGateway gateway) {
+    public Status handleUpdate(String username, String oldPass, String newName, String newPass) {
         String finalName = ("-".equals(newName)) ? null : newName;
         String finalPass = ("-".equals(newPass)) ? null : newPass;
 
@@ -47,15 +49,11 @@ public class UserAdapter {
             return Status.ERROR;
         }
 
-        ClientRequest request = UserRequest.updateCredentials(oldName, oldPass, finalName, finalPass);
-        return callAndProcess(request, gateway);
+        ClientRequest request = UserRequest.updateCredentials(username, oldPass, finalName, finalPass);
+        return callAndProcess(request);
     }
 
-    /**
-     * Executes a request by converting it to JSON, sending it through the gateway,
-     * and displaying the response status/message.
-     */
-    private Status callAndProcess(ClientRequest request, NetworkGateway gateway) {
+    private Status callAndProcess(ClientRequest request) {
         try {
             String requestJson = gson.toJson(request);
             String responseJson = gateway.sendRequest(requestJson);

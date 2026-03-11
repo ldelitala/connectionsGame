@@ -12,19 +12,21 @@ import java.lang.reflect.Type;
 
 /**
  * Coordinator for history-related operations (archives, stats, leaderboards).
- * Converts actions to JSON and dispatches responses directly to specific view methods.
+ * Uses a persistent network gateway to dispatch responses directly to view methods.
  */
 public class HistoryAdapter {
 
     private final ClientView view;
+    private final NetworkGateway gateway;
     private final Gson gson = new Gson();
 
-    public HistoryAdapter(ClientView view) {
+    public HistoryAdapter(ClientView view, NetworkGateway gateway) {
         this.view = view;
+        this.gateway = gateway;
     }
 
     /** Requests past puzzle info and renders the board. */
-    public void handlePastInfo(int puzzleId, NetworkGateway gateway) {
+    public void handlePastInfo(int puzzleId) {
         try {
             String jsonReq = gson.toJson(HistoryRequest.getGameInfo(puzzleId));
             String jsonRes = gateway.sendRequest(jsonReq);
@@ -42,7 +44,7 @@ public class HistoryAdapter {
     }
 
     /** Requests global stats for a past puzzle and renders statistics. */
-    public void handleGlobalStats(int puzzleId, NetworkGateway gateway) {
+    public void handleGlobalStats(int puzzleId) {
         try {
             String jsonReq = gson.toJson(HistoryRequest.getGameStats(puzzleId));
             String jsonRes = gateway.sendRequest(jsonReq);
@@ -60,7 +62,7 @@ public class HistoryAdapter {
     }
 
     /** Requests leaderboard or player ranking and renders the leaderboard. */
-    public void handleRanking(String username, Integer topK, NetworkGateway gateway) {
+    public void handleRanking(String username, Integer topK) {
         try {
             String jsonReq = gson.toJson(HistoryRequest.getLeaderboard(username, topK));
             String jsonRes = gateway.sendRequest(jsonReq);
@@ -78,7 +80,7 @@ public class HistoryAdapter {
     }
 
     /** Requests current player's career history and renders player stats. */
-    public void handleHistory(NetworkGateway gateway) {
+    public void handleHistory() {
         try {
             String jsonReq = gson.toJson(HistoryRequest.getPlayerStats());
             String jsonRes = gateway.sendRequest(jsonReq);
