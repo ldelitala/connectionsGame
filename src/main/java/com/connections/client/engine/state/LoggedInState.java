@@ -5,8 +5,8 @@ import com.connections.common.protocol.server_responses.Status;
 import java.util.List;
 
 /**
- * State for players who are authenticated.
- * Actions are delegated to the appropriate Module which maintains its own gateway.
+ * State for players who are authenticated. Actions are delegated to the appropriate Module which
+ * maintains its own gateway.
  */
 public class LoggedInState implements EngineState {
 
@@ -18,8 +18,15 @@ public class LoggedInState implements EngineState {
         this.username = username;
     }
 
-    @Override public void onRegister(String u, String p) { engine.getView().showMessage("Already logged in."); }
-    @Override public void onLogin(String u, String p) { engine.getView().showMessage("Already logged in."); }
+    @Override
+    public void onRegister(String u, String p) {
+        engine.getView().showMessage("Already logged in.");
+    }
+
+    @Override
+    public void onLogin(String u, String p) {
+        engine.getView().showMessage("Already logged in.");
+    }
 
     @Override
     public void onLogout() {
@@ -72,10 +79,18 @@ public class LoggedInState implements EngineState {
         engine.getHistoryModule().handleHistory();
     }
 
-    @Override public String getPrompt() { return String.format("[%s] > ", username); }
-    
-    @Override 
-    public void onExit() { 
+    @Override
+    public String getPrompt() {
+        return String.format("[%s] > ", username);
+    }
+
+    @Override
+    public void onExit() {
         engine.getUserModule().handleLogout();
+    }
+
+    @Override
+    public void onHelp() {
+        engine.getView().showHelp(true);
     }
 }

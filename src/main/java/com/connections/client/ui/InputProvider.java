@@ -27,20 +27,29 @@ public interface InputProvider extends AutoCloseable {
 
         void onLogout();
 
+        /**
+         * Update the username or password of the current user.
+         * To skip changing a specific field, use the placeholder "-" for newName or newPass.
+         */
         void onUpdateCredentials(String oldPass, String newName, String newPass);
 
         // Gameplay
         void onGuess(List<String> words);
-
         void onRequestBoard();
-
         void onRequestStats();
 
         // History & Rankings
         void onRequestPastInfo(int puzzleId);
-
         void onRequestGlobalStats(int puzzleId);
 
+        /**
+         * Request the global leaderboard or a specific player's rank.
+         * 
+         * @param username if not null, requests rank for this specific user (topK is ignored).
+         * @param topK if username is null:
+         *             - if topK is not null, requests the top K players.
+         *             - if topK is null, requests the full leaderboard.
+         */
         void onRequestRanking(String username, Integer topK);
 
         void onRequestHistory();

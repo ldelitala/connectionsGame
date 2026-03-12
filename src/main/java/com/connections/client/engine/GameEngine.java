@@ -8,8 +8,8 @@ import com.connections.client.ui.InputProvider;
 import java.util.List;
 
 /**
- * The Game Engine: The central reactive hub of the application.
- * It reacts to explicit actions received from an InputProvider.
+ * The Game Engine: The central reactive hub of the application. It reacts to explicit actions
+ * received from an InputProvider.
  */
 public class GameEngine implements InputProvider.InputListener {
 
@@ -17,14 +17,15 @@ public class GameEngine implements InputProvider.InputListener {
     private final int udpPort;
     private final ClientView view;
     private final InputProvider inputProvider;
-    
+
     private final UserModule userModule;
     private final GameplayModule gameplayModule;
     private final HistoryModule historyModule;
 
     private EngineState currentState;
 
-    public GameEngine(NetworkGateway gateway, int udpPort, ClientView view, InputProvider inputProvider) {
+    public GameEngine(NetworkGateway gateway, int udpPort, ClientView view,
+            InputProvider inputProvider) {
         this.gateway = gateway;
         this.udpPort = udpPort;
         this.view = view;
@@ -38,6 +39,7 @@ public class GameEngine implements InputProvider.InputListener {
     public void mainLoop() {
         view.renderPrompt(currentState.getPrompt());
         inputProvider.startListening(this);
+        // This will loop until the provider signals to stop (e.g., onExit)
     }
 
     // --- Action Implementations (Delegating to State) ---
@@ -138,10 +140,27 @@ public class GameEngine implements InputProvider.InputListener {
     }
 
     // --- Getters for Modules and Infrastructure ---
-    public NetworkGateway getGateway() { return gateway; }
-    public int getUdpPort() { return udpPort; }
-    public ClientView getView() { return view; }
-    public UserModule getUserModule() { return userModule; }
-    public GameplayModule getGameplayModule() { return gameplayModule; }
-    public HistoryModule getHistoryModule() { return historyModule; }
+    public NetworkGateway getGateway() {
+        return gateway;
+    }
+
+    public int getUdpPort() {
+        return udpPort;
+    }
+
+    public ClientView getView() {
+        return view;
+    }
+
+    public UserModule getUserModule() {
+        return userModule;
+    }
+
+    public GameplayModule getGameplayModule() {
+        return gameplayModule;
+    }
+
+    public HistoryModule getHistoryModule() {
+        return historyModule;
+    }
 }
