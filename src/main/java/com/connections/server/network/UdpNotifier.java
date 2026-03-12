@@ -1,4 +1,4 @@
-package com.connections.server;
+package com.connections.server.network;
 
 import java.io.IOException;
 import java.net.*;

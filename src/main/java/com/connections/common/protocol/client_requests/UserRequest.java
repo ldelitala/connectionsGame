@@ -1,14 +1,12 @@
 package com.connections.common.protocol.client_requests;
 
-import com.google.gson.annotations.SerializedName;
-
 /**
- * specialized Request subclass for user management operations.
- * Handles registration, login, logout, and credential updates.
+ * specialized Request subclass for user management operations. Handles registration, login, logout,
+ * and credential updates.
  */
 public class UserRequest extends ClientRequest {
 
-    // register uses "name", login uses "username". 
+    // register uses "name", login uses "username".
     // gson will serialize based on the factory method's settings.
     private String name;
     private String username;
@@ -57,7 +55,8 @@ public class UserRequest extends ClientRequest {
     /**
      * Creates a request to update user credentials.
      */
-    public static UserRequest updateCredentials(String oldName, String oldPsw, String newName, String newPsw) {
+    public static UserRequest updateCredentials(String oldName, String oldPsw, String newName,
+            String newPsw) {
         UserRequest req = new UserRequest(Operation.UPDATE_CREDENTIALS);
         req.oldName = oldName;
         req.oldPsw = oldPsw;
@@ -67,11 +66,31 @@ public class UserRequest extends ClientRequest {
     }
 
     // --- GETTERS ---
-    public String getUsername() { return (username != null) ? username : name; }
-    public String getPassword() { return psw; }
-    public String getOldName() { return oldName; }
-    public String getNewName() { return newName; }
-    public String getOldPsw() { return oldPsw; }
-    public String getNewPsw() { return newPsw; }
-    public Integer getUdpPort() { return udpPort; }
+    public String getUsername() {
+        return (username != null) ? username : name;
+    }
+
+    public String getPassword() {
+        return psw;
+    }
+
+    public String getOldName() {
+        return oldName;
+    }
+
+    public String getNewName() {
+        return newName;
+    }
+
+    public String getOldPsw() {
+        return oldPsw;
+    }
+
+    public String getNewPsw() {
+        return newPsw;
+    }
+
+    public Integer getUdpPort() {
+        return udpPort;
+    }
 }

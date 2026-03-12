@@ -2,7 +2,6 @@ package com.connections.client.ui.console;
 
 import com.connections.client.ui.InputProvider;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
 
 /**

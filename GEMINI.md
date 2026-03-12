@@ -15,7 +15,7 @@
 ## Project Structure
 - `src/main/java/com/connections/`
   - `server/`: Decoupled Server logic.
-    - `core/`: High-performance NIO engine (`NioServer`, `ClientSession`).
+    - `network/`: Infrastructure and I/O (`NioServer`, `ClientSession`, `UdpNotifier`).
     - `logic/`: Business logic coordinators (`UserCoordinator`, `PuzzleCoordinator`, `HistoryCoordinator`).
     - `persistence/`: Data Access Objects (`UsersDAO`, `PuzzlesDAO`, `HistoryDAO`).
     - `handler/`: Protocol bridge and worker pool management (`RequestDispatcher`).

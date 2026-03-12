@@ -1,4 +1,4 @@
-package com.connections.server.core;
+package com.connections.server.network;
 
 import com.connections.server.handler.RequestDispatcher;
 

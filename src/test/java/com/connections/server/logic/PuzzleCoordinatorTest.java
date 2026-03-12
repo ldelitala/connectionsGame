@@ -3,7 +3,7 @@ package com.connections.server.logic;
 import com.connections.common.models.Category;
 import com.connections.common.protocol.server_responses.dto.GuessResultDTO;
 import com.connections.common.protocol.server_responses.dto.PuzzleStateDTO;
-import com.connections.server.UdpNotifier;
+import com.connections.server.network.UdpNotifier;
 import com.connections.server.models.Puzzle;
 import com.connections.server.models.User;
 import com.connections.server.persistence.PuzzlesDAO;

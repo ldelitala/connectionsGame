@@ -3,7 +3,7 @@ package com.connections.server.handler;
 import com.connections.common.protocol.client_requests.*;
 import com.connections.common.protocol.server_responses.*;
 import com.connections.common.protocol.server_responses.dto.*;
-import com.connections.server.core.ClientSession;
+import com.connections.server.network.ClientSession;
 import com.connections.server.logic.*;
 import com.connections.server.models.User;
 import com.google.gson.Gson;
@@ -117,7 +117,16 @@ public class RequestDispatcher {
             case GET_PLAYER_STATS:
                 if (session.getUsername() == null) return ServerResponse.forbidden("Login required.");
                 User u = userCoordinator.getUser(session.getUsername());
-                return ServerResponse.ok("Player stats retrieved.", PlayerStatsDTO.create(u.getPuzzlesCompleted(), u.getWinRate(), u.getTotalScore(), u.getAverageScore()));
+                return ServerResponse.ok("Player stats retrieved.", PlayerStatsDTO.create(
+                        u.getPuzzlesCompleted(),
+                        u.getWinRate(),
+                        u.getLossRate(),
+                        u.getCurrentStreak(),
+                        u.getMaxStreak(),
+                        u.getPerfectPuzzles(),
+                        u.getMistakeHistogram(),
+                        u.getTotalScore()
+                ));
 
             case GET_LEADERBOARD:
                 HistoryRequest leadReq = gson.fromJson(json, HistoryRequest.class);

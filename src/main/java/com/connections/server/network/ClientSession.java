@@ -1,4 +1,4 @@
-package com.connections.server.core;
+package com.connections.server.network;
 
 import java.nio.ByteBuffer;
 import java.util.Queue;
