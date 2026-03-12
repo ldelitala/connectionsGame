@@ -7,7 +7,8 @@ import com.google.gson.annotations.SerializedName;
  * Handles past puzzle info/stats, player statistics, and leaderboard.
  */
 public class HistoryRequest extends ClientRequest {
-    private final Integer gameId;
+    @SerializedName("gameId")
+    private final Integer puzzleId;
     
     @SerializedName("playerName")
     private final String playerName;
@@ -15,9 +16,9 @@ public class HistoryRequest extends ClientRequest {
     @SerializedName("topPlayers")
     private final Integer topPlayers;
 
-    private HistoryRequest(Operation op, Integer gameId, String playerName, Integer topPlayers) {
+    private HistoryRequest(Operation op, Integer puzzleId, String playerName, Integer topPlayers) {
         super(op);
-        this.gameId = gameId;
+        this.puzzleId = puzzleId;
         this.playerName = playerName;
         this.topPlayers = topPlayers;
     }
@@ -25,15 +26,15 @@ public class HistoryRequest extends ClientRequest {
     /**
      * Creates a request for info about a past puzzle.
      */
-    public static HistoryRequest getGameInfo(int gameId) {
-        return new HistoryRequest(Operation.GET_GAME_INFO, gameId, null, null);
+    public static HistoryRequest getPuzzleInfo(int puzzleId) {
+        return new HistoryRequest(Operation.GET_PUZZLE_INFO, puzzleId, null, null);
     }
 
     /**
      * Creates a request for stats about a past puzzle.
      */
-    public static HistoryRequest getGameStats(int gameId) {
-        return new HistoryRequest(Operation.GET_GAME_STATS, gameId, null, null);
+    public static HistoryRequest getPuzzleStats(int puzzleId) {
+        return new HistoryRequest(Operation.GET_PUZZLE_STATS, puzzleId, null, null);
     }
 
     /**
@@ -53,7 +54,7 @@ public class HistoryRequest extends ClientRequest {
         return new HistoryRequest(Operation.GET_LEADERBOARD, null, playerName, topPlayers);
     }
 
-    public Integer getGameId() { return gameId; }
+    public Integer getPuzzleId() { return puzzleId; }
     public String getPlayerName() { return playerName; }
     public Integer getTopPlayers() { return topPlayers; }
 }

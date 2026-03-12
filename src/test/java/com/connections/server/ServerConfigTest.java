@@ -38,6 +38,6 @@ public class ServerConfigTest {
         assertEquals(9999, config.getTcpPort());
         assertEquals(5, config.getThreadPoolSize());
         // Check a default that wasn't overridden
-        assertEquals("Connections_Data.json", config.getGameDataPath());
+        assertEquals("Connections_Data.json", config.getPuzzleDataPath());
     }
 }

@@ -32,15 +32,15 @@ public class ConnectionsServer {
 
     private final ServerConfig config;
     private final UserManager userManager;
-    private final GameSessionManager sessionManager;
+    private final PuzzleSessionManager puzzleSessionManager;
     private final UdpNotifier udpNotifier;
     private final ExecutorService threadPool;
     private final Gson gson = new Gson();
 
-    public ConnectionsServer(ServerConfig config, UserManager userManager, GameSessionManager sessionManager, UdpNotifier udpNotifier) {
+    public ConnectionsServer(ServerConfig config, UserManager userManager, PuzzleSessionManager puzzleSessionManager, UdpNotifier udpNotifier) {
         this.config = config;
         this.userManager = userManager;
-        this.sessionManager = sessionManager;
+        this.puzzleSessionManager = puzzleSessionManager;
         this.udpNotifier = udpNotifier;
         this.threadPool = Executors.newFixedThreadPool(config.getThreadPoolSize());
     }
@@ -106,7 +106,7 @@ public class ConnectionsServer {
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
             String op = obj.get(KEY_OPERATION).getAsString().toLowerCase();
 
-            // 2. Delegate logic to UserManager or GameSessionManager
+            // 2. Delegate logic to UserManager or PuzzleSessionManager
             // (Simplified for brevity, following the project's logic)
             // ... Logic processing ...
 

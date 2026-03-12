@@ -15,16 +15,16 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class GameSessionManagerTest {
+public class PuzzleSessionManagerTest {
 
-    private GamesDAO gamesDAO;
+    private PuzzlesDAO puzzlesDAO;
     private UserManager userManager;
     private UdpNotifier udpNotifier;
-    private GameSessionManager sessionManager;
+    private PuzzleSessionManager sessionManager;
 
     @BeforeEach
     public void setup() throws IOException {
-        gamesDAO = mock(GamesDAO.class);
+        puzzlesDAO = mock(PuzzlesDAO.class);
         userManager = mock(UserManager.class);
         udpNotifier = mock(UdpNotifier.class);
 
@@ -35,11 +35,11 @@ public class GameSessionManagerTest {
         Category group4 = new Category("Foods", Arrays.asList("PIZZA", "PASTA", "BURGER", "SUSHI"));
         Puzzle puzzle = new Puzzle(1, Arrays.asList(group1, group2, group3, group4));
 
-        when(gamesDAO.getNumGames()).thenReturn(1);
-        when(gamesDAO.getNextGame()).thenReturn(puzzle);
-        when(gamesDAO.getGame(anyInt())).thenReturn(puzzle);
+        when(puzzlesDAO.getNumPuzzles()).thenReturn(1);
+        when(puzzlesDAO.getNextPuzzle()).thenReturn(puzzle);
+        when(puzzlesDAO.getPuzzle(anyInt())).thenReturn(puzzle);
 
-        sessionManager = new GameSessionManager(gamesDAO, userManager, udpNotifier, 300000);
+        sessionManager = new PuzzleSessionManager(puzzlesDAO, userManager, udpNotifier, 300000);
     }
 
     @Test
@@ -90,14 +90,14 @@ public class GameSessionManagerTest {
     }
 
     @Test
-    public void testGetPersonalGameStatusWithRemainingWords() {
+    public void testGetPersonalPuzzleStatusWithRemainingWords() {
         User user = new User("test", "pass");
         when(userManager.getUser("test")).thenReturn(user);
 
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "BIRD");
         sessionManager.submitProposal("test", words);
 
-        PuzzleStateDTO status = sessionManager.getPersonalGameStatus("test", 1);
+        PuzzleStateDTO status = sessionManager.getPersonalPuzzleStatus("test", 1);
         
         assertNotNull(status);
         assertFalse(status.isFinished());

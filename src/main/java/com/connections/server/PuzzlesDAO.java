@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
  * Data Access Object for Puzzle data.
  * Optimized with an index of file offsets for large JSON files.
  */
-public class GamesDAO {
+public class PuzzlesDAO {
     private final String filePath;
-    private final List<Long> gameOffsets = new ArrayList<>();
-    private int nextGameIndex = 0;
+    private final List<Long> puzzleOffsets = new ArrayList<>();
+    private int nextPuzzleIndex = 0;
     private final Gson gson = new Gson();
 
-    public GamesDAO(String filePath) {
+    public PuzzlesDAO(String filePath) {
         this.filePath = filePath;
         buildIndex();
     }
@@ -37,42 +37,42 @@ public class GamesDAO {
                 // To be safe and fast, we just index every line starting with '{' 
                 // and verify it's a puzzle when reading.
                 if (trimmed.equals("{")) {
-                    gameOffsets.add(pos);
+                    puzzleOffsets.add(pos);
                 }
                 pos = raf.getFilePointer();
             }
-            System.out.println("Indexed " + gameOffsets.size() + " potential games.");
+            System.out.println("Indexed " + puzzleOffsets.size() + " potential puzzles.");
         } catch (IOException e) {
             System.err.println("Critical error building puzzle index: " + e.getMessage());
         }
     }
 
-    public synchronized Puzzle getNextGame() {
-        if (gameOffsets.isEmpty()) return null;
+    public synchronized Puzzle getNextPuzzle() {
+        if (puzzleOffsets.isEmpty()) return null;
         
         Puzzle puzzle = null;
         int attempts = 0;
-        while (puzzle == null && attempts < gameOffsets.size()) {
-            if (nextGameIndex >= gameOffsets.size()) {
+        while (puzzle == null && attempts < puzzleOffsets.size()) {
+            if (nextPuzzleIndex >= puzzleOffsets.size()) {
                 System.out.println("End of puzzle list. Restarting from the first puzzle.");
-                nextGameIndex = 0;
+                nextPuzzleIndex = 0;
             }
-            puzzle = getGameByOffset(gameOffsets.get(nextGameIndex));
-            nextGameIndex++;
+            puzzle = getPuzzleByOffset(puzzleOffsets.get(nextPuzzleIndex));
+            nextPuzzleIndex++;
             attempts++;
         }
         return puzzle;
     }
 
-    public Puzzle getGameById(int id) {
-        for (Long offset : gameOffsets) {
-            Puzzle g = getGameByOffset(offset);
-            if (g != null && g.getGameId() == id) return g;
+    public Puzzle getPuzzleById(int id) {
+        for (Long offset : puzzleOffsets) {
+            Puzzle p = getPuzzleByOffset(offset);
+            if (p != null && p.getPuzzleId() == id) return p;
         }
         return null;
     }
 
-    private Puzzle getGameByOffset(long offset) {
+    private Puzzle getPuzzleByOffset(long offset) {
         try (RandomAccessFile raf = new RandomAccessFile(filePath, "r")) {
             raf.seek(offset);
             
@@ -104,23 +104,23 @@ public class GamesDAO {
         }
     }
 
-    public Puzzle getGame(int gameId) {
-        return getGameById(gameId);
+    public Puzzle getPuzzle(int puzzleId) {
+        return getPuzzleById(puzzleId);
     }
 
-    public int getNumGames() {
-        // Return count of valid games
-        return (int) gameOffsets.stream()
-                .map(this::getGameByOffset)
+    public int getNumPuzzles() {
+        // Return count of valid puzzles
+        return (int) puzzleOffsets.stream()
+                .map(this::getPuzzleByOffset)
                 .filter(java.util.Objects::nonNull)
                 .count();
     }
 
-    public List<Integer> getAllGameIds() {
-        return gameOffsets.stream()
-                .map(this::getGameByOffset)
+    public List<Integer> getAllPuzzleIds() {
+        return puzzleOffsets.stream()
+                .map(this::getPuzzleByOffset)
                 .filter(java.util.Objects::nonNull)
-                .map(Puzzle::getGameId)
+                .map(Puzzle::getPuzzleId)
                 .collect(Collectors.toList());
     }
 }

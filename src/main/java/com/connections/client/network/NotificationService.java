@@ -74,14 +74,14 @@ public class NotificationService extends Thread implements AutoCloseable {
 
             // Deserialization must target the specific subclass to populate all fields
             switch (type) {
-                case NewGameNotification.TYPE_ID:
-                    view.onNewPuzzle(gson.fromJson(json, NewGameNotification.class));
+                case NewPuzzleNotification.TYPE_ID:
+                    view.onNewPuzzle(gson.fromJson(json, NewPuzzleNotification.class));
                     break;
-                case GameEndNotification.TYPE_ID:
-                    view.onPuzzleEnd(gson.fromJson(json, GameEndNotification.class));
+                case PuzzleEndNotification.TYPE_ID:
+                    view.onPuzzleEnd(gson.fromJson(json, PuzzleEndNotification.class));
                     break;
-                case PlayerGameSummaryNotification.TYPE_ID:
-                    view.onPlayerSummary(gson.fromJson(json, PlayerGameSummaryNotification.class));
+                case PlayerPuzzleSummaryNotification.TYPE_ID:
+                    view.onPlayerSummary(gson.fromJson(json, PlayerPuzzleSummaryNotification.class));
                     break;
                 default:
                     // Unknown notification type

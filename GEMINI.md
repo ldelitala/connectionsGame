@@ -15,7 +15,7 @@
 ## Project Structure
 - `src/main/java/com/connections/`
   - `server/`: Server logic (NIO, Thread Pool).
-    - `models/`: Private domain entities (User, Game).
+    - `models/`: Private domain entities (User, Puzzle).
   - `client/`: CLI Client logic (TCP connection, UDP listener).
     - `engine/`: The core reactive hub (GameEngine, EngineState).
       - `modules/`: Specialized domain logic (User, Gameplay, History).
@@ -23,7 +23,7 @@
     - `ui/`: User Interface layer (InputProvider, ClientView).
     - `network/`: Network communication (TCP Gateway, UDP Service).
   - `common/`: Shared resources.
-    - `models/`: Shared data structures (WordGroup).
+    - `models/`: Shared data structures (WordGroup, Category).
     - `dto/`: Data Transfer Objects used in both TCP and UDP.
     - `protocol/`: TCP Request/Response structure.
     - `notifications/`: UDP asynchronous message structure.
@@ -33,23 +33,18 @@
 - [x] `pom.xml` with dependencies (Gson, JUnit, Mockito).
 - [x] Architectural Refactoring: Separation of Domain Models, DTOs, and Protocols.
 - [x] Implement Type-Safe Generic Response system.
-- [x] Implement Server configuration and Game data loading.
+- [x] Implement Server configuration and Puzzle data loading.
 - [x] Implement TCP request/response handling (NIO).
 - [x] Implement User registration/login (Persistence).
-- [x] Implement Game logic (Session management).
-- [x] Implement UDP notifications (New game, Game end summaries).
+- [x] Implement Puzzle logic (Session management).
+- [x] Implement UDP notifications (New puzzle, Puzzle end summaries).
 - [x] Implement CLI Client with input/output handlers.
 - [x] Testing and validation (Comprehensive suite: 17/17 passed).
-- [x] Optimization: High-performance Game indexing (Offsets + Buffered I/O).
-- [x] Refactoring Modulare: Separazione delle logiche Client (User, Game, History) in moduli indipendenti.
-- [x] Raffinamento Protocollo: Specializzazione di GameInfo/Stats DTO per aderenza rigorosa alle specifiche (Corrente vs Passato).
+- [x] Optimization: High-performance Puzzle indexing (Offsets + Buffered I/O).
+- [x] Refactoring Modulare: Separazione delle logiche Client (User, Gameplay, History) in moduli indipendenti.
 - [x] Allineamento Specifiche (Allegato 1): Correzione dei nomi dei campi JSON (`name` vs `username`, `psw`) e ripristino dei nomi operazione originali (`requestGameInfo`, `requestLeaderboard`, etc.) per garantire la piena conformità.
-- [x] **Full MVC Refactoring**: Decoupled Input (InputProvider) and Output (ClientView) into a dedicated `ui` layer.
-- [x] **Game Engine Architecture**: Transitioned the client to a reactive engine-based design (`GameEngine`, `EngineState`, `Services`).
-- [x] **Network Infrastructure**: Isolated TCP/UDP communication into a specialized `network` layer (`NetworkGateway`, `NotificationService`).
-- [x] **Action-Based Protocol**: Replaced raw string parsing in states with explicit action methods (`onGuess`, `onLogin`, etc.), isolating CLI parsing in the UI layer.
-- [x] **Dependency Injection**: Services now receive the `ClientView` at construction, simplifying method signatures and improving encapsulation.
-- [x] **Semantic Refactoring**: Renamed `controller` package to `engine` and `adapters` to `modules` to better reflect their architectural intent.
+- [x] **Semantic Terminology Refactoring**: Renamed all occurrences of "game" to "puzzle" when referring to a specific round/puzzle session, maintaining "game" only for the entire application.
+- [x] **Protocol Compatibility**: Ensured that while Java names use "puzzle", JSON fields still use "gameId" via `@SerializedName` for strict compatibility with existing specifications.
 
 ## Latest Session Improvements (March 12, 2026)
 - **Engine-Module Architecture**:

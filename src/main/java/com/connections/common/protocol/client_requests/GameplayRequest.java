@@ -26,14 +26,14 @@ public class GameplayRequest extends ClientRequest {
      * Creates a request for info about the current puzzle.
      */
     public static GameplayRequest getCurrentInfo() {
-        return new GameplayRequest(Operation.GET_GAME_INFO, null);
+        return new GameplayRequest(Operation.GET_PUZZLE_INFO, null);
     }
 
     /**
      * Creates a request for stats about the current puzzle.
      */
     public static GameplayRequest getCurrentStats() {
-        return new GameplayRequest(Operation.GET_GAME_STATS, null);
+        return new GameplayRequest(Operation.GET_PUZZLE_STATS, null);
     }
 
     public List<String> getWords() { return words; }

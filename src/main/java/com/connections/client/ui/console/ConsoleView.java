@@ -49,7 +49,7 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
-    public synchronized void showGameInfo(PuzzleStateDTO info) {
+    public synchronized void showPuzzleInfo(PuzzleStateDTO info) {
         if (info.isFinished()) {
             System.out.println("Puzzle is solved or expired. Use 'history' or 'info' for details.");
             return;
@@ -73,7 +73,7 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
-    public synchronized void showGameStats(PuzzleStatsDTO stats) {
+    public synchronized void showPuzzleStats(PuzzleStatsDTO stats) {
         System.out.println("--- Global Puzzle Statistics ---");
         System.out.println("Active players: " + stats.getActivePlayers());
         System.out.println("Players finished: " + stats.getFinishedPlayers());
@@ -111,18 +111,18 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
-    public synchronized void onNewPuzzle(NewGameNotification n) {
-        System.out.println("\n[NOTIFICATION] A new Puzzle has started! ID: " + n.getGameId());
+    public synchronized void onNewPuzzle(NewPuzzleNotification n) {
+        System.out.println("\n[NOTIFICATION] A new Puzzle has started! ID: " + n.getPuzzleId());
         System.out.println("Words: " + String.join(", ", n.getWords()));
-        System.out.println("Type 'board' to view the game state.");
+        System.out.println("Type 'board' to view the puzzle board.");
         System.out.print("> ");
     }
 
     @Override
-    public synchronized void onPuzzleEnd(GameEndNotification n) {
+    public synchronized void onPuzzleEnd(PuzzleEndNotification n) {
         System.out.println("\n[NOTIFICATION] The current Puzzle has ended.");
         if (n.getStats() != null) {
-            showGameStats(n.getStats());
+            showPuzzleStats(n.getStats());
         }
         if (n.getLeaderboard() != null) {
             showLeaderboard(n.getLeaderboard());
@@ -131,10 +131,10 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
-    public synchronized void onPlayerSummary(PlayerGameSummaryNotification n) {
+    public synchronized void onPlayerSummary(PlayerPuzzleSummaryNotification n) {
         System.out.println("\n[NOTIFICATION] Personal summary for the concluded puzzle:");
         if (n.getPersonalInfo() != null) {
-            showGameInfo(n.getPersonalInfo());
+            showPuzzleInfo(n.getPersonalInfo());
         }
         System.out.print("> ");
     }

@@ -1,6 +1,7 @@
 package com.connections.common.dto;
 
 import com.connections.common.models.Category;
+import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 /**
@@ -8,7 +9,8 @@ import java.util.List;
  * Follows the project's specific requirements for what info to return for active vs finished games.
  */
 public class PuzzleStateDTO implements DTO {
-    private final int gameId;
+    @SerializedName("gameId")
+    private final int puzzleId;
     private final boolean finished;
     private final int mistakes;
     private final int score;
@@ -22,11 +24,11 @@ public class PuzzleStateDTO implements DTO {
     private final List<Category> allGroups; // All 16 words assigned to 4 groups
     private final Integer correctGroupsCount;
 
-    private PuzzleStateDTO(int gameId, boolean finished, int mistakes, int score,
+    private PuzzleStateDTO(int puzzleId, boolean finished, int mistakes, int score,
             Long remainingTime, List<Category> foundGroups, List<String> remainingWords,
             List<Category> allGroups, Integer correctGroupsCount) {
 
-        this.gameId = gameId;
+        this.puzzleId = puzzleId;
         this.finished = finished;
         this.mistakes = mistakes;
         this.score = score;
@@ -40,7 +42,7 @@ public class PuzzleStateDTO implements DTO {
     /**
      * Factory method for active (in progress) puzzle info.
      * 
-     * @param gameId puzzle ID
+     * @param puzzleId puzzle ID
      * @param remainingTime time left in milliseconds
      * @param foundGroups list of groups already found
      * @param remainingWords list of words not yet grouped
@@ -48,31 +50,31 @@ public class PuzzleStateDTO implements DTO {
      * @param score current player score
      * @return a new PuzzleStateDTO for the active session
      */
-    public static PuzzleStateDTO active(int gameId, long remainingTime, List<Category> foundGroups,
+    public static PuzzleStateDTO active(int puzzleId, long remainingTime, List<Category> foundGroups,
             List<String> remainingWords, int mistakes, int score) {
-        return new PuzzleStateDTO(gameId, false, mistakes, score, remainingTime, foundGroups,
+        return new PuzzleStateDTO(puzzleId, false, mistakes, score, remainingTime, foundGroups,
                 remainingWords, null, null);
     }
 
     /**
      * Factory method for concluded (past) puzzle info.
      * 
-     * @param gameId past puzzle ID
+     * @param puzzleId past puzzle ID
      * @param allGroups all 16 words assigned to their 4 groups
      * @param correctGroupsCount number of groups correctly guessed
      * @param mistakes final mistakes
      * @param score final score
      * @return a new PuzzleStateDTO for a historical puzzle
      */
-    public static PuzzleStateDTO concluded(int gameId, List<Category> allGroups,
+    public static PuzzleStateDTO concluded(int puzzleId, List<Category> allGroups,
             int correctGroupsCount, int mistakes, int score) {
-        return new PuzzleStateDTO(gameId, true, mistakes, score, null, null, null, allGroups,
+        return new PuzzleStateDTO(puzzleId, true, mistakes, score, null, null, null, allGroups,
                 correctGroupsCount);
     }
 
     // --- GETTERS ---
-    public int getGameId() {
-        return gameId;
+    public int getPuzzleId() {
+        return puzzleId;
     }
 
     public boolean isFinished() {

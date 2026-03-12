@@ -6,7 +6,7 @@ import com.connections.common.dto.PuzzleStatsDTO;
 /**
  * Notification sent to all participants when a puzzle ends.
  */
-public class GameEndNotification extends Notification {
+public class PuzzleEndNotification extends Notification {
 
     /** The unique identifier for this notification type. */
     public static final String TYPE_ID = "game_end";
@@ -14,14 +14,14 @@ public class GameEndNotification extends Notification {
     private final LeaderboardDTO leaderboard;
     private final PuzzleStatsDTO stats;
 
-    private GameEndNotification(LeaderboardDTO leaderboard, PuzzleStatsDTO stats) {
+    private PuzzleEndNotification(LeaderboardDTO leaderboard, PuzzleStatsDTO stats) {
         super(TYPE_ID);
         this.leaderboard = leaderboard;
         this.stats = stats;
     }
 
-    public static GameEndNotification create(LeaderboardDTO leaderboard, PuzzleStatsDTO stats) {
-        return new GameEndNotification(leaderboard, stats);
+    public static PuzzleEndNotification create(LeaderboardDTO leaderboard, PuzzleStatsDTO stats) {
+        return new PuzzleEndNotification(leaderboard, stats);
     }
 
     public LeaderboardDTO getLeaderboard() {

@@ -29,13 +29,13 @@ public class GameplayModule {
     /** Submits a guess and displays the puzzle board. */
     public void handleGuess(List<String> words) {
         String jsonReq = gson.toJson(GameplayRequest.submitProposal(words));
-        processPuzzleState(jsonReq);
+        processPuzzleInfo(jsonReq);
     }
 
     /** Requests and displays the puzzle board. */
     public void handleStatus() {
         String jsonReq = gson.toJson(GameplayRequest.getCurrentInfo());
-        processPuzzleState(jsonReq);
+        processPuzzleInfo(jsonReq);
     }
 
     /** Requests and displays puzzle global statistics. */
@@ -49,14 +49,14 @@ public class GameplayModule {
             
             view.showResponse(response);
             if (response.getStatus() == Status.OK && response.getData() != null) {
-                view.showGameStats(response.getData());
+                view.showPuzzleStats(response.getData());
             }
         } catch (IOException e) {
             view.showError("Network error: " + e.getMessage());
         }
     }
 
-    private void processPuzzleState(String jsonRequest) {
+    private void processPuzzleInfo(String jsonRequest) {
         try {
             String jsonResponse = gateway.sendRequest(jsonRequest);
             Type type = new TypeToken<ServerResponse<PuzzleStateDTO>>(){}.getType();
@@ -64,7 +64,7 @@ public class GameplayModule {
             
             view.showResponse(response);
             if (response.getStatus() == Status.OK && response.getData() != null) {
-                view.showGameInfo(response.getData());
+                view.showPuzzleInfo(response.getData());
             }
         } catch (IOException e) {
             view.showError("Network error: " + e.getMessage());

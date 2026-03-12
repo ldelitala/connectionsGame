@@ -10,8 +10,8 @@ import com.connections.common.notifications.*;
  */
 public interface ClientView {
     void showResponse(ServerResponse<?> response);
-    void showGameInfo(PuzzleStateDTO info);
-    void showGameStats(PuzzleStatsDTO stats);
+    void showPuzzleInfo(PuzzleStateDTO info);
+    void showPuzzleStats(PuzzleStatsDTO stats);
     void showPlayerStats(PlayerStatsDTO stats);
     void showLeaderboard(LeaderboardDTO leaderboard);
 
@@ -19,9 +19,9 @@ public interface ClientView {
     void showHelp(boolean loggedIn);
     
     // Specific notification callbacks
-    void onNewPuzzle(NewGameNotification notification);
-    void onPuzzleEnd(GameEndNotification notification);
-    void onPlayerSummary(PlayerGameSummaryNotification notification);
+    void onNewPuzzle(NewPuzzleNotification notification);
+    void onPuzzleEnd(PuzzleEndNotification notification);
+    void onPlayerSummary(PlayerPuzzleSummaryNotification notification);
     
     void showError(String error);
     void showMessage(String message);

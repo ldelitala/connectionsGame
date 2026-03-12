@@ -28,7 +28,7 @@ public class HistoryModule {
     /** Requests past puzzle info and renders the board. */
     public void handlePastInfo(int puzzleId) {
         try {
-            String jsonReq = gson.toJson(HistoryRequest.getGameInfo(puzzleId));
+            String jsonReq = gson.toJson(HistoryRequest.getPuzzleInfo(puzzleId));
             String jsonRes = gateway.sendRequest(jsonReq);
             
             Type type = new TypeToken<ServerResponse<PuzzleStateDTO>>(){}.getType();
@@ -36,7 +36,7 @@ public class HistoryModule {
             
             view.showResponse(response);
             if (response.getStatus() == Status.OK && response.getData() != null) {
-                view.showGameInfo(response.getData());
+                view.showPuzzleInfo(response.getData());
             }
         } catch (IOException e) {
             view.showError("Network error: " + e.getMessage());
@@ -46,7 +46,7 @@ public class HistoryModule {
     /** Requests global stats for a past puzzle and renders statistics. */
     public void handleGlobalStats(int puzzleId) {
         try {
-            String jsonReq = gson.toJson(HistoryRequest.getGameStats(puzzleId));
+            String jsonReq = gson.toJson(HistoryRequest.getPuzzleStats(puzzleId));
             String jsonRes = gateway.sendRequest(jsonReq);
             
             Type type = new TypeToken<ServerResponse<PuzzleStatsDTO>>(){}.getType();
@@ -54,7 +54,7 @@ public class HistoryModule {
             
             view.showResponse(response);
             if (response.getStatus() == Status.OK && response.getData() != null) {
-                view.showGameStats(response.getData());
+                view.showPuzzleStats(response.getData());
             }
         } catch (IOException e) {
             view.showError("Network error: " + e.getMessage());

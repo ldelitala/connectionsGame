@@ -16,10 +16,10 @@ public class ServerMain {
         ServerConfig config = (args.length > 0) ? new ServerConfig(args[0]) : new ServerConfig();
         
         try {
-            GamesDAO gamesDAO = new GamesDAO(config.getGameDataPath());
+            PuzzlesDAO puzzlesDAO = new PuzzlesDAO(config.getPuzzleDataPath());
             UserManager userManager = new UserManager(config.getUserDataPath());
             UdpNotifier udpNotifier = new UdpNotifier();
-            GameSessionManager sessionManager = new GameSessionManager(gamesDAO, userManager, udpNotifier, config.getGameDurationMillis());
+            PuzzleSessionManager sessionManager = new PuzzleSessionManager(puzzlesDAO, userManager, udpNotifier, config.getPuzzleDurationMillis());
             
             // Initialize and start TCP Server
             ConnectionsServer server = new ConnectionsServer(config, userManager, sessionManager, udpNotifier);

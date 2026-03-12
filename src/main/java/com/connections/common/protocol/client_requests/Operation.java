@@ -33,11 +33,11 @@ public enum Operation {
 
     /** Request detailed information about a specific puzzle or the current puzzle. */
     @SerializedName("requestGameInfo")
-    GET_GAME_INFO,
+    GET_PUZZLE_INFO,
 
     /** Request global statistics for a specific puzzle. */
     @SerializedName("requestGameStats")
-    GET_GAME_STATS,
+    GET_PUZZLE_STATS,
 
     /** Request personal statistics for the logged-in user. */
     @SerializedName("requestPlayerStats")
