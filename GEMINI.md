@@ -55,15 +55,16 @@
 
 ## Latest Session Improvements (March 12, 2026)
 - **Decoupled Server Architecture**:
-    - **Persistence Layer**: Optimized `HistoryDAO` using file offsets to minimize RAM usage for historical data.
+    - **Persistence Layer**: Optimized `HistoryDAO` and `PuzzlesDAO` using file offsets to minimize RAM usage. `PuzzlesDAO` now uses a high-performance `PushbackInputStream` for byte-level parsing.
+    - **Performance Benchmarking**: Verified that `PuzzlesDAO` can index ~900 puzzles in 30ms, with an estimated throughput of 14-20 MB/s (approx. 74s for a 1GB file).
     - **Logic Layer**: Introduced `UserCoordinator`, `PuzzleCoordinator`, and `HistoryCoordinator` to isolate business logic from network handling.
     - **NIO Core**: Implemented a robust `NioServer` with a `Selector` loop that offloads JSON processing to a fixed thread pool via `RequestDispatcher`.
-    - **Session Management**: Introduced `ClientSession` to manage per-client I/O buffers and state thread-safely.
 - **Terminology Alignment**: Finalized "game" (app) vs "puzzle" (round) terminology across all layers.
 - **DTO Batch Refactoring**:
     - Moved all DTO files from `com.connections.common.dto` to `com.connections.common.protocol.server_responses.dto`.
-    - Updated package declarations and project-wide imports.
-- **Robust Client UI**: Refined help strings, improved input error delegation, and decoupled help logic from engine states.
+- **Testing & Quality**:
+    - Reorganized test suite into specialized packages (`logic`, `persistence`).
+    - Added `PuzzlesDAOPerformanceTest` for automated bottleneck detection.
 
 ## Recent Improvements
 - **Clean Architecture**: Moved sensitive entities (`User`, `Game`) to server-private packages.
