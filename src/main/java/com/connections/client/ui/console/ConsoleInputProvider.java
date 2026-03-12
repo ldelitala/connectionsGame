@@ -104,7 +104,9 @@ public class ConsoleInputProvider implements InputProvider {
                 case CMD_UPDATE:
                     if (tokens.length != 4)
                         throw new IllegalArgumentException("Usage: update <oldP> <newU> <newP>");
-                    listener.onUpdateCredentials(tokens[1], tokens[2], tokens[3]);
+                    String newName = ("-".equals(tokens[2])) ? null : tokens[2];
+                    String newPass = ("-".equals(tokens[3])) ? null : tokens[3];
+                    listener.onUpdateCredentials(tokens[1], newName, newPass);
                     break;
 
                 // gameplay

@@ -39,7 +39,7 @@ public class LoggedInState implements EngineState {
     @Override
     public void onUpdateCredentials(String oldPass, String newName, String newPass) {
         Status status = engine.getUserModule().handleUpdate(username, oldPass, newName, newPass);
-        if (status == Status.OK && newName != null && !"-".equals(newName)) {
+        if (status == Status.OK && newName != null) {
             this.username = newName;
         }
     }

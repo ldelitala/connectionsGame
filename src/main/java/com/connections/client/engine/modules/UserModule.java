@@ -41,15 +41,12 @@ public class UserModule {
     }
 
     public Status handleUpdate(String username, String oldPass, String newName, String newPass) {
-        String finalName = ("-".equals(newName)) ? null : newName;
-        String finalPass = ("-".equals(newPass)) ? null : newPass;
-
-        if (finalName == null && finalPass == null) {
+        if (newName == null && newPass == null) {
             view.showMessage("No changes provided.");
             return Status.ERROR;
         }
 
-        ClientRequest request = UserRequest.updateCredentials(username, oldPass, finalName, finalPass);
+        ClientRequest request = UserRequest.updateCredentials(username, oldPass, newName, newPass);
         return callAndProcess(request);
     }
 

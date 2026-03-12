@@ -29,7 +29,7 @@ public interface InputProvider extends AutoCloseable {
 
         /**
          * Update the username or password of the current user.
-         * To skip changing a specific field, use the placeholder "-" for newName or newPass.
+         * To skip changing a specific field, pass null for newName or newPass.
          */
         void onUpdateCredentials(String oldPass, String newName, String newPass);
 
