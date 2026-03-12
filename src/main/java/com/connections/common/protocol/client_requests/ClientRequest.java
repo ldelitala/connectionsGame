@@ -1,12 +1,9 @@
 package com.connections.common.protocol.client_requests;
 
-import java.io.Serializable;
-
 /**
  * Base class for all requests sent from the client to the server.
  */
-public abstract class ClientRequest implements Serializable {
-    private static final long serialVersionUID = 1L;
+public abstract class ClientRequest {
     
     private final Operation operation;
 

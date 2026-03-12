@@ -1,15 +1,12 @@
 package com.connections.common.protocol.server_responses;
 
 import com.connections.common.dto.DTO;
-import java.io.Serializable;
-
 /**
  * Generic response structure for all messages sent from the server to the client.
  * 
  * @param <T> The type of DTO contained in the response.
  */
-public class ServerResponse<T extends DTO> implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class ServerResponse<T extends DTO> {
     
     private final Status status;
     private final String message;

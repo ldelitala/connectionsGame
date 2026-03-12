@@ -1,12 +1,10 @@
 package com.connections.server;
 
-import java.io.Serializable;
-
 /**
  * Represents the internal state of a player's performance in a puzzle. Internal to the server, NOT
  * shared with the client.
  */
-public class PlayerResult implements Serializable {
+public class PlayerResult {
     private final int mistakes;
     private final int correctGroups;
     private final int points;
