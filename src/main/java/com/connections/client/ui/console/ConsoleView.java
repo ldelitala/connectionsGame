@@ -16,6 +16,31 @@ public class ConsoleView implements ClientView {
     private static final int MS_TO_S_RATIO = 1000;
     private static final int MAX_MISTAKES = 4;
 
+    private static final String HELP_LOGGED_OUT =
+            "\n--- SYSTEM COMMANDS ---\n" +
+            "  help              : Show this list\n" +
+            "  exit              : Close the application\n" +
+            "\n--- AUTHENTICATION ---\n" +
+            "  register <uP> <psw>: Create a new account\n" +
+            "  login <uP> <psw>   : Sign in to your account\n";
+
+    private static final String HELP_LOGGED_IN =
+            "\n--- SYSTEM COMMANDS ---\n" +
+            "  help              : Show this list\n" +
+            "  exit              : Close the application\n" +
+            "\n--- GAMEPLAY COMMANDS ---\n" +
+            "  board             : Show current puzzle board\n" +
+            "  guess <w1 w2 w3 w4>: Submit a proposal\n" +
+            "  stats             : View global stats for current puzzle\n" +
+            "\n--- HISTORY & RANKING ---\n" +
+            "  history           : View your career statistics\n" +
+            "  ranking [user] [k]: View global ranking (optional: specific user or top K)\n" +
+            "  info <id>         : View past puzzle board by ID\n" +
+            "  global <id>       : View past puzzle global stats by ID\n" +
+            "\n--- ACCOUNT ---\n" +
+            "  update <old> <nU> <nP>: Update credentials (use '-' to skip username or password)\n" +
+            "  logout            : Sign out of the session\n";
+
     @Override
     public synchronized void showResponse(ServerResponse<?> response) {
         System.out.println("[" + response.getStatus() + "] " + response.getMessage());
@@ -76,31 +101,7 @@ public class ConsoleView implements ClientView {
 
     @Override
     public synchronized void showHelp(boolean loggedIn) {
-        System.out.println("\n--- SYSTEM COMMANDS ---");
-        System.out.println("  help              : Show this list");
-        System.out.println("  exit              : Close the application");
-
-        if (loggedIn) {
-            System.out.println("\n--- GAMEPLAY COMMANDS ---");
-            System.out.println("  board             : Show current puzzle board");
-            System.out.println("  guess <w1 w2 w3 w4>: Submit a proposal");
-            System.out.println("  stats             : View global stats for current puzzle");
-
-            System.out.println("\n--- HISTORY & RANKING ---");
-            System.out.println("  history           : View your career statistics");
-            System.out.println("  ranking [user] [k]: View global ranking (optional: specific user or top K)");
-            System.out.println("  info <id>         : View past puzzle board by ID");
-            System.out.println("  global <id>       : View past puzzle global stats by ID");
-
-            System.out.println("\n--- ACCOUNT ---");
-            System.out.println("  update <old> <nU> <nP>: Update credentials (use '-' to skip username or password)");
-            System.out.println("  logout            : Sign out of the session");
-        } else {
-            System.out.println("\n--- AUTHENTICATION ---");
-            System.out.println("  register <uP> <psw>: Create a new account");
-            System.out.println("  login <uP> <psw>   : Sign in to your account");
-        }
-        System.out.println();
+        System.out.println(loggedIn ? HELP_LOGGED_IN : HELP_LOGGED_OUT);
     }
 
     @Override

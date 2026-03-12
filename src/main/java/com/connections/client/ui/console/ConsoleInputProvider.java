@@ -6,25 +6,33 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * CLI implementation of InputProvider.
- * Parses raw string input from the console into explicit Game Engine actions.
+ * CLI implementation of InputProvider. Parses raw string input from the console into explicit Game
+ * Engine actions.
  */
 public class ConsoleInputProvider implements InputProvider {
 
     private static final String REGEX_WHITESPACE = "\\s+";
-    
-    // Commands mapping
+
+    // COMMAND DEFINITIONS
+
+    // authentication
     private static final String CMD_REGISTER = "register";
     private static final String CMD_LOGIN = "login";
     private static final String CMD_LOGOUT = "logout";
     private static final String CMD_UPDATE = "update";
+
+    // gameplay
     private static final String CMD_GUESS = "guess";
     private static final String CMD_BOARD = "board";
     private static final String CMD_STATS = "stats";
+
+    // history & rankings
     private static final String CMD_INFO = "info";
     private static final String CMD_GLOBAL = "global";
     private static final String CMD_RANKING = "ranking";
     private static final String CMD_HISTORY = "history";
+
+    // system
     private static final String CMD_HELP = "help";
     private static final String CMD_EXIT = "exit";
 
@@ -39,7 +47,8 @@ public class ConsoleInputProvider implements InputProvider {
     public void startListening(InputListener listener) {
         while (running && scanner.hasNextLine()) {
             String line = scanner.nextLine().trim();
-            if (line.isEmpty()) continue;
+            if (line.isEmpty())
+                continue;
 
             processLine(line, listener);
         }
@@ -51,23 +60,31 @@ public class ConsoleInputProvider implements InputProvider {
 
         try {
             switch (command) {
+
+                // authentication
                 case CMD_REGISTER:
-                    if (tokens.length < 3) throw new IllegalArgumentException("Usage: register <user> <psw>");
+                    if (tokens.length < 3)
+                        throw new IllegalArgumentException("Usage: register <user> <psw>");
                     listener.onRegister(tokens[1], tokens[2]);
                     break;
                 case CMD_LOGIN:
-                    if (tokens.length < 3) throw new IllegalArgumentException("Usage: login <user> <psw>");
+                    if (tokens.length < 3)
+                        throw new IllegalArgumentException("Usage: login <user> <psw>");
                     listener.onLogin(tokens[1], tokens[2]);
                     break;
                 case CMD_LOGOUT:
                     listener.onLogout();
                     break;
                 case CMD_UPDATE:
-                    if (tokens.length < 4) throw new IllegalArgumentException("Usage: update <oldP> <newU> <newP>");
+                    if (tokens.length < 4)
+                        throw new IllegalArgumentException("Usage: update <oldP> <newU> <newP>");
                     listener.onUpdateCredentials(tokens[1], tokens[2], tokens[3]);
                     break;
+
+                // gameplay
                 case CMD_GUESS:
-                    if (tokens.length < 2) throw new IllegalArgumentException("Usage: guess <w1> <w2> <w3> <w4>");
+                    if (tokens.length < 2)
+                        throw new IllegalArgumentException("Usage: guess <w1> <w2> <w3> <w4>");
                     listener.onGuess(Arrays.asList(Arrays.copyOfRange(tokens, 1, tokens.length)));
                     break;
                 case CMD_BOARD:
@@ -76,12 +93,16 @@ public class ConsoleInputProvider implements InputProvider {
                 case CMD_STATS:
                     listener.onRequestStats();
                     break;
+
+                // history & rankings
                 case CMD_INFO:
-                    if (tokens.length < 2) throw new IllegalArgumentException("Usage: info <puzzleId>");
+                    if (tokens.length < 2)
+                        throw new IllegalArgumentException("Usage: info <puzzleId>");
                     listener.onRequestPastInfo(Integer.parseInt(tokens[1]));
                     break;
                 case CMD_GLOBAL:
-                    if (tokens.length < 2) throw new IllegalArgumentException("Usage: global <puzzleId>");
+                    if (tokens.length < 2)
+                        throw new IllegalArgumentException("Usage: global <puzzleId>");
                     listener.onRequestGlobalStats(Integer.parseInt(tokens[1]));
                     break;
                 case CMD_RANKING:
@@ -90,12 +111,15 @@ public class ConsoleInputProvider implements InputProvider {
                 case CMD_HISTORY:
                     listener.onRequestHistory();
                     break;
+
+                // system
                 case CMD_HELP:
                     listener.onHelp();
                     break;
                 case CMD_EXIT:
                     listener.onExit();
                     break;
+
                 default:
                     System.out.println("Unknown command. Type 'help' for assistance.");
             }
@@ -119,8 +143,13 @@ public class ConsoleInputProvider implements InputProvider {
     }
 
     @Override
-    public void stop() { this.running = false; }
+    public void stop() {
+        this.running = false;
+    }
 
     @Override
-    public void close() { stop(); scanner.close(); }
+    public void close() {
+        stop();
+        scanner.close();
+    }
 }
