@@ -2,9 +2,80 @@
 
 This document describes all JSON messages exchanged between the Client and the Server.
 
-## 1. TCP Requests (Client -> Server)
+## 1. TCP Requests & Success Responses (status: "ok")
 
 All requests must contain an `"operation"` field.
+
+### Register
+**Request**
+```json
+{
+  "operation": "register",
+  "name": "user123",
+  "psw": "password"
+}
+```
+**Response**
+```json
+{
+  "status": "ok",
+  "message": "User registered successfully."
+}
+```
+
+### Login
+**Request**
+```json
+{
+  "operation": "login",
+  "username": "user123",
+  "psw": "password",
+  "udpPort": 8081
+}
+```
+**Response**
+```json
+{
+  "status": "ok",
+  "message": "Login successful."
+}
+```
+
+### Logout
+**Request**
+```json
+{
+  "operation": "logout"
+}
+```
+**Response**
+```json
+{
+  "status": "ok",
+  "message": "Logout successful."
+}
+```
+
+### Update Credentials
+**Request**
+```json
+{
+  "operation": "updateCredentials",
+  "oldName": "user123",
+  "oldPsw": "password",
+  "newName": "newUser",
+  "newPsw": "newPassword"
+}
+```
+*Note: `newName` or `newPsw` can be null if not being changed.*
+
+**Response**
+```json
+{
+  "status": "ok",
+  "message": "Credentials updated successfully."
+}
+```
 
 ### Submit Proposal
 **Request**
@@ -17,7 +88,6 @@ All requests must contain an `"operation"` field.
 *Note: Words are sent as a list. Server validates that length is exactly 4.*
 
 **Response**
-Returns a `GuessResultDTO` in the `data` field:
 ```json
 {
   "status": "ok",
@@ -28,16 +98,16 @@ Returns a `GuessResultDTO` in the `data` field:
   }
 }
 ```
-*Note: pointsDelta can be negative for wrong guesses.*
+*Note: pointsDelta can be negative for wrong guesses (status: "wrong").*
 
-### Get Game Info
+### Get Puzzle Info (requestGameInfo)
 **Request**
 ```json
-{ "operation": "getGameInfo", "gameId": 123 }
+{ "operation": "requestGameInfo", "gameId": 123 }
 ```
-*Note: gameId can be null or -1 for the current game.*
+*Note: gameId can be null or -1 for the current puzzle.*
 
-**Response (Active Game)**
+**Response (Active Puzzle)**
 ```json
 {
   "status": "ok",
@@ -53,7 +123,7 @@ Returns a `GuessResultDTO` in the `data` field:
 }
 ```
 
-**Response (Concluded Game)**
+**Response (Concluded Puzzle)**
 ```json
 {
   "status": "ok",
@@ -68,13 +138,13 @@ Returns a `GuessResultDTO` in the `data` field:
 }
 ```
 
-### Get Game Stats
+### Get Puzzle Stats (requestGameStats)
 **Request**
 ```json
-{ "operation": "getGameStats", "gameId": 123 }
+{ "operation": "requestGameStats", "gameId": 123 }
 ```
 
-**Response (Active Game)**
+**Response (Active Puzzle)**
 ```json
 {
   "status": "ok",
@@ -89,7 +159,7 @@ Returns a `GuessResultDTO` in the `data` field:
 }
 ```
 
-**Response (Concluded Game)**
+**Response (Concluded Puzzle)**
 ```json
 {
   "status": "ok",
@@ -104,36 +174,67 @@ Returns a `GuessResultDTO` in the `data` field:
 }
 ```
 
-### Get Leaderboard
+### Get Player Career Stats (requestPlayerStats)
+**Request**
 ```json
-{ "operation": "getLeaderboard", "topPlayers": 10 }
+{ "operation": "requestPlayerStats" }
+```
+**Response**
+```json
+{
+  "status": "ok",
+  "data": {
+    "puzzlesCompleted": 10,
+    "winRate": 80.0,
+    "totalScore": 150,
+    "averageScore": 15.0
+  }
+}
+```
+
+### Get Leaderboard (requestLeaderboard)
+**Request**
+```json
+{ 
+  "operation": "requestLeaderboard", 
+  "playerName": "user123", 
+  "topPlayers": 10 
+}
+```
+*Note: `playerName` and `topPlayers` are optional.*
+
+**Response**
+```json
+{
+  "status": "ok",
+  "data": {
+    "entries": [
+      { "rank": 1, "username": "pro", "score": 500 },
+      { "rank": 2, "username": "user123", "score": 150 }
+    ]
+  }
+}
 ```
 
 ---
 
-## 2. TCP Responses (Server -> Client)
+## 2. Other Server Responses (error & forbidden)
 
-All responses follow a standard generic format:
-
+### Error Response
+Used when an operation fails due to invalid input, network issues, or internal errors.
 ```json
 {
-  "status": "ok",
-  "message": "Human readable message",
-  "data": { ... }
+  "status": "error",
+  "message": "Invalid password."
 }
 ```
 
-### Response: Leaderboard / Rank
-When requesting a rank for a specific player, the `data` field contains a single entry:
+### Forbidden Response
+Used when a user tries to perform an action without proper authorization (e.g., requesting stats for a puzzle before logging in).
 ```json
 {
-  "status": "ok",
-  "message": "Rank.",
-  "data": {
-    "rank": 5,
-    "username": "user123",
-    "score": 120
-  }
+  "status": "forbidden",
+  "message": "Authentication required."
 }
 ```
 
@@ -143,7 +244,7 @@ When requesting a rank for a specific player, the `data` field contains a single
 
 Sent asynchronously via UDP.
 
-### New Game Started
+### New Puzzle Started
 ```json
 {
   "type": "new_game",
@@ -152,8 +253,8 @@ Sent asynchronously via UDP.
 }
 ```
 
-### Game Ended (Global Summary)
-Broadcast to all clients when a game concluded.
+### Puzzle Ended (Global Summary)
+Broadcast to all clients when a puzzle concluded.
 ```json
 {
   "type": "game_end",
@@ -162,8 +263,8 @@ Broadcast to all clients when a game concluded.
 }
 ```
 
-### Personal Game Summary
-Sent privately to each participant when their game (or the global game) ends.
+### Personal Puzzle Summary
+Sent privately to each participant when their puzzle (or the global puzzle) ends.
 ```json
 {
   "type": "player_summary",
@@ -172,7 +273,6 @@ Sent privately to each participant when their game (or the global game) ends.
     "mistakes": 2,
     "score": 12,
     "finished": true,
-    "won": true,
     "foundGroups": [...],
     "remainingWords": []
   }
