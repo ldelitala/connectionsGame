@@ -55,6 +55,7 @@ public class ConsoleView implements ClientView {
         } else {
             System.out.println("Wrong! " + result.getPointsDelta() + " points.");
         }
+        System.out.println("Remaining words: " + String.join(", ", result.getRemainingWords()));
         System.out.println("New total score: " + result.getTotalPoints());
     }
 

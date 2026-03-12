@@ -133,7 +133,7 @@ public class PuzzleSessionManager {
             if (win) finalizePlayerPuzzle(username, true);
             
             PlayerResult snapshot = getPlayerSnapshot(username);
-            return GuessResultDTO.success((float) POINTS_PER_GROUP, snapshot.getPoints());
+            return GuessResultDTO.success((float) POINTS_PER_GROUP, snapshot.getPoints(), getRemainingWords(username));
         } else {
             int m = playerMistakes.getOrDefault(username, 0) + 1;
             playerMistakes.put(username, m);
@@ -141,8 +141,18 @@ public class PuzzleSessionManager {
             if (lose) finalizePlayerPuzzle(username, false);
             
             PlayerResult snapshot = getPlayerSnapshot(username);
-            return GuessResultDTO.wrong((float) -PENALTY_PER_MISTAKE, snapshot.getPoints());
+            return GuessResultDTO.wrong((float) -PENALTY_PER_MISTAKE, snapshot.getPoints(), getRemainingWords(username));
         }
+    }
+
+    private List<String> getRemainingWords(String username) {
+        List<Category> foundGroups = playerProgress.getOrDefault(username, Collections.emptyList());
+        List<String> foundWords = foundGroups.stream()
+                .flatMap(g -> g.getWords().stream())
+                .collect(Collectors.toList());
+        return currentPuzzle.getAllWords().stream()
+                .filter(w -> !foundWords.contains(w))
+                .collect(Collectors.toList());
     }
 
     private void finalizePlayerPuzzle(String username, boolean won) {
