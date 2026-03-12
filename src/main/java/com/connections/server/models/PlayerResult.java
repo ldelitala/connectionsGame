@@ -1,4 +1,4 @@
-package com.connections.server;
+package com.connections.server.models;
 
 /**
  * Represents the internal state of a player's performance in a puzzle. Internal to the server, NOT

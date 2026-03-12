@@ -3,7 +3,7 @@ package com.connections.server.logic;
 import com.connections.common.models.Category;
 import com.connections.common.notifications.*;
 import com.connections.common.protocol.server_responses.dto.*;
-import com.connections.server.PlayerResult;
+import com.connections.server.models.PlayerResult;
 import com.connections.server.network.UdpNotifier;
 import com.connections.server.models.Puzzle;
 import com.connections.server.models.User;

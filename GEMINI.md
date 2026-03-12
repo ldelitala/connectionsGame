@@ -19,7 +19,7 @@
     - `logic/`: Business logic coordinators (`UserCoordinator`, `PuzzleCoordinator`, `HistoryCoordinator`).
     - `persistence/`: Data Access Objects (`UsersDAO`, `PuzzlesDAO`, `HistoryDAO`).
     - `handler/`: Protocol bridge and worker pool management (`RequestDispatcher`).
-    - `models/`: Private domain entities (User, Puzzle).
+    - `models/`: Private domain entities (`User`, `Puzzle`, `PlayerResult`).
   - `client/`: CLI Client logic (TCP connection, UDP listener).
     - `engine/`: The core reactive hub (GameEngine, EngineState).
       - `modules/`: Specialized domain logic (User, Gameplay, History).

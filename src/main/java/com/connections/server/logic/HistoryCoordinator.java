@@ -2,7 +2,7 @@ package com.connections.server.logic;
 
 import com.connections.common.protocol.server_responses.dto.LeaderboardDTO;
 import com.connections.common.protocol.server_responses.dto.LeaderboardEntryDTO;
-import com.connections.server.PlayerResult;
+import com.connections.server.models.PlayerResult;
 import com.connections.server.models.User;
 import com.connections.server.persistence.HistoryDAO;
 import com.connections.server.persistence.UsersDAO;

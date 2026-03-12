@@ -1,6 +1,6 @@
 package com.connections.server.persistence;
 
-import com.connections.server.PlayerResult;
+import com.connections.server.models.PlayerResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
