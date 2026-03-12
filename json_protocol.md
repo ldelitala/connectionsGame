@@ -7,6 +7,7 @@ This document describes all JSON messages exchanged between the Client and the S
 All requests must contain an `"operation"` field.
 
 ### Submit Proposal
+**Request**
 ```json
 {
   "operation": "submitProposal",
@@ -14,6 +15,9 @@ All requests must contain an `"operation"` field.
 }
 ```
 *Note: Words are sent as a list. Server validates that length is exactly 4.*
+
+**Response**
+Returns an updated **Active Game** state (see "Get Game Info" response format below) in the `data` field. This allows the client to immediately render the updated board.
 
 ### Get Game Info
 **Request**
