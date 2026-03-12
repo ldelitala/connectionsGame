@@ -13,11 +13,6 @@ import java.util.List;
  */
 public class GameEngine implements InputProvider.InputListener {
 
-    private static final String SYSTEM_HELP = 
-        "\nSystem:\n" +
-        "  help              : Show this list\n" +
-        "  exit              : Close the application\n";
-
     private final NetworkGateway gateway;
     private final int udpPort;
     private final ClientView view;
@@ -115,8 +110,7 @@ public class GameEngine implements InputProvider.InputListener {
 
     @Override
     public void onHelp() {
-        currentState.printHelp();
-        view.showMessage(SYSTEM_HELP);
+        view.showHelp(currentState instanceof LoggedInState);
         postAction();
     }
 

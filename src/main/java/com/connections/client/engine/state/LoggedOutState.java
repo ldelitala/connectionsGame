@@ -39,12 +39,6 @@ public class LoggedOutState implements EngineState {
     @Override public void onRequestRanking(String u, Integer k) { engine.getView().showMessage("Please login first."); }
     @Override public void onRequestHistory() { engine.getView().showMessage("Please login first."); }
 
-    @Override
-    public void printHelp() {
-        engine.getView().showMessage("\n--- AVAILABLE COMMANDS (Logged Out) ---\n" +
-                                     "  register <uP> <psw>\n  login <uP> <psw>\n");
-    }
-
     @Override public String getPrompt() { return "> "; }
     @Override public void onExit() {}
 }

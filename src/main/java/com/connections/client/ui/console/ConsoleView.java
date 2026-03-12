@@ -75,6 +75,35 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
+    public synchronized void showHelp(boolean loggedIn) {
+        System.out.println("\n--- SYSTEM COMMANDS ---");
+        System.out.println("  help              : Show this list");
+        System.out.println("  exit              : Close the application");
+
+        if (loggedIn) {
+            System.out.println("\n--- GAMEPLAY COMMANDS ---");
+            System.out.println("  board             : Show current puzzle board");
+            System.out.println("  guess <w1 w2 w3 w4>: Submit a proposal");
+            System.out.println("  stats             : View global stats for current puzzle");
+
+            System.out.println("\n--- HISTORY & RANKING ---");
+            System.out.println("  history           : View your career statistics");
+            System.out.println("  ranking [user] [k]: View global ranking (optional: specific user or top K)");
+            System.out.println("  info <id>         : View past puzzle board by ID");
+            System.out.println("  global <id>       : View past puzzle global stats by ID");
+
+            System.out.println("\n--- ACCOUNT ---");
+            System.out.println("  update <old> <nU> <nP>: Update credentials (use '-' to skip username or password)");
+            System.out.println("  logout            : Sign out of the session");
+        } else {
+            System.out.println("\n--- AUTHENTICATION ---");
+            System.out.println("  register <uP> <psw>: Create a new account");
+            System.out.println("  login <uP> <psw>   : Sign in to your account");
+        }
+        System.out.println();
+    }
+
+    @Override
     public synchronized void onNewPuzzle(NewGameNotification n) {
         System.out.println("\n[NOTIFICATION] A new Puzzle has started! ID: " + n.getGameId());
         System.out.println("Words: " + String.join(", ", n.getWords()));

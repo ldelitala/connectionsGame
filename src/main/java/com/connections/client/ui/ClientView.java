@@ -14,6 +14,9 @@ public interface ClientView {
     void showGameStats(PuzzleStatsDTO stats);
     void showPlayerStats(PlayerStatsDTO stats);
     void showLeaderboard(LeaderboardDTO leaderboard);
+
+    /** Displays the help menu based on the current authentication state. */
+    void showHelp(boolean loggedIn);
     
     // Specific notification callbacks
     void onNewPuzzle(NewGameNotification notification);

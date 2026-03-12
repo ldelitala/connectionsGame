@@ -72,14 +72,6 @@ public class LoggedInState implements EngineState {
         engine.getHistoryModule().handleHistory();
     }
 
-    @Override
-    public void printHelp() {
-        engine.getView().showMessage("\n--- AVAILABLE COMMANDS (Logged In) ---\n" +
-                                     "Active Puzzle: guess, board, stats\n" +
-                                     "History: info, global, ranking, history\n" +
-                                     "Account: update, logout\n");
-    }
-
     @Override public String getPrompt() { return String.format("[%s] > ", username); }
     
     @Override 

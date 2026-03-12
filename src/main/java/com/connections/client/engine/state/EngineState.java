@@ -26,7 +26,6 @@ public interface EngineState {
     void onRequestHistory();
 
     // General
-    void printHelp();
     String getPrompt();
     void onExit();
 }
