@@ -12,13 +12,12 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 
 /**
- * Listens for asynchronous UDP notifications and dispatches them to the UI layer.
- * Leverages polymorphic DTOs for type-safe processing.
+ * Listens for asynchronous UDP notifications and dispatches them to the UI layer. Leverages
+ * polymorphic DTOs for type-safe processing.
  */
 public class NotificationService extends Thread implements AutoCloseable {
 
     private static final int BUFFER_SIZE = 4096;
-    private static final String FIELD_TYPE = "type";
 
     private final DatagramSocket socket;
     private final ClientView view;
@@ -35,6 +34,10 @@ public class NotificationService extends Thread implements AutoCloseable {
         return socket.getLocalPort();
     }
 
+    /**
+     * Main execution loop for the notification service. Continuously listens for incoming UDP
+     * packets, processes them, and triggers the appropriate UI callbacks.
+     */
     @Override
     public void run() {
         byte[] buffer = new byte[BUFFER_SIZE];
@@ -42,39 +45,42 @@ public class NotificationService extends Thread implements AutoCloseable {
             try {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
-                
+
                 String json = new String(packet.getData(), 0, packet.getLength());
                 processNotification(json);
-                
+
             } catch (IOException e) {
                 if (!socket.isClosed()) {
                     view.showError("Notification service error: " + e.getMessage());
                 }
                 break;
+            } catch (Exception e) {
+                view.showError("Unexpected error in notification service: " + e.getMessage());
             }
         }
     }
 
     /**
-     * Identifies the notification type and triggers the specific view callback.
-     * Uses the mandatory 'type' field from the Notification abstract class.
+     * Identifies the notification type and triggers the specific view callback. Uses the mandatory
+     * 'type' field from the Notification abstract class.
      */
     private void processNotification(String json) {
         try {
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-            if (!obj.has(FIELD_TYPE)) return;
+            if (!obj.has(Notification.FIELD_TYPE))
+                return;
 
-            String type = obj.get(FIELD_TYPE).getAsString();
+            String type = obj.get(Notification.FIELD_TYPE).getAsString();
 
             // Deserialization must target the specific subclass to populate all fields
             switch (type) {
-                case "new_game":
+                case NewGameNotification.TYPE_ID:
                     view.onNewPuzzle(gson.fromJson(json, NewGameNotification.class));
                     break;
-                case "game_end":
+                case GameEndNotification.TYPE_ID:
                     view.onPuzzleEnd(gson.fromJson(json, GameEndNotification.class));
                     break;
-                case "player_summary":
+                case PlayerGameSummaryNotification.TYPE_ID:
                     view.onPlayerSummary(gson.fromJson(json, PlayerGameSummaryNotification.class));
                     break;
                 default:

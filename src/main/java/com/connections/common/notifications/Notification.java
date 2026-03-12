@@ -5,6 +5,9 @@ package com.connections.common.notifications;
  * Ensures that every notification includes a mandatory 'type' field for protocol identification.
  */
 public abstract class Notification {
+
+    /** The JSON field name used for identification. */
+    public static final String FIELD_TYPE = "type";
     
     /** The identifier for the notification type. */
     public final String type;

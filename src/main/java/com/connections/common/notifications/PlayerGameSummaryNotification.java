@@ -6,10 +6,14 @@ import com.connections.common.dto.PuzzleStateDTO;
  * Notification sent privately to a specific player when their puzzle ends.
  */
 public class PlayerGameSummaryNotification extends Notification {
+
+    /** The unique identifier for this notification type. */
+    public static final String TYPE_ID = "player_summary";
+
     private final PuzzleStateDTO personalInfo;
 
     private PlayerGameSummaryNotification(PuzzleStateDTO personalInfo) {
-        super("player_summary");
+        super(TYPE_ID);
         this.personalInfo = personalInfo;
     }
 

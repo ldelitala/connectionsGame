@@ -6,11 +6,15 @@ import java.util.List;
  * DTO for UDP notifications sent when a new puzzle starts.
  */
 public class NewGameNotification extends Notification {
+
+    /** The unique identifier for this notification type. */
+    public static final String TYPE_ID = "new_game";
+
     private final int gameId;
     private final List<String> words;
 
     private NewGameNotification(int gameId, List<String> words) {
-        super("new_game");
+        super(TYPE_ID);
         this.gameId = gameId;
         this.words = words;
     }

@@ -12,30 +12,33 @@ import java.util.List;
  */
 public class ConsoleView implements ClientView {
 
+    // formatter:off
     private static final String HELP_SYSTEM =
             "\n--- SYSTEM COMMANDS ---\n" +
-            "  help              : Show this list\n" +
-            "  exit              : Logout and close the application\n";
+                    "  help              : Show this list\n" +
+                    "  exit              : Logout and close the application\n";
 
     private static final String HELP_AUTH =
             "\n--- AUTHENTICATION ---\n" +
-            "  register <uP> <psw>: Create a new account\n" +
-            "  login <uP> <psw>   : Sign in to your account\n";
+                    "  register <uP> <psw>: Create a new account\n" +
+                    "  login <uP> <psw>   : Sign in to your account\n";
 
     private static final String HELP_GAMEPLAY =
             "\n--- GAMEPLAY COMMANDS ---\n" +
-            "  board             : Show current puzzle board\n" +
-            "  guess <w1 w2 w3 w4>: Submit a proposal (exactly 4 words)\n" +
-            "  stats             : View global stats for current puzzle\n" +
-            "\n--- HISTORY & RANKING ---\n" +
-            "  history           : View your career statistics\n" +
-            "  ranking <username>: View a specific player's current rank\n" +
-            "  ranking -top [k]  : View the top K players (k is optional)\n" +
-            "  info <id>         : View past puzzle board by ID\n" +
-            "  global <id>       : View past puzzle global stats by ID\n" +
-            "\n--- ACCOUNT ---\n" +
-            "  update <old> <nU> <nP>: Update credentials (use '-' to skip username or password)\n" +
-            "  logout            : Sign out of the session\n";
+                    "  board             : Show current puzzle board\n" +
+                    "  guess <w1 w2 w3 w4>: Submit a proposal (exactly 4 words)\n" +
+                    "  stats             : View global stats for current puzzle\n" +
+                    "\n--- HISTORY & RANKING ---\n" +
+                    "  history           : View your career statistics\n" +
+                    "  ranking <username>: View a specific player's current rank\n" +
+                    "  ranking -top [k]  : View the top K players (k is optional)\n" +
+                    "  info <id>         : View past puzzle board by ID\n" +
+                    "  global <id>       : View past puzzle global stats by ID\n" +
+                    "\n--- ACCOUNT ---\n" +
+                    "  update <old> <nU> <nP>: Update credentials (use '-' to skip username or password)\n"
+                    +
+                    "  logout            : Sign out of the session\n";
+    // formatter:on
 
     private static final int MS_TO_S_RATIO = 1000;
     private static final int MAX_MISTAKES = 4;
