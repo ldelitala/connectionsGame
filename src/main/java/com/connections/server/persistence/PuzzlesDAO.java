@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 /**
  * High-performance DAO for Puzzles.
  * Uses byte-offset indexing and on-demand reading to minimize RAM usage.
- * Implementation follows the optimized GamesDAO pattern.
  */
 public class PuzzlesDAO {
     private final String filePath;
@@ -37,34 +36,26 @@ public class PuzzlesDAO {
     private void buildIndex() throws IOException {
         System.out.println("Building puzzle index from " + filePath + "...");
 
-        // PushbackInputStream allows us to "peek" at bytes using unread()
         try (PushbackInputStream pis = new PushbackInputStream(new BufferedInputStream(new FileInputStream(filePath)), 1)) {
             long currentOffset = 0;
             int b;
 
             while ((b = pis.read()) != -1) {
                 if (b == '{') {
-                    // --- PEEK EXAMPLE ---
-                    // We can see the next byte without moving the pointer
-                    int nextByte = pis.read();
-                    if (nextByte != -1) {
-                        pis.unread(nextByte); // Put it back immediately
-                    }
-                    // --------------------
+                    pis.unread(b); // Put it back immediately
 
                     long startOffset = currentOffset;
 
-                    // Extract the rest of the object to calculate its length and get the ID
-                    String restOfJson = extractRestOfObject(pis);
-                    String fullJson = "{" + restOfJson;
-
-                    currentOffset += 1 + restOfJson.length();
-
-                    Integer puzzleId = extractPuzzleId(fullJson);
+                    String jsonPuzzle = extractObject(pis);
+                    
+                    Integer puzzleId = extractPuzzleId(jsonPuzzle);
                     if (puzzleId != null) {
                         index.put(puzzleId, startOffset);
                         puzzleIds.add(puzzleId);
                     }
+
+                    currentOffset += jsonPuzzle.getBytes().length;
+                
                 } else {
                     currentOffset++;
                 }
@@ -76,21 +67,25 @@ public class PuzzlesDAO {
     /**
      * Reads until the braces are balanced to extract a full JSON object.
      */
-    private String extractRestOfObject(InputStream is) throws IOException {
+    private String extractObject(InputStream is) throws IOException {
         StringBuilder sb = new StringBuilder();
-        int balance = 1;
+        int balance = 0;
         int b;
 
-        while (balance > 0 && (b = is.read()) != -1) {
+        while ((b = is.read()) != -1) {
             char c = (char) b;
             sb.append(c);
 
-            if (c == '{') {
+            if (c == '{')
                 balance++;
-            } else if (c == '}') {
+            
+            else if (c == '}')
                 balance--;
-            }
+            
+            if (balance == 0)
+                break;
         }
+
         return sb.toString();
     }
 
@@ -125,13 +120,12 @@ public class PuzzlesDAO {
         if (offset == null) return null;
 
         try (FileInputStream fis = new FileInputStream(filePath)) {
-            // Jump directly to the offset
+
             fis.getChannel().position(offset);
 
-            if (fis.read() == '{') {
-                String restOfJson = extractRestOfObject(fis);
-                return gson.fromJson("{" + restOfJson, Puzzle.class);
-            }
+            String puzzleJson = extractObject(fis);
+            return gson.fromJson(puzzleJson, Puzzle.class);
+            
         } catch (IOException e) {
             System.err.println("Error reading puzzle " + puzzleId + " from disk: " + e.getMessage());
         }
