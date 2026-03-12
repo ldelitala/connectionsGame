@@ -53,9 +53,15 @@ public class ConsoleInputProvider implements InputProvider {
 
                 processLine(line, listener);
             }
-        } catch (Exception e) {
+        } catch (IllegalStateException e) {
+            // Scanner was closed. If running is still true, it was unexpected.
             if (running) {
-                // Unexpected stream termination while the app was supposed to be running
+                listener.onExit();
+            }
+        } catch (Exception e) {
+            // Other critical failures (e.g. NoSuchElementException or I/O errors)
+            if (running) {
+                System.err.println("Input stream error: " + e.getMessage());
                 listener.onExit();
             }
         }
