@@ -36,13 +36,27 @@ public class ConsoleInputProvider implements InputProvider {
     private static final String CMD_HELP = "help";
     private static final String CMD_EXIT = "exit";
 
+    // END OF COMMAND DEFINITIONS
+
+    // Scanner for reading console input. We keep it open for the lifetime of the provider.
     private final Scanner scanner;
+
+    // Running flag to control the input loop. Marked volatile for thread safety in case of
+    // concurrent stop/close calls.
     private volatile boolean running = true;
 
+    /**
+     * Constructs a new ConsoleInputProvider.
+     */
     public ConsoleInputProvider() {
         this.scanner = new Scanner(System.in);
     }
 
+    /**
+     * Starts listening for console input.
+     *
+     * @param listener The listener to notify of input events.
+     */
     @Override
     public void startListening(InputListener listener) {
         try {
@@ -53,13 +67,13 @@ public class ConsoleInputProvider implements InputProvider {
 
                 processLine(line, listener);
             }
-        } catch (IllegalStateException e) {
-            // Scanner was closed. If running is still true, it was unexpected.
+        }
+
+        catch (IllegalStateException e) {
             if (running) {
-                listener.onError("Input scanner was closed unexpectedly.");
+                listener.onError("Input scanner was closed unexpectedly." + e.getMessage());
             }
         } catch (Exception e) {
-            // Other critical failures (e.g. NoSuchElementException or I/O errors)
             if (running) {
                 listener.onError("Fatal input error: " + e.getMessage());
             }
@@ -75,12 +89,12 @@ public class ConsoleInputProvider implements InputProvider {
 
                 // authentication
                 case CMD_REGISTER:
-                    if (tokens.length < 3)
+                    if (tokens.length != 3)
                         throw new IllegalArgumentException("Usage: register <user> <psw>");
                     listener.onRegister(tokens[1], tokens[2]);
                     break;
                 case CMD_LOGIN:
-                    if (tokens.length < 3)
+                    if (tokens.length != 3)
                         throw new IllegalArgumentException("Usage: login <user> <psw>");
                     listener.onLogin(tokens[1], tokens[2]);
                     break;
@@ -88,14 +102,14 @@ public class ConsoleInputProvider implements InputProvider {
                     listener.onLogout();
                     break;
                 case CMD_UPDATE:
-                    if (tokens.length < 4)
+                    if (tokens.length != 4)
                         throw new IllegalArgumentException("Usage: update <oldP> <newU> <newP>");
                     listener.onUpdateCredentials(tokens[1], tokens[2], tokens[3]);
                     break;
 
                 // gameplay
                 case CMD_GUESS:
-                    if (tokens.length < 2)
+                    if (tokens.length != 5)
                         throw new IllegalArgumentException("Usage: guess <w1> <w2> <w3> <w4>");
                     listener.onGuess(Arrays.asList(Arrays.copyOfRange(tokens, 1, tokens.length)));
                     break;
@@ -108,12 +122,12 @@ public class ConsoleInputProvider implements InputProvider {
 
                 // history & rankings
                 case CMD_INFO:
-                    if (tokens.length < 2)
+                    if (tokens.length != 2)
                         throw new IllegalArgumentException("Usage: info <puzzleId>");
                     listener.onRequestPastInfo(Integer.parseInt(tokens[1]));
                     break;
                 case CMD_GLOBAL:
-                    if (tokens.length < 2)
+                    if (tokens.length != 2)
                         throw new IllegalArgumentException("Usage: global <puzzleId>");
                     listener.onRequestGlobalStats(Integer.parseInt(tokens[1]));
                     break;
@@ -143,7 +157,7 @@ public class ConsoleInputProvider implements InputProvider {
     }
 
     private void handleRanking(String[] tokens, InputListener listener) {
-        if (tokens.length < 2) {
+        if (tokens.length != 2 && tokens.length != 3) {
             throw new IllegalArgumentException("Usage: ranking <user> OR ranking -top [k]");
         }
         if (tokens[1].equalsIgnoreCase("-top")) {
