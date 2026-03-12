@@ -1,4 +1,4 @@
-package com.connections.server;
+package com.connections.server.persistence;
 
 import com.connections.server.models.Puzzle;
 import com.google.gson.Gson;

@@ -1,6 +1,7 @@
 package com.connections.server;
 
 import com.connections.server.models.Puzzle;
+import com.connections.server.persistence.PuzzlesDAO;
 import com.connections.common.models.Category;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

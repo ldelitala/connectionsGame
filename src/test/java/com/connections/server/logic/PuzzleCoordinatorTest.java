@@ -1,31 +1,35 @@
-package com.connections.server;
+package com.connections.server.logic;
 
+import com.connections.common.models.Category;
+import com.connections.common.protocol.server_responses.dto.GuessResultDTO;
+import com.connections.common.protocol.server_responses.dto.PuzzleStateDTO;
+import com.connections.server.UdpNotifier;
 import com.connections.server.models.Puzzle;
 import com.connections.server.models.User;
-import com.connections.common.models.Category;
-import com.connections.common.protocol.server_responses.dto.PuzzleStateDTO;
-import com.connections.common.protocol.server_responses.dto.GuessResultDTO;
+import com.connections.server.persistence.PuzzlesDAO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class PuzzleSessionManagerTest {
+public class PuzzleCoordinatorTest {
 
     private PuzzlesDAO puzzlesDAO;
-    private UserManager userManager;
+    private HistoryCoordinator historyCoordinator;
+    private UserCoordinator userCoordinator;
     private UdpNotifier udpNotifier;
-    private PuzzleSessionManager sessionManager;
+    private PuzzleCoordinator coordinator;
 
     @BeforeEach
     public void setup() throws IOException {
         puzzlesDAO = mock(PuzzlesDAO.class);
-        userManager = mock(UserManager.class);
+        historyCoordinator = mock(HistoryCoordinator.class);
+        userCoordinator = mock(UserCoordinator.class);
         udpNotifier = mock(UdpNotifier.class);
 
         // Mock a single puzzle
@@ -35,52 +39,50 @@ public class PuzzleSessionManagerTest {
         Category group4 = new Category("Foods", Arrays.asList("PIZZA", "PASTA", "BURGER", "SUSHI"));
         Puzzle puzzle = new Puzzle(1, Arrays.asList(group1, group2, group3, group4));
 
-        when(puzzlesDAO.getNumPuzzles()).thenReturn(1);
         when(puzzlesDAO.getNextPuzzle()).thenReturn(puzzle);
         when(puzzlesDAO.getPuzzle(anyInt())).thenReturn(puzzle);
 
-        sessionManager = new PuzzleSessionManager(puzzlesDAO, userManager, udpNotifier, 300000);
+        coordinator = new PuzzleCoordinator(puzzlesDAO, historyCoordinator, userCoordinator, udpNotifier, 300000);
     }
 
     @Test
     public void testCorrectProposal() {
         User user = new User("test", "pass");
-        when(userManager.getUser("test")).thenReturn(user);
+        when(userCoordinator.getUser("test")).thenReturn(user);
 
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "BIRD");
-        GuessResultDTO result = sessionManager.submitProposal("test", words);
+        GuessResultDTO result = coordinator.handleProposal("test", words);
 
         assertNotNull(result);
         assertEquals("success", result.getStatus());
         assertEquals(6.0f, result.getPointsDelta());
-        assertEquals(1, sessionManager.getPlayerProgress("test").size());
-        assertEquals(0, sessionManager.getPlayerMistakes("test"));
+        // Remaining words should be 12 (16 - 4)
+        assertEquals(12, result.getRemainingWords().size());
     }
 
     @Test
     public void testWrongProposal() {
         User user = new User("test", "pass");
-        when(userManager.getUser("test")).thenReturn(user);
+        when(userCoordinator.getUser("test")).thenReturn(user);
 
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "RED"); // Mixed
-        GuessResultDTO result = sessionManager.submitProposal("test", words);
+        GuessResultDTO result = coordinator.handleProposal("test", words);
 
         assertNotNull(result);
         assertEquals("wrong", result.getStatus());
         assertEquals(-4.0f, result.getPointsDelta());
-        assertEquals(0, sessionManager.getPlayerProgress("test").size());
-        assertEquals(1, sessionManager.getPlayerMistakes("test"));
+        assertEquals(16, result.getRemainingWords().size());
     }
 
     @Test
     public void testWinningGame() {
         User user = mock(User.class);
-        when(userManager.getUser("test")).thenReturn(user);
+        when(userCoordinator.getUser("test")).thenReturn(user);
 
-        sessionManager.submitProposal("test", Arrays.asList("CAT", "DOG", "FISH", "BIRD"));
-        sessionManager.submitProposal("test", Arrays.asList("RED", "GREEN", "BLUE", "YELLOW"));
+        coordinator.handleProposal("test", Arrays.asList("CAT", "DOG", "FISH", "BIRD"));
+        coordinator.handleProposal("test", Arrays.asList("RED", "GREEN", "BLUE", "YELLOW"));
         
-        GuessResultDTO result = sessionManager.submitProposal("test", Arrays.asList("LONDON", "PARIS", "ROME", "BERLIN"));
+        GuessResultDTO result = coordinator.handleProposal("test", Arrays.asList("LONDON", "PARIS", "ROME", "BERLIN"));
 
         assertNotNull(result);
         assertEquals("success", result.getStatus());
@@ -90,14 +92,14 @@ public class PuzzleSessionManagerTest {
     }
 
     @Test
-    public void testGetPersonalPuzzleStatusWithRemainingWords() {
+    public void testGetPersonalStatusWithRemainingWords() {
         User user = new User("test", "pass");
-        when(userManager.getUser("test")).thenReturn(user);
+        when(userCoordinator.getUser("test")).thenReturn(user);
 
         List<String> words = Arrays.asList("CAT", "DOG", "FISH", "BIRD");
-        sessionManager.submitProposal("test", words);
+        coordinator.handleProposal("test", words);
 
-        PuzzleStateDTO status = sessionManager.getPersonalPuzzleStatus("test", 1);
+        PuzzleStateDTO status = coordinator.getPersonalStatus("test", 1);
         
         assertNotNull(status);
         assertFalse(status.isFinished());

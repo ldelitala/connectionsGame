@@ -80,6 +80,11 @@ public class User {
         return (double) wins / puzzlesCompleted * 100.0;
     }
 
+    public double getAverageScore() {
+        if (puzzlesCompleted == 0) return 0.0;
+        return (double) totalScore / puzzlesCompleted;
+    }
+
     public double getLossRate() {
         if (puzzlesCompleted == 0) return 0.0;
         return (double) losses / puzzlesCompleted * 100.0;

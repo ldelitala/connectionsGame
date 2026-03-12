@@ -1,4 +1,4 @@
-package com.connections.server;
+package com.connections.server.persistence;
 
 import com.connections.server.models.User;
 import com.google.gson.Gson;
@@ -12,19 +12,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * Handles user persistence and account operations.
+ * Data Access Object for User accounts.
+ * Manages thread-safe in-memory cache and persistent JSON storage.
  */
-public class UserManager {
+public class UsersDAO {
     private final Map<String, User> users = new ConcurrentHashMap<>();
     private final String filePath;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    public UserManager(String filePath) {
+    public UsersDAO(String filePath) {
         this.filePath = filePath;
         loadUserData();
     }
 
-    public synchronized void loadUserData() {
+    private synchronized void loadUserData() {
         File file = new File(filePath);
         if (!file.exists()) {
             System.out.println("No user data found, starting with empty registry.");
@@ -79,11 +80,8 @@ public class UserManager {
         return users.get(username);
     }
 
-    public List<User> getTopK(int k) {
-        return users.values().stream()
-                .sorted(Comparator.comparingInt(User::getTotalScore).reversed())
-                .limit(k)
-                .collect(Collectors.toList());
+    public List<User> getAllUsers() {
+        return new ArrayList<>(users.values());
     }
 
     public boolean updateCredentials(String oldName, String oldPsw, String newName, String newPsw) {

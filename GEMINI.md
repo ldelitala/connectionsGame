@@ -14,7 +14,11 @@
 
 ## Project Structure
 - `src/main/java/com/connections/`
-  - `server/`: Server logic (NIO, Thread Pool).
+  - `server/`: Decoupled Server logic.
+    - `core/`: High-performance NIO engine (`NioServer`, `ClientSession`).
+    - `logic/`: Business logic coordinators (`UserCoordinator`, `PuzzleCoordinator`, `HistoryCoordinator`).
+    - `persistence/`: Data Access Objects (`UsersDAO`, `PuzzlesDAO`, `HistoryDAO`).
+    - `handler/`: Protocol bridge and worker pool management (`RequestDispatcher`).
     - `models/`: Private domain entities (User, Puzzle).
   - `client/`: CLI Client logic (TCP connection, UDP listener).
     - `engine/`: The core reactive hub (GameEngine, EngineState).
@@ -40,43 +44,35 @@
 - [x] Implement Puzzle logic (Session management).
 - [x] Implement UDP notifications (New puzzle, Puzzle end summaries).
 - [x] Implement CLI Client with input/output handlers.
-- [x] Testing and validation (Comprehensive suite: 17/17 passed).
+- [x] Testing and validation (Comprehensive suite: 16/16 passed).
 - [x] Optimization: High-performance Puzzle indexing (Offsets + Buffered I/O).
 - [x] Refactoring Modulare: Separazione delle logiche Client (User, Gameplay, History) in moduli indipendenti.
 - [x] Allineamento Specifiche (Allegato 1): Correzione dei nomi dei campi JSON (`name` vs `username`, `psw`) e ripristino dei nomi operazione originali (`requestGameInfo`, `requestLeaderboard`, etc.) per garantire la piena conformità.
 - [x] **Semantic Terminology Refactoring**: Renamed all occurrences of "game" to "puzzle" when referring to a specific round/puzzle session, maintaining "game" only for the entire application.
 - [x] **Protocol Compatibility**: Ensured that while Java names use "puzzle", JSON fields still use "gameId" via `@SerializedName` for strict compatibility with existing specifications.
 - [x] **Batch Refactoring (DTOs)**: Moved DTO classes to `common.protocol.server_responses.dto` for better architectural grouping.
+- [x] **Server Core Rewrite (NIO 2.0)**: Completely refactored the server into a decoupled, thread-safe architecture with a dedicated Worker Pool and logic Coordinators.
 
 ## Latest Session Improvements (March 12, 2026)
+- **Decoupled Server Architecture**:
+    - **Persistence Layer**: Optimized `HistoryDAO` using file offsets to minimize RAM usage for historical data.
+    - **Logic Layer**: Introduced `UserCoordinator`, `PuzzleCoordinator`, and `HistoryCoordinator` to isolate business logic from network handling.
+    - **NIO Core**: Implemented a robust `NioServer` with a `Selector` loop that offloads JSON processing to a fixed thread pool via `RequestDispatcher`.
+    - **Session Management**: Introduced `ClientSession` to manage per-client I/O buffers and state thread-safely.
+- **Terminology Alignment**: Finalized "game" (app) vs "puzzle" (round) terminology across all layers.
 - **DTO Batch Refactoring**:
     - Moved all DTO files from `com.connections.common.dto` to `com.connections.common.protocol.server_responses.dto`.
     - Updated package declarations and project-wide imports.
-    - Verified architectural consistency in `ServerResponse`, `GameEngine` modules, and `ClientView`.
-- **Engine-Module Architecture**:
-    - Renamed `com.connections.client.controller` -> `com.connections.client.engine`.
-    - Renamed `com.connections.client.controller.adapters` -> `com.connections.client.engine.modules`.
-    - Refactored `UserAdapter`, `GameplayAdapter`, and `HistoryAdapter` into `UserModule`, `GameplayModule`, and `HistoryModule`.
-- **Architectural Clarity**: The naming now correctly identifies the `GameEngine` as the central reactive hub and the `Modules` as domain-specific logic providers rather than generic adapters.
-- **Verification**: Full project recompilation and test suite execution (17/17 passed) confirmed zero regressions after the move.
+- **Robust Client UI**: Refined help strings, improved input error delegation, and decoupled help logic from engine states.
 
 ## Recent Improvements
 - **Clean Architecture**: Moved sensitive entities (`User`, `Game`) to server-private packages.
 - **Protocol Type Safety**: Implemented `Response<T extends DTO>` to ensure only DTOs are sent over TCP.
-- **Strict Spec Compliance (Allegato 1)**: Refactored `UserRequest`, `HistoryRequest` and `Operation` to match the exact JSON structure required by the project documentation, including:
-    - Support for optional `playerName` and `topPlayers` in leaderboard requests.
-    - Differentiation between `name` (registration) and `username` (login).
-    - Use of exact operation strings required by the evaluation criteria.
-- **Flexible Rules**: Refactored `WordGroup` and `GameRequest` to be agnostic of specific word counts, moving validation logic to the server.
-- **Advanced Notifications**: Added `GameEndNotification` (global) and `PlayerGameSummaryNotification` (individual) via UDP.
-- **Planned Modular Client**: Introduction of `ClientController` and three specialized modules:
-    - `UserModule`: Authentication and account management.
-    - `GameModule`: Active game interactions (proposals, current info/stats).
-    - `HistoryModule`: Historical data, leaderboard, and global stats.
-- **Contextual DTOs**: Refactoring `GameInfoDTO` and `GameStatsDTO` to distinguish explicitly between "Active" and "Concluded" game data as per project requirements.
+- **Strict Spec Compliance (Allegato 1)**: Refactored `UserRequest`, `HistoryRequest` and `Operation` to match the exact JSON structure required by the project documentation.
+- **Advanced Notifications**: Added `PuzzleEndNotification` (global) and `PlayerPuzzleSummaryNotification` (individual) via UDP.
 
 ## Communication Protocol (JSON)
 - Requests: `{ "operation": "register", "name": "user", "psw": "pass" }`
 - Responses: `{ "status": "ok", "message": "registered successfully", "data": { ... } }`
 - Notifications: `{ "type": "new_game", ... }`
-- **Behavioral Note**: Sending a `submitProposal` request results in a response containing a `GuessResultDTO` in the `data` field, informing the player about the outcome (points earned/lost and new total score).
+- **Behavioral Note**: Sending a `submitProposal` request results in a response containing a `GuessResultDTO` in the `data` field, informing the player about the outcome.
