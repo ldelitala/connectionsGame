@@ -1,4 +1,4 @@
-package com.connections.client.controller.adapters;
+package com.connections.client.engine.modules;
 
 import com.connections.client.network.NetworkGateway;
 import com.connections.client.ui.ClientView;
@@ -15,13 +15,13 @@ import java.util.List;
  * Coordinator for active puzzle gameplay actions.
  * Maintains a persistent network connection to dispatch responses directly to view methods.
  */
-public class GameplayAdapter {
+public class GameplayModule {
 
     private final ClientView view;
     private final NetworkGateway gateway;
     private final Gson gson = new Gson();
 
-    public GameplayAdapter(ClientView view, NetworkGateway gateway) {
+    public GameplayModule(ClientView view, NetworkGateway gateway) {
         this.view = view;
         this.gateway = gateway;
     }

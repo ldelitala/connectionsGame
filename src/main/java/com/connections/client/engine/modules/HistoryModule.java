@@ -1,4 +1,4 @@
-package com.connections.client.controller.adapters;
+package com.connections.client.engine.modules;
 
 import com.connections.client.network.NetworkGateway;
 import com.connections.client.ui.ClientView;
@@ -14,13 +14,13 @@ import java.lang.reflect.Type;
  * Coordinator for history-related operations (archives, stats, leaderboards).
  * Uses a persistent network gateway to dispatch responses directly to view methods.
  */
-public class HistoryAdapter {
+public class HistoryModule {
 
     private final ClientView view;
     private final NetworkGateway gateway;
     private final Gson gson = new Gson();
 
-    public HistoryAdapter(ClientView view, NetworkGateway gateway) {
+    public HistoryModule(ClientView view, NetworkGateway gateway) {
         this.view = view;
         this.gateway = gateway;
     }

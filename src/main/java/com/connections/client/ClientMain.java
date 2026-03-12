@@ -2,7 +2,7 @@ package com.connections.client;
 
 import com.connections.client.network.NotificationService;
 import com.connections.client.network.NetworkGateway;
-import com.connections.client.controller.GameEngine;
+import com.connections.client.engine.GameEngine;
 import com.connections.client.ui.*;
 import com.connections.client.ui.console.*;
 import java.io.IOException;

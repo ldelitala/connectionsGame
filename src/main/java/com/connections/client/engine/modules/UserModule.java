@@ -1,4 +1,4 @@
-package com.connections.client.controller.adapters;
+package com.connections.client.engine.modules;
 
 import com.connections.client.network.NetworkGateway;
 import com.connections.client.ui.ClientView;
@@ -14,13 +14,13 @@ import java.lang.reflect.Type;
  * Coordinator for account-related operations.
  * Uses a persistent NetworkGateway to handle identity actions.
  */
-public class UserAdapter {
+public class UserModule {
 
     private final ClientView view;
     private final NetworkGateway gateway;
     private final Gson gson = new Gson();
 
-    public UserAdapter(ClientView view, NetworkGateway gateway) {
+    public UserModule(ClientView view, NetworkGateway gateway) {
         this.view = view;
         this.gateway = gateway;
     }

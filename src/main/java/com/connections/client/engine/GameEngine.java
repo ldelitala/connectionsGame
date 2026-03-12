@@ -1,8 +1,8 @@
-package com.connections.client.controller;
+package com.connections.client.engine;
 
 import com.connections.client.network.NetworkGateway;
-import com.connections.client.controller.adapters.*;
-import com.connections.client.controller.state.*;
+import com.connections.client.engine.modules.*;
+import com.connections.client.engine.state.*;
 import com.connections.client.ui.ClientView;
 import com.connections.client.ui.InputProvider;
 import java.util.List;
@@ -23,9 +23,9 @@ public class GameEngine implements InputProvider.InputListener {
     private final ClientView view;
     private final InputProvider inputProvider;
     
-    private final UserAdapter userAdapter;
-    private final GameplayAdapter gameplayAdapter;
-    private final HistoryAdapter historyAdapter;
+    private final UserModule userModule;
+    private final GameplayModule gameplayModule;
+    private final HistoryModule historyModule;
 
     private EngineState currentState;
 
@@ -34,9 +34,9 @@ public class GameEngine implements InputProvider.InputListener {
         this.udpPort = udpPort;
         this.view = view;
         this.inputProvider = inputProvider;
-        this.userAdapter = new UserAdapter(view, gateway);
-        this.gameplayAdapter = new GameplayAdapter(view, gateway);
-        this.historyAdapter = new HistoryAdapter(view, gateway);
+        this.userModule = new UserModule(view, gateway);
+        this.gameplayModule = new GameplayModule(view, gateway);
+        this.historyModule = new HistoryModule(view, gateway);
         this.currentState = new LoggedOutState(this);
     }
 
@@ -135,11 +135,11 @@ public class GameEngine implements InputProvider.InputListener {
         this.currentState = newState;
     }
 
-    // --- Getters for Adapters and Infrastructure ---
+    // --- Getters for Modules and Infrastructure ---
     public NetworkGateway getGateway() { return gateway; }
     public int getUdpPort() { return udpPort; }
     public ClientView getView() { return view; }
-    public UserAdapter getUserAdapter() { return userAdapter; }
-    public GameplayAdapter getGameplayAdapter() { return gameplayAdapter; }
-    public HistoryAdapter getHistoryAdapter() { return historyAdapter; }
+    public UserModule getUserModule() { return userModule; }
+    public GameplayModule getGameplayModule() { return gameplayModule; }
+    public HistoryModule getHistoryModule() { return historyModule; }
 }

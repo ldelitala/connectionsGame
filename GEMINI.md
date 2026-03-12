@@ -17,6 +17,11 @@
   - `server/`: Server logic (NIO, Thread Pool).
     - `models/`: Private domain entities (User, Game).
   - `client/`: CLI Client logic (TCP connection, UDP listener).
+    - `engine/`: The core reactive hub (GameEngine, EngineState).
+      - `modules/`: Specialized domain logic (User, Gameplay, History).
+      - `state/`: Concrete engine states (LoggedOut, LoggedIn).
+    - `ui/`: User Interface layer (InputProvider, ClientView).
+    - `network/`: Network communication (TCP Gateway, UDP Service).
   - `common/`: Shared resources.
     - `models/`: Shared data structures (WordGroup).
     - `dto/`: Data Transfer Objects used in both TCP and UDP.
@@ -44,21 +49,15 @@
 - [x] **Network Infrastructure**: Isolated TCP/UDP communication into a specialized `network` layer (`NetworkGateway`, `NotificationService`).
 - [x] **Action-Based Protocol**: Replaced raw string parsing in states with explicit action methods (`onGuess`, `onLogin`, etc.), isolating CLI parsing in the UI layer.
 - [x] **Dependency Injection**: Services now receive the `ClientView` at construction, simplifying method signatures and improving encapsulation.
+- [x] **Semantic Refactoring**: Renamed `controller` package to `engine` and `adapters` to `modules` to better reflect their architectural intent.
 
-## Latest Session Improvements (March 11, 2026)
-- **MVC 2.0 (Action-Based)**: 
-    - The `GameEngine` now acts as an **Action Listener**, receiving high-level events from the UI.
-    - `ConsoleInputProvider` now handles all CLI-specific parsing, making the Engine completely UI-agnostic (ready for GUI).
-- **Service Layer Refinement**:
-    - Refactored `IdentityService`, `GameplayService`, and `ArchiveService` to accept typed parameters (List, int, String) instead of raw CLI tokens.
-    - Implemented **Dependency Injection** for the `ClientView` across all services.
-- **Polymorphic Notifications**: 
-    - The `NotificationService` now performs polymorphic deserialization of UDP JSON packets.
-    - Dispatches directly to specialized methods in `ClientView` (`onNewPuzzle`, `onPuzzleEnd`), removing redundant type checks.
-- **Robustness & Docs**:
-    - Increased UDP buffer to **4KB** to prevent truncation of large notifications.
-    - Added comprehensive **professional Javadoc** to the entire client codebase.
-    - Standardized naming: **Puzzle**, **Category**, **Guess**, **Board**.
+## Latest Session Improvements (March 12, 2026)
+- **Engine-Module Architecture**:
+    - Renamed `com.connections.client.controller` -> `com.connections.client.engine`.
+    - Renamed `com.connections.client.controller.adapters` -> `com.connections.client.engine.modules`.
+    - Refactored `UserAdapter`, `GameplayAdapter`, and `HistoryAdapter` into `UserModule`, `GameplayModule`, and `HistoryModule`.
+- **Architectural Clarity**: The naming now correctly identifies the `GameEngine` as the central reactive hub and the `Modules` as domain-specific logic providers rather than generic adapters.
+- **Verification**: Full project recompilation and test suite execution (17/17 passed) confirmed zero regressions after the move.
 
 ## Recent Improvements
 - **Clean Architecture**: Moved sensitive entities (`User`, `Game`) to server-private packages.

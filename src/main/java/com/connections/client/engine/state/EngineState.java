@@ -1,4 +1,4 @@
-package com.connections.client.controller.state;
+package com.connections.client.engine.state;
 
 import java.util.List;
 
