@@ -56,13 +56,12 @@ public class ConsoleInputProvider implements InputProvider {
         } catch (IllegalStateException e) {
             // Scanner was closed. If running is still true, it was unexpected.
             if (running) {
-                listener.onExit();
+                listener.onError("Input scanner was closed unexpectedly.");
             }
         } catch (Exception e) {
             // Other critical failures (e.g. NoSuchElementException or I/O errors)
             if (running) {
-                System.err.println("Input stream error: " + e.getMessage());
-                listener.onExit();
+                listener.onError("Fatal input error: " + e.getMessage());
             }
         }
     }
@@ -134,12 +133,12 @@ public class ConsoleInputProvider implements InputProvider {
                     break;
 
                 default:
-                    System.out.println("Unknown command. Type 'help' for assistance.");
+                    listener.onError("Unknown command. Type 'help' for assistance.");
             }
         } catch (IllegalArgumentException e) {
-            System.err.println("Input error: " + e.getMessage());
+            listener.onError("Invalid usage: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Error processing input: " + e.getMessage());
+            listener.onError("Error processing input: " + e.getMessage());
         }
     }
 

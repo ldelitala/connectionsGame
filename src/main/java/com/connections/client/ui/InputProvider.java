@@ -39,6 +39,7 @@ public interface InputProvider extends AutoCloseable {
 
         // System
         void onHelp();
+        void onError(String message);
         void onExit();
     }
 }

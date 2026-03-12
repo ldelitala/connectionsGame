@@ -115,6 +115,14 @@ public class GameEngine implements InputProvider.InputListener {
     }
 
     @Override
+    public void onError(String message) {
+        view.showError(message);
+        if (message.contains("Input scanner") || message.contains("Fatal input error")) {
+            onExit();
+        }
+    }
+
+    @Override
     public void onExit() {
         view.showMessage("Exiting Engine...");
         currentState.onExit();
