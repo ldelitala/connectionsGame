@@ -7,6 +7,7 @@ import com.connections.server.network.UdpNotifier;
 import com.connections.server.persistence.*;
 
 import java.io.IOException;
+import java.net.SocketException;
 
 /**
  * Modern Entry point for the Connections Server. Initializes the decoupled architecture:
@@ -46,8 +47,16 @@ public class ServerMain {
 
             server.start();
 
+        } catch (SocketException e) {
+            System.err.println("Network interface error (UDP/TCP): " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
         } catch (IOException e) {
             System.err.println("Critical server error: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
+        } catch (Exception e) {
+            System.err.println("Unexpected server error: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
         }

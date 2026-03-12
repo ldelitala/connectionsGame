@@ -15,6 +15,15 @@ public class ServerConfig {
 
     private static final String DEFAULT_CONFIG_PATH = "config/server.properties";
 
+    // Default Values
+    private static final String DEFAULT_TCP_PORT = "8080";
+    private static final String DEFAULT_UDP_PORT = "8081";
+    private static final String DEFAULT_THREAD_POOL_SIZE = "10";
+    private static final String DEFAULT_PUZZLE_DATA_PATH = "Connections_Data.json";
+    private static final String DEFAULT_USER_DATA_PATH = "data/users.json";
+    private static final String DEFAULT_LOG_PATH = "data/games_log.json";
+    private static final String DEFAULT_PUZZLE_DURATION_MS = "300000"; // 5 minutes
+
     // Keys
     private static final String KEY_TCP_PORT = "server.tcp_port";
     private static final String KEY_UDP_PORT = "server.udp_port";
@@ -35,13 +44,13 @@ public class ServerConfig {
     }
 
     private void setDefaultProperties() {
-        props.setProperty(KEY_TCP_PORT, "8080");
-        props.setProperty(KEY_UDP_PORT, "8081");
-        props.setProperty(KEY_THREAD_POOL, "10");
-        props.setProperty(KEY_PUZZLE_DATA, "Connections_Data.json");
-        props.setProperty(KEY_USER_DATA, "data/users.json");
-        props.setProperty(KEY_LOG_PATH, "data/games_log.json");
-        props.setProperty(KEY_PUZZLE_DURATION, "300000"); // 5 minutes
+        props.setProperty(KEY_TCP_PORT, DEFAULT_TCP_PORT);
+        props.setProperty(KEY_UDP_PORT, DEFAULT_UDP_PORT);
+        props.setProperty(KEY_THREAD_POOL, DEFAULT_THREAD_POOL_SIZE);
+        props.setProperty(KEY_PUZZLE_DATA, DEFAULT_PUZZLE_DATA_PATH);
+        props.setProperty(KEY_USER_DATA, DEFAULT_USER_DATA_PATH);
+        props.setProperty(KEY_LOG_PATH, DEFAULT_LOG_PATH);
+        props.setProperty(KEY_PUZZLE_DURATION, DEFAULT_PUZZLE_DURATION_MS);
     }
 
     private void loadOrInitConfig() {
