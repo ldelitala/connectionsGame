@@ -45,12 +45,19 @@ public class ConsoleInputProvider implements InputProvider {
 
     @Override
     public void startListening(InputListener listener) {
-        while (running && scanner.hasNextLine()) {
-            String line = scanner.nextLine().trim();
-            if (line.isEmpty())
-                continue;
+        try {
+            while (running && scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty())
+                    continue;
 
-            processLine(line, listener);
+                processLine(line, listener);
+            }
+        } catch (Exception e) {
+            if (running) {
+                // Unexpected stream termination while the app was supposed to be running
+                listener.onExit();
+            }
         }
     }
 

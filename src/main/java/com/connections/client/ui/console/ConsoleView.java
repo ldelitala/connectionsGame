@@ -8,38 +8,44 @@ import com.connections.common.notifications.*;
 import java.util.List;
 
 /**
- * CLI implementation of ClientView. 
- * Methods are synchronized to ensure atomic console output.
+ * CLI implementation of ClientView. Methods are synchronized to ensure atomic console output.
  */
 public class ConsoleView implements ClientView {
+
+    // @formatter: off
+    private static final String HELP_LOGGED_OUT =
+            "\n--- SYSTEM COMMANDS ---\n" +
+                    "  help              : Show this list\n" +
+                    "  exit              : Close the application\n" +
+                    "\n--- AUTHENTICATION ---\n" +
+                    "  register <uP> <psw>: Create a new account\n" +
+                    "  login <uP> <psw>   : Sign in to your account\n";
+
+
+    private static final String HELP_LOGGED_IN =
+            "\n--- SYSTEM COMMANDS ---\n" +
+                    "  help              : Show this list\n" +
+                    "  exit              : Close the application\n" +
+                    "\n--- GAMEPLAY COMMANDS ---\n" +
+                    "  board             : Show current puzzle board\n" +
+                    "  guess <w1 w2 w3 w4>: Submit a proposal\n" +
+                    "  stats             : View global stats for current puzzle\n" +
+                    "\n--- HISTORY & RANKING ---\n" +
+                    "  history           : View your career statistics\n" +
+                    "  ranking [user] [k]: View global ranking (optional: specific user or top K)\n"
+                    +
+                    "  info <id>         : View past puzzle board by ID\n" +
+                    "  global <id>       : View past puzzle global stats by ID\n" +
+                    "\n--- ACCOUNT ---\n" +
+                    "  update <old> <nU> <nP>: Update credentials (use '-' to skip username or password)\n"
+                    +
+                    "  logout            : Sign out of the session\n";
+    // @formatter: on
 
     private static final int MS_TO_S_RATIO = 1000;
     private static final int MAX_MISTAKES = 4;
 
-    private static final String HELP_LOGGED_OUT =
-            "\n--- SYSTEM COMMANDS ---\n" +
-            "  help              : Show this list\n" +
-            "  exit              : Close the application\n" +
-            "\n--- AUTHENTICATION ---\n" +
-            "  register <uP> <psw>: Create a new account\n" +
-            "  login <uP> <psw>   : Sign in to your account\n";
 
-    private static final String HELP_LOGGED_IN =
-            "\n--- SYSTEM COMMANDS ---\n" +
-            "  help              : Show this list\n" +
-            "  exit              : Close the application\n" +
-            "\n--- GAMEPLAY COMMANDS ---\n" +
-            "  board             : Show current puzzle board\n" +
-            "  guess <w1 w2 w3 w4>: Submit a proposal\n" +
-            "  stats             : View global stats for current puzzle\n" +
-            "\n--- HISTORY & RANKING ---\n" +
-            "  history           : View your career statistics\n" +
-            "  ranking [user] [k]: View global ranking (optional: specific user or top K)\n" +
-            "  info <id>         : View past puzzle board by ID\n" +
-            "  global <id>       : View past puzzle global stats by ID\n" +
-            "\n--- ACCOUNT ---\n" +
-            "  update <old> <nU> <nP>: Update credentials (use '-' to skip username or password)\n" +
-            "  logout            : Sign out of the session\n";
 
     @Override
     public synchronized void showResponse(ServerResponse<?> response) {
@@ -55,14 +61,15 @@ public class ConsoleView implements ClientView {
         System.out.println("--- Puzzle Board ---");
         System.out.println("Time remaining: " + (info.getRemainingTime() / MS_TO_S_RATIO) + "s");
         System.out.println(String.format("Mistakes made: %d/%d", info.getMistakes(), MAX_MISTAKES));
-        
+
         if (info.getFoundGroups() != null && !info.getFoundGroups().isEmpty()) {
             System.out.println("Categories found:");
             for (Category category : info.getFoundGroups()) {
-                System.out.println("  - " + category.getTheme() + ": " + String.join(", ", category.getWords()));
+                System.out.println("  - " + category.getTheme() + ": "
+                        + String.join(", ", category.getWords()));
             }
         }
-        
+
         if (info.getRemainingWords() != null && !info.getRemainingWords().isEmpty()) {
             System.out.println("Remaining words: " + String.join(", ", info.getRemainingWords()));
         }
@@ -95,7 +102,8 @@ public class ConsoleView implements ClientView {
         List<LeaderboardEntryDTO> entries = leaderboard.getEntries();
         for (int i = 0; i < entries.size(); i++) {
             LeaderboardEntryDTO entry = entries.get(i);
-            System.out.printf("%2d. %-15s | Score: %5d\n", (i + 1), entry.getUsername(), entry.getScore());
+            System.out.printf("%2d. %-15s | Score: %5d\n", (i + 1), entry.getUsername(),
+                    entry.getScore());
         }
     }
 
@@ -109,7 +117,7 @@ public class ConsoleView implements ClientView {
         System.out.println("\n[NOTIFICATION] A new Puzzle has started! ID: " + n.getGameId());
         System.out.println("Words: " + String.join(", ", n.getWords()));
         System.out.println("Type 'board' to view the game state.");
-        System.out.print("> "); 
+        System.out.print("> ");
     }
 
     @Override
@@ -121,7 +129,7 @@ public class ConsoleView implements ClientView {
         if (n.getLeaderboard() != null) {
             showLeaderboard(n.getLeaderboard());
         }
-        System.out.print("> "); 
+        System.out.print("> ");
     }
 
     @Override
@@ -130,7 +138,7 @@ public class ConsoleView implements ClientView {
         if (n.getPersonalInfo() != null) {
             showGameInfo(n.getPersonalInfo());
         }
-        System.out.print("> "); 
+        System.out.print("> ");
     }
 
     @Override
