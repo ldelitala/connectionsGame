@@ -52,7 +52,7 @@ public class ClientMain {
 
             GameEngine engine = new GameEngine(gateway, actualUdpPort, view, inputProvider);
 
-            engine.run();
+            engine.mainLoop();
 
 
         } catch (IOException e) {

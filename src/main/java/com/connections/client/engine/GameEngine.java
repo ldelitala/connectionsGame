@@ -35,7 +35,7 @@ public class GameEngine implements InputProvider.InputListener {
         this.currentState = new LoggedOutState(this);
     }
 
-    public void run() {
+    public void mainLoop() {
         view.renderPrompt(currentState.getPrompt());
         inputProvider.startListening(this);
     }

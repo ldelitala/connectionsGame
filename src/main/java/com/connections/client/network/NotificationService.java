@@ -81,12 +81,14 @@ public class NotificationService extends Thread implements AutoCloseable {
                     view.onPuzzleEnd(gson.fromJson(json, PuzzleEndNotification.class));
                     break;
                 case PlayerPuzzleSummaryNotification.TYPE_ID:
-                    view.onPlayerSummary(gson.fromJson(json, PlayerPuzzleSummaryNotification.class));
+                    view.onPlayerSummary(
+                            gson.fromJson(json, PlayerPuzzleSummaryNotification.class));
                     break;
                 default:
-                    // Unknown notification type
+                    view.showError("Received unknown notification type: " + type);
                     break;
             }
+
         } catch (Exception e) {
             view.showError("Failed to process notification: " + e.getMessage());
         }
