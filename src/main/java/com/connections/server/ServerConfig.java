@@ -80,11 +80,31 @@ public class ServerConfig {
     }
 
     // Getters
-    public int getTcpPort() { return Integer.parseInt(props.getProperty(KEY_TCP_PORT)); }
-    public int getUdpPort() { return Integer.parseInt(props.getProperty(KEY_UDP_PORT)); }
-    public int getThreadPoolSize() { return Integer.parseInt(props.getProperty(KEY_THREAD_POOL)); }
-    public String getPuzzleDataPath() { return props.getProperty(KEY_PUZZLE_DATA); }
-    public String getUserDataPath() { return props.getProperty(KEY_USER_DATA); }
-    public String getLogPath() { return props.getProperty(KEY_LOG_PATH); }
-    public long getPuzzleDurationMillis() { return Long.parseLong(props.getProperty(KEY_PUZZLE_DURATION)); }
+    public int getTcpPort() {
+        return Integer.parseInt(props.getProperty(KEY_TCP_PORT));
+    }
+
+    public int getUdpPort() {
+        return Integer.parseInt(props.getProperty(KEY_UDP_PORT));
+    }
+
+    public int getThreadPoolSize() {
+        return Integer.parseInt(props.getProperty(KEY_THREAD_POOL));
+    }
+
+    public String getPuzzleDataPath() {
+        return props.getProperty(KEY_PUZZLE_DATA);
+    }
+
+    public String getUserDataPath() {
+        return props.getProperty(KEY_USER_DATA);
+    }
+
+    public String getLogPath() {
+        return props.getProperty(KEY_LOG_PATH);
+    }
+
+    public long getPuzzleDurationMillis() {
+        return Long.parseLong(props.getProperty(KEY_PUZZLE_DURATION));
+    }
 }

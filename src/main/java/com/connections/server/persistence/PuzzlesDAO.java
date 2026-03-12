@@ -2,125 +2,147 @@ package com.connections.server.persistence;
 
 import com.connections.server.models.Puzzle;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
 import java.io.*;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Data Access Object for Puzzle data.
- * Optimized with an index of file offsets for large JSON files.
+ * High-performance DAO for Puzzles.
+ * Uses byte-offset indexing and on-demand reading to minimize RAM usage.
+ * Implementation follows the optimized GamesDAO pattern.
  */
 public class PuzzlesDAO {
     private final String filePath;
-    private final List<Long> puzzleOffsets = new ArrayList<>();
+    private final Map<Integer, Long> index = new ConcurrentHashMap<>();
+    private final List<Integer> puzzleIds = new ArrayList<>();
     private int nextPuzzleIndex = 0;
     private final Gson gson = new Gson();
 
+    private static final Pattern GAME_ID_PATTERN = Pattern.compile("\"gameId\"\\s*:\\s*(\\d+)");
+
     public PuzzlesDAO(String filePath) {
         this.filePath = filePath;
-        buildIndex();
-    }
-
-    private void buildIndex() {
-        System.out.println("Building puzzle index from " + filePath + "...");
-        try (RandomAccessFile raf = new RandomAccessFile(filePath, "r")) {
-            long pos = 0;
-            String line;
-            while ((line = raf.readLine()) != null) {
-                String trimmed = line.trim();
-                // A puzzle object in the provided JSON format starts with '{'
-                // We look for the start of an object that is likely a Puzzle (contains gameId on next lines)
-                // To be safe and fast, we just index every line starting with '{' 
-                // and verify it's a puzzle when reading.
-                if (trimmed.equals("{")) {
-                    puzzleOffsets.add(pos);
-                }
-                pos = raf.getFilePointer();
-            }
-            System.out.println("Indexed " + puzzleOffsets.size() + " potential puzzles.");
+        try {
+            buildIndex();
         } catch (IOException e) {
             System.err.println("Critical error building puzzle index: " + e.getMessage());
         }
     }
 
-    public synchronized Puzzle getNextPuzzle() {
-        if (puzzleOffsets.isEmpty()) return null;
-        
-        Puzzle puzzle = null;
-        int attempts = 0;
-        while (puzzle == null && attempts < puzzleOffsets.size()) {
-            if (nextPuzzleIndex >= puzzleOffsets.size()) {
-                System.out.println("End of puzzle list. Restarting from the first puzzle.");
-                nextPuzzleIndex = 0;
+    /**
+     * Scans the JSON file and indexes the byte offset of each puzzle object.
+     */
+    private void buildIndex() throws IOException {
+        System.out.println("Building puzzle index from " + filePath + "...");
+
+        // PushbackInputStream allows us to "peek" at bytes using unread()
+        try (PushbackInputStream pis = new PushbackInputStream(new BufferedInputStream(new FileInputStream(filePath)), 1)) {
+            long currentOffset = 0;
+            int b;
+
+            while ((b = pis.read()) != -1) {
+                if (b == '{') {
+                    // --- PEEK EXAMPLE ---
+                    // We can see the next byte without moving the pointer
+                    int nextByte = pis.read();
+                    if (nextByte != -1) {
+                        pis.unread(nextByte); // Put it back immediately
+                    }
+                    // --------------------
+
+                    long startOffset = currentOffset;
+
+                    // Extract the rest of the object to calculate its length and get the ID
+                    String restOfJson = extractRestOfObject(pis);
+                    String fullJson = "{" + restOfJson;
+
+                    currentOffset += 1 + restOfJson.length();
+
+                    Integer puzzleId = extractPuzzleId(fullJson);
+                    if (puzzleId != null) {
+                        index.put(puzzleId, startOffset);
+                        puzzleIds.add(puzzleId);
+                    }
+                } else {
+                    currentOffset++;
+                }
             }
-            puzzle = getPuzzleByOffset(puzzleOffsets.get(nextPuzzleIndex));
-            nextPuzzleIndex++;
-            attempts++;
         }
-        return puzzle;
+        System.out.println("Indexed " + index.size() + " puzzles.");
     }
 
-    public Puzzle getPuzzleById(int id) {
-        for (Long offset : puzzleOffsets) {
-            Puzzle p = getPuzzleByOffset(offset);
-            if (p != null && p.getPuzzleId() == id) return p;
+    /**
+     * Reads until the braces are balanced to extract a full JSON object.
+     */
+    private String extractRestOfObject(InputStream is) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        int balance = 1;
+        int b;
+
+        while (balance > 0 && (b = is.read()) != -1) {
+            char c = (char) b;
+            sb.append(c);
+
+            if (c == '{') {
+                balance++;
+            } else if (c == '}') {
+                balance--;
+            }
+        }
+        return sb.toString();
+    }
+
+    private Integer extractPuzzleId(String json) {
+        Matcher matcher = GAME_ID_PATTERN.matcher(json);
+        if (matcher.find()) {
+            return Integer.parseInt(matcher.group(1));
         }
         return null;
     }
 
-    private Puzzle getPuzzleByOffset(long offset) {
-        try (RandomAccessFile raf = new RandomAccessFile(filePath, "r")) {
-            raf.seek(offset);
-            
-            StringBuilder sb = new StringBuilder();
-            int balance = 0;
-            boolean started = false;
-            int c;
-            while ((c = raf.read()) != -1) {
-                char charC = (char) c;
-                if (charC == '{') {
-                    balance++;
-                    started = true;
-                } else if (charC == '}') {
-                    balance--;
-                }
-                
-                if (started) sb.append(charC);
-                if (started && balance == 0) break;
-            }
-            
-            String json = sb.toString();
-            if (json.contains("\"gameId\"")) {
-                return gson.fromJson(json, Puzzle.class);
-            }
-            return null;
-        } catch (IOException e) {
-            System.err.println("Error reading puzzle at offset " + offset + ": " + e.getMessage());
-            return null;
+    /**
+     * Returns the next puzzle in the sequence, wrapping around if necessary.
+     */
+    public synchronized Puzzle getNextPuzzle() {
+        if (puzzleIds.isEmpty()) return null;
+        
+        if (nextPuzzleIndex >= puzzleIds.size()) {
+            nextPuzzleIndex = 0;
         }
+        
+        Puzzle p = getPuzzle(puzzleIds.get(nextPuzzleIndex));
+        nextPuzzleIndex++;
+        return p;
     }
 
+    /**
+     * Reads a specific puzzle from disk using its byte offset.
+     */
     public Puzzle getPuzzle(int puzzleId) {
-        return getPuzzleById(puzzleId);
+        Long offset = index.get(puzzleId);
+        if (offset == null) return null;
+
+        try (FileInputStream fis = new FileInputStream(filePath)) {
+            // Jump directly to the offset
+            fis.getChannel().position(offset);
+
+            if (fis.read() == '{') {
+                String restOfJson = extractRestOfObject(fis);
+                return gson.fromJson("{" + restOfJson, Puzzle.class);
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading puzzle " + puzzleId + " from disk: " + e.getMessage());
+        }
+        return null;
     }
 
     public int getNumPuzzles() {
-        // Return count of valid puzzles
-        return (int) puzzleOffsets.stream()
-                .map(this::getPuzzleByOffset)
-                .filter(java.util.Objects::nonNull)
-                .count();
+        return puzzleIds.size();
     }
 
     public List<Integer> getAllPuzzleIds() {
-        return puzzleOffsets.stream()
-                .map(this::getPuzzleByOffset)
-                .filter(java.util.Objects::nonNull)
-                .map(Puzzle::getPuzzleId)
-                .collect(Collectors.toList());
+        return Collections.unmodifiableList(puzzleIds);
     }
 }
