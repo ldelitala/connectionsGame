@@ -1,7 +1,7 @@
 package com.connections.common.notifications;
 
-import com.connections.common.dto.LeaderboardDTO;
-import com.connections.common.dto.PuzzleStatsDTO;
+import com.connections.common.protocol.server_responses.dto.LeaderboardDTO;
+import com.connections.common.protocol.server_responses.dto.PuzzleStatsDTO;
 
 /**
  * Notification sent to all participants when a puzzle ends.

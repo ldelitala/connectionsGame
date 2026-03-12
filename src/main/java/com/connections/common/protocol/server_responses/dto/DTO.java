@@ -1,4 +1,4 @@
-package com.connections.common.dto;
+package com.connections.common.protocol.server_responses.dto;
 
 /**
  * Marker interface for all Data Transfer Objects (DTOs) used in the communication from server to

@@ -24,8 +24,9 @@
     - `network/`: Network communication (TCP Gateway, UDP Service).
   - `common/`: Shared resources.
     - `models/`: Shared data structures (WordGroup, Category).
-    - `dto/`: Data Transfer Objects used in both TCP and UDP.
     - `protocol/`: TCP Request/Response structure.
+      - `server_responses/`: Logic for responses from server.
+        - `dto/`: Data Transfer Objects used in both TCP and UDP.
     - `notifications/`: UDP asynchronous message structure.
 
 ## Progress
@@ -45,8 +46,13 @@
 - [x] Allineamento Specifiche (Allegato 1): Correzione dei nomi dei campi JSON (`name` vs `username`, `psw`) e ripristino dei nomi operazione originali (`requestGameInfo`, `requestLeaderboard`, etc.) per garantire la piena conformità.
 - [x] **Semantic Terminology Refactoring**: Renamed all occurrences of "game" to "puzzle" when referring to a specific round/puzzle session, maintaining "game" only for the entire application.
 - [x] **Protocol Compatibility**: Ensured that while Java names use "puzzle", JSON fields still use "gameId" via `@SerializedName` for strict compatibility with existing specifications.
+- [x] **Batch Refactoring (DTOs)**: Moved DTO classes to `common.protocol.server_responses.dto` for better architectural grouping.
 
 ## Latest Session Improvements (March 12, 2026)
+- **DTO Batch Refactoring**:
+    - Moved all DTO files from `com.connections.common.dto` to `com.connections.common.protocol.server_responses.dto`.
+    - Updated package declarations and project-wide imports.
+    - Verified architectural consistency in `ServerResponse`, `GameEngine` modules, and `ClientView`.
 - **Engine-Module Architecture**:
     - Renamed `com.connections.client.controller` -> `com.connections.client.engine`.
     - Renamed `com.connections.client.controller.adapters` -> `com.connections.client.engine.modules`.

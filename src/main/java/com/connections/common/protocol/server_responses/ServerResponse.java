@@ -1,6 +1,6 @@
 package com.connections.common.protocol.server_responses;
 
-import com.connections.common.dto.DTO;
+import com.connections.common.protocol.server_responses.dto.DTO;
 /**
  * Generic response structure for all messages sent from the server to the client.
  * 

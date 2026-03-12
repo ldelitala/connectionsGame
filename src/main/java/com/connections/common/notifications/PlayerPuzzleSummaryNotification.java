@@ -1,6 +1,6 @@
 package com.connections.common.notifications;
 
-import com.connections.common.dto.PuzzleStateDTO;
+import com.connections.common.protocol.server_responses.dto.PuzzleStateDTO;
 
 /**
  * Notification sent privately to a specific player when their puzzle ends.

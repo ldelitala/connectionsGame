@@ -1,6 +1,6 @@
 package com.connections.client.ui;
 
-import com.connections.common.dto.*;
+import com.connections.common.protocol.server_responses.dto.*;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.notifications.*;
 

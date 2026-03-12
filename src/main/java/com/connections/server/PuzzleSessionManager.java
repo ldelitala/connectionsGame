@@ -4,7 +4,7 @@ import com.connections.server.models.Puzzle;
 import com.connections.server.models.User;
 import com.connections.common.models.Category;
 import com.connections.common.notifications.*;
-import com.connections.common.dto.*;
+import com.connections.common.protocol.server_responses.dto.*;
 import com.google.gson.Gson;
 
 import java.util.*;
