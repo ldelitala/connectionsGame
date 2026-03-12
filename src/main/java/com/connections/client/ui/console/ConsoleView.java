@@ -49,6 +49,16 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
+    public synchronized void showGuessResult(GuessResultDTO result) {
+        if ("success".equals(result.getStatus())) {
+            System.out.println("Correct! +" + result.getPointsDelta() + " points.");
+        } else {
+            System.out.println("Wrong! " + result.getPointsDelta() + " points.");
+        }
+        System.out.println("New total score: " + result.getTotalPoints());
+    }
+
+    @Override
     public synchronized void showPuzzleInfo(PuzzleStateDTO info) {
         if (info.isFinished()) {
             System.out.println("Puzzle is solved or expired. Use 'history' or 'info' for details.");

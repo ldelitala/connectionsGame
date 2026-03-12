@@ -12,8 +12,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 /**
- * Coordinator for active puzzle gameplay actions.
- * Maintains a persistent network connection to dispatch responses directly to view methods.
+ * Coordinator for active puzzle gameplay actions. Maintains a persistent network connection to
+ * dispatch responses directly to view methods.
  */
 public class GameplayModule {
 
@@ -26,10 +26,22 @@ public class GameplayModule {
         this.gateway = gateway;
     }
 
-    /** Submits a guess and displays the puzzle board. */
+    /** Submits a guess and displays the result. */
     public void handleGuess(List<String> words) {
-        String jsonReq = gson.toJson(GameplayRequest.submitProposal(words));
-        processPuzzleInfo(jsonReq);
+        try {
+            String jsonReq = gson.toJson(GameplayRequest.submitProposal(words));
+            String jsonRes = gateway.sendRequest(jsonReq);
+
+            Type type = new TypeToken<ServerResponse<GuessResultDTO>>() {}.getType();
+            ServerResponse<GuessResultDTO> response = gson.fromJson(jsonRes, type);
+
+            view.showResponse(response);
+            if (response.getStatus() == Status.OK && response.getData() != null) {
+                view.showGuessResult(response.getData());
+            }
+        } catch (IOException e) {
+            view.showError("Network error: " + e.getMessage());
+        }
     }
 
     /** Requests and displays the puzzle board. */
@@ -43,10 +55,10 @@ public class GameplayModule {
         try {
             String jsonReq = gson.toJson(GameplayRequest.getCurrentStats());
             String jsonRes = gateway.sendRequest(jsonReq);
-            
-            Type type = new TypeToken<ServerResponse<PuzzleStatsDTO>>(){}.getType();
+
+            Type type = new TypeToken<ServerResponse<PuzzleStatsDTO>>() {}.getType();
             ServerResponse<PuzzleStatsDTO> response = gson.fromJson(jsonRes, type);
-            
+
             view.showResponse(response);
             if (response.getStatus() == Status.OK && response.getData() != null) {
                 view.showPuzzleStats(response.getData());
@@ -59,9 +71,9 @@ public class GameplayModule {
     private void processPuzzleInfo(String jsonRequest) {
         try {
             String jsonResponse = gateway.sendRequest(jsonRequest);
-            Type type = new TypeToken<ServerResponse<PuzzleStateDTO>>(){}.getType();
+            Type type = new TypeToken<ServerResponse<PuzzleStateDTO>>() {}.getType();
             ServerResponse<PuzzleStateDTO> response = gson.fromJson(jsonResponse, type);
-            
+
             view.showResponse(response);
             if (response.getStatus() == Status.OK && response.getData() != null) {
                 view.showPuzzleInfo(response.getData());

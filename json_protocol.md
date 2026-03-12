@@ -17,7 +17,18 @@ All requests must contain an `"operation"` field.
 *Note: Words are sent as a list. Server validates that length is exactly 4.*
 
 **Response**
-Returns an updated **Active Game** state (see "Get Game Info" response format below) in the `data` field. This allows the client to immediately render the updated board.
+Returns a `GuessResultDTO` in the `data` field:
+```json
+{
+  "status": "ok",
+  "data": {
+    "status": "success",
+    "pointsDelta": 6.0,
+    "totalPoints": 18
+  }
+}
+```
+*Note: pointsDelta can be negative for wrong guesses.*
 
 ### Get Game Info
 **Request**

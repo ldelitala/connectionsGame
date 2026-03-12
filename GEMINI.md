@@ -73,4 +73,4 @@
 - Requests: `{ "operation": "register", "name": "user", "psw": "pass" }`
 - Responses: `{ "status": "ok", "message": "registered successfully", "data": { ... } }`
 - Notifications: `{ "type": "new_game", ... }`
-- **Behavioral Note**: Sending a `submitProposal` request results in a response containing the updated `PuzzleStateDTO` in the `data` field, ensuring the client immediately sees the effect of the guess (found categories, remaining words, etc.).
+- **Behavioral Note**: Sending a `submitProposal` request results in a response containing a `GuessResultDTO` in the `data` field, informing the player about the outcome (points earned/lost and new total score).

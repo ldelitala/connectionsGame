@@ -10,6 +10,7 @@ import com.connections.common.notifications.*;
  */
 public interface ClientView {
     void showResponse(ServerResponse<?> response);
+    void showGuessResult(GuessResultDTO result);
     void showPuzzleInfo(PuzzleStateDTO info);
     void showPuzzleStats(PuzzleStatsDTO stats);
     void showPlayerStats(PlayerStatsDTO stats);
