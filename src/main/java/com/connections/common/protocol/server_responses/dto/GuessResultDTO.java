@@ -28,6 +28,11 @@ public class GuessResultDTO implements DTO {
         return new GuessResultDTO("wrong", pointsDelta, totalPoints, remainingWords);
     }
 
+    /** Factory for generic proposal result. */
+    public static GuessResultDTO create(String status, double pointsDelta, int totalPoints, List<String> remainingWords) {
+        return new GuessResultDTO(status, (float) pointsDelta, totalPoints, remainingWords);
+    }
+
     public String getStatus() {
         return status;
     }

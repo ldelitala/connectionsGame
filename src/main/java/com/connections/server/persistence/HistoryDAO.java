@@ -62,6 +62,11 @@ public class HistoryDAO {
         }
     }
 
+    /** Alias for archivePuzzle for compatibility with coordinators. */
+    public void savePuzzleResults(int puzzleId, Map<String, PlayerResult> results) {
+        archivePuzzle(puzzleId, results);
+    }
+
     /**
      * Appends a puzzle's results to the log file.
      */

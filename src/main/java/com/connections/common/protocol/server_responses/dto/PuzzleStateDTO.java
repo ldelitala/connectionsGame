@@ -17,7 +17,7 @@ public class PuzzleStateDTO implements DTO {
 
     // Fields used in ACTIVE puzzle
     private final Long remainingTime;
-    private final List<Category> foundGroups;
+    private final List<String> foundGroups;
     private final List<String> remainingWords;
 
     // Fields used in FINISHED puzzle
@@ -25,7 +25,7 @@ public class PuzzleStateDTO implements DTO {
     private final Integer correctGroupsCount;
 
     private PuzzleStateDTO(int puzzleId, boolean finished, int mistakes, int score,
-            Long remainingTime, List<Category> foundGroups, List<String> remainingWords,
+            Long remainingTime, List<String> foundGroups, List<String> remainingWords,
             List<Category> allGroups, Integer correctGroupsCount) {
 
         this.puzzleId = puzzleId;
@@ -41,18 +41,19 @@ public class PuzzleStateDTO implements DTO {
 
     /**
      * Factory method for active (in progress) puzzle info.
-     * 
-     * @param puzzleId puzzle ID
-     * @param remainingTime time left in milliseconds
-     * @param foundGroups list of groups already found
-     * @param remainingWords list of words not yet grouped
-     * @param mistakes current number of mistakes
-     * @param score current player score
-     * @return a new PuzzleStateDTO for the active session
      */
-    public static PuzzleStateDTO active(int puzzleId, long remainingTime, List<Category> foundGroups,
+    public static PuzzleStateDTO active(int puzzleId, long remainingTime, List<String> foundGroups,
             List<String> remainingWords, int mistakes, int score) {
         return new PuzzleStateDTO(puzzleId, false, mistakes, score, remainingTime, foundGroups,
+                remainingWords, null, null);
+    }
+
+    /**
+     * Static factory method for general creation (used by coordinators).
+     */
+    public static PuzzleStateDTO create(int puzzleId, boolean finished, long remainingTime,
+            List<String> foundGroups, List<String> remainingWords, int mistakes, int score) {
+        return new PuzzleStateDTO(puzzleId, finished, mistakes, score, remainingTime, foundGroups,
                 remainingWords, null, null);
     }
 
@@ -93,7 +94,7 @@ public class PuzzleStateDTO implements DTO {
         return remainingTime;
     }
 
-    public List<Category> getFoundGroups() {
+    public List<String> getFoundGroups() {
         return foundGroups;
     }
 

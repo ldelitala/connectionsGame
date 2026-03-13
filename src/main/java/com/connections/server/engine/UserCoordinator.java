@@ -1,10 +1,10 @@
-package com.connections.server.logic;
+package com.connections.server.engine;
 
 import com.connections.common.protocol.Operation;
 import com.connections.common.protocol.client_requests.UserRequest;
-import com.connections.common.protocol.server_responses.UserResponse;
-import com.connections.server.network.UdpNotifier;
+import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.server.models.User;
+import com.connections.server.network.UdpNotifier;
 import com.connections.server.persistence.UsersDAO;
 
 import java.util.Set;
@@ -12,53 +12,47 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Coordinator for User-related business logic.
- * Manages active sessions and bridges between persistence and real-time notifications.
+ * Independent of other coordinators.
  */
 public class UserCoordinator {
     private final UsersDAO usersDAO;
     private final UdpNotifier udpNotifier;
-    private final HistoryCoordinator historyCoordinator;
     
-    // Set of usernames currently logged in
     private final Set<String> onlineUsers = ConcurrentHashMap.newKeySet();
 
-    public UserCoordinator(UsersDAO usersDAO, UdpNotifier udpNotifier, HistoryCoordinator historyCoordinator) {
+    public UserCoordinator(UsersDAO usersDAO, UdpNotifier udpNotifier) {
         this.usersDAO = usersDAO;
         this.udpNotifier = udpNotifier;
-        this.historyCoordinator = historyCoordinator;
     }
 
-    /**
-     * Centralized processing for user-related requests.
-     */
-    public UserResponse handle(UserRequest req, Operation op, String currentUsername) {
+    public ServerResponse<?> handle(UserRequest req, Operation op, String currentUsername) {
         switch (op) {
             case REGISTER:
                 return register(req.getUsername(), req.getPassword()) 
-                    ? UserResponse.ok(op, "Registered successfully.") 
-                    : UserResponse.error(op, "Username already exists.");
+                    ? ServerResponse.ok(op, "Registered successfully.") 
+                    : ServerResponse.error(op, "Username already exists.");
 
             case LOGIN:
                 User user = login(req.getUsername(), req.getPassword(), "localhost", req.getUdpPort());
                 if (user != null) {
-                    return UserResponse.ok(op, "Login successful.");
+                    return ServerResponse.ok(op, "Login successful.");
                 }
-                return UserResponse.error(op, "Invalid credentials.");
+                return ServerResponse.error(op, "Invalid credentials.");
 
             case LOGOUT:
                 if (currentUsername != null) {
                     logout(currentUsername);
-                    return UserResponse.ok(op, "Logout successful.");
+                    return ServerResponse.ok(op, "Logout successful.");
                 }
-                return UserResponse.error(op, "Not logged in.");
+                return ServerResponse.error(op, "Not logged in.");
 
             case UPDATE_CREDENTIALS:
-                if (currentUsername == null) return UserResponse.forbidden(op, "Login required.");
+                if (currentUsername == null) return ServerResponse.forbidden(op, "Login required.");
                 boolean success = updateCredentials(currentUsername, req.getOldPsw(), 
                                                    req.getNewName(), req.getNewPsw());
-                return success ? UserResponse.ok(op, "Credentials updated.") : UserResponse.error(op, "Update failed.");
+                return success ? ServerResponse.ok(op, "Credentials updated.") : ServerResponse.error(op, "Update failed.");
 
-            default: return UserResponse.error(op, "Invalid user operation.");
+            default: return ServerResponse.error(op, "Invalid user operation.");
         }
     }
 
@@ -90,7 +84,6 @@ public class UserCoordinator {
                 onlineUsers.add(newName);
             }
             udpNotifier.updateClientKey(oldName, newName);
-            historyCoordinator.renameUser(oldName, newName);
         }
         return success;
     }

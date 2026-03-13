@@ -33,4 +33,32 @@ public class Puzzle {
         }
         return allWords;
     }
+
+    /** Checks if the 4 words form a valid group in this puzzle. */
+    public boolean isCorrectGroup(List<String> words) {
+        for (Category category : groups) {
+            if (category.getWords().containsAll(words) && words.containsAll(category.getWords())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Returns the base points for a correct grouping. */
+    public double getPointsForWords(List<String> words) {
+        return isCorrectGroup(words) ? 6.0 : 0.0;
+    }
+
+    /** Returns the category names for the successfully identified groups. */
+    public List<String> getCategoriesForGroups(List<List<String>> submittedGroups) {
+        List<String> result = new ArrayList<>();
+        for (List<String> group : submittedGroups) {
+            for (Category cat : groups) {
+                if (cat.getWords().containsAll(group)) {
+                    result.add(cat.getTheme());
+                }
+            }
+        }
+        return result;
+    }
 }

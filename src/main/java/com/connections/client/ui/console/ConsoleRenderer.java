@@ -2,7 +2,6 @@ package com.connections.client.ui.console;
 
 import com.connections.common.protocol.server_responses.dto.*;
 import com.connections.common.notifications.*;
-import com.connections.common.models.Category;
 import java.util.List;
 
 /**
@@ -34,9 +33,8 @@ public class ConsoleRenderer {
 
         if (info.getFoundGroups() != null && !info.getFoundGroups().isEmpty()) {
             System.out.println("Categories found:");
-            for (Category category : info.getFoundGroups()) {
-                System.out.println("  - " + category.getTheme() + ": "
-                        + String.join(", ", category.getWords()));
+            for (String categoryName : info.getFoundGroups()) {
+                System.out.println("  - " + categoryName);
             }
         }
 

@@ -1,6 +1,6 @@
 package com.connections.server.network;
 
-import com.connections.server.handler.RequestDispatcher;
+import com.connections.server.network.bridge.ProtocolBridge;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -10,23 +10,28 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * High-performance NIO TCP Server.
- * Handles connections and raw I/O, delegating logic to a RequestDispatcher.
+ * Manages raw network I/O and offloads processing to a worker thread pool.
  */
 public class NioServer {
     private static final int BUFFER_SIZE = 8192;
 
     private final int port;
-    private final RequestDispatcher dispatcher;
+    private final ProtocolBridge bridge;
+    private final ExecutorService workerPool;
+    
     private Selector selector;
     private ServerSocketChannel serverChannel;
     private volatile boolean running = true;
 
-    public NioServer(int port, RequestDispatcher dispatcher) {
+    public NioServer(int port, ProtocolBridge bridge, int threadPoolSize) {
         this.port = port;
-        this.dispatcher = dispatcher;
+        this.bridge = bridge;
+        this.workerPool = Executors.newFixedThreadPool(threadPoolSize);
     }
 
     public void start() throws IOException {
@@ -88,9 +93,13 @@ public class NioServer {
 
         String message;
         while ((message = session.extractMessage()) != null) {
-            // Offload processing to dispatcher (Thread Pool)
-            dispatcher.execute(message, session, () -> {
-                // Callback once response is ready: wake up selector to process write
+            final String finalMsg = message;
+            // Offload business logic to worker pool
+            workerPool.execute(() -> {
+                ByteBuffer response = bridge.process(finalMsg, session);
+                session.enqueueOutput(response);
+                
+                // Wake up selector to process write
                 key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
                 selector.wakeup();
             });
@@ -106,13 +115,11 @@ public class NioServer {
             ByteBuffer buffer = queue.peek();
             channel.write(buffer);
             if (buffer.hasRemaining()) {
-                // Socket buffer full, stay interested in OP_WRITE and try again later
                 return;
             }
-            queue.poll(); // Finished writing this buffer
+            queue.poll();
         }
 
-        // All pending data sent, stop being interested in OP_WRITE
         key.interestOps(SelectionKey.OP_READ);
     }
 
@@ -123,7 +130,7 @@ public class NioServer {
             
             ClientSession session = (ClientSession) key.attachment();
             if (session != null && session.getUsername() != null) {
-                dispatcher.handleDisconnect(session.getUsername());
+                bridge.handleDisconnect(session.getUsername());
             }
             
             key.cancel();
@@ -133,6 +140,7 @@ public class NioServer {
 
     public void stop() {
         running = false;
+        workerPool.shutdown();
         selector.wakeup();
     }
 }

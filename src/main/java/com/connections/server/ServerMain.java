@@ -1,17 +1,14 @@
 package com.connections.server;
 
-import com.connections.server.handler.RequestDispatcher;
-import com.connections.server.logic.*;
+import com.connections.server.engine.GameEngine;
 import com.connections.server.network.NioServer;
-import com.connections.server.network.UdpNotifier;
-import com.connections.server.persistence.*;
+import com.connections.server.network.bridge.ProtocolBridge;
 
 import java.io.IOException;
-import java.net.SocketException;
 
 /**
- * Modern Entry point for the Connections Server. Initializes the decoupled architecture:
- * Persistence -> Logic -> Handler -> Core.
+ * Modern Entry point for the Connections Server.
+ * Architecture: Engine (Core) -> Bridge (Protocol) -> Core (Nio).
  */
 public class ServerMain {
     public static void main(String[] args) {
@@ -21,39 +18,21 @@ public class ServerMain {
         ServerConfig config = (args.length > 0) ? new ServerConfig(args[0]) : new ServerConfig();
 
         try {
-            // 1. Network Layer (Infrastructure)
-            UdpNotifier udpNotifier = new UdpNotifier();
+            // 1. Core Logic Engine (autonomous)
+            GameEngine engine = new GameEngine(config);
+            engine.start();
 
-            // 2. Persistence Layer
-            PuzzlesDAO puzzlesDAO = new PuzzlesDAO(config.getPuzzleDataPath());
-            UsersDAO usersDAO = new UsersDAO(config.getUserDataPath());
-            HistoryDAO historyDAO = new HistoryDAO(config.getLogPath());
+            // 2. Protocol Bridge (Translation only)
+            ProtocolBridge bridge = new ProtocolBridge(engine);
 
-            // 3. Logic Layer (Coordinators)
-            HistoryCoordinator historyCoordinator = new HistoryCoordinator(historyDAO, usersDAO);
-            UserCoordinator userCoordinator =
-                    new UserCoordinator(usersDAO, udpNotifier, historyCoordinator);
-            PuzzleCoordinator puzzleCoordinator = new PuzzleCoordinator(
-                    puzzlesDAO, historyCoordinator, userCoordinator, udpNotifier,
-                    config.getPuzzleDurationMillis());
+            // 3. Network Core (Handles threads & I/O)
+            NioServer server = new NioServer(config.getTcpPort(), bridge, config.getThreadPoolSize());
 
-            // 4. Handler Layer
-            RequestDispatcher dispatcher = new RequestDispatcher(
-                    userCoordinator, puzzleCoordinator, historyCoordinator,
-                    config.getThreadPoolSize());
-
-            // 5. Network Layer (TCP Server)
-            NioServer server = new NioServer(config.getTcpPort(), dispatcher);
-
+            System.out.println("Server ready. TCP Port: " + config.getTcpPort());
             server.start();
 
-        } catch (SocketException e) {
-            System.err.println("Network interface error (UDP/TCP): " + e.getMessage());
-            e.printStackTrace();
-            System.exit(1);
         } catch (IOException e) {
-            System.err.println("Critical server error: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Critical IO error: " + e.getMessage());
             System.exit(1);
         } catch (Exception e) {
             System.err.println("Unexpected server error: " + e.getMessage());

@@ -97,6 +97,13 @@ public class PuzzlesDAO {
         return null;
     }
 
+    /** Returns a random puzzle from the database. */
+    public synchronized Puzzle getRandomPuzzle() {
+        if (puzzleIds.isEmpty()) return null;
+        int randomIndex = new Random().nextInt(puzzleIds.size());
+        return getPuzzle(puzzleIds.get(randomIndex));
+    }
+
     /**
      * Returns the next puzzle in the sequence, wrapping around if necessary.
      */
