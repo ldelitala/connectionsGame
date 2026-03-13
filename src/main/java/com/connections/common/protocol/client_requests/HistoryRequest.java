@@ -28,14 +28,14 @@ public class HistoryRequest extends ClientRequest {
      * Creates a request for info about a past puzzle.
      */
     public static HistoryRequest getPuzzleInfo(int puzzleId) {
-        return new HistoryRequest(Operation.GET_PUZZLE_INFO, puzzleId, null, null);
+        return new HistoryRequest(Operation.GET_PAST_PUZZLE_INFO, puzzleId, null, null);
     }
 
     /**
      * Creates a request for stats about a past puzzle.
      */
     public static HistoryRequest getPuzzleStats(int puzzleId) {
-        return new HistoryRequest(Operation.GET_PUZZLE_STATS, puzzleId, null, null);
+        return new HistoryRequest(Operation.GET_PAST_PUZZLE_STATS, puzzleId, null, null);
     }
 
     /**

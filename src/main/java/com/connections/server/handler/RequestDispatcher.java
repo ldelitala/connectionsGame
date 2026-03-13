@@ -47,6 +47,7 @@ public class RequestDispatcher {
                 op = request.getOperation();
                 
                 response = routeToCoordinator(request, session.getUsername());
+                
                 updateSessionState(session, request, response);
 
             } catch (Exception e) {
@@ -66,13 +67,13 @@ public class RequestDispatcher {
         
         if (op == null) throw new IllegalArgumentException("Unknown or missing operation");
 
-        Class<? extends ClientRequest> reqClass = op.getRequestClass();
-        if (reqClass == null) {
-            // Logic for ambiguous requests (info/stats)
-            reqClass = (header.gameId != null) ? HistoryRequest.class : GameplayRequest.class;
+        // Resolve ambiguity between ACTIVE and PAST puzzle requests
+        if (header.gameId != null) {
+            if (op == Operation.GET_PUZZLE_INFO) op = Operation.GET_PAST_PUZZLE_INFO;
+            else if (op == Operation.GET_PUZZLE_STATS) op = Operation.GET_PAST_PUZZLE_STATS;
         }
-        
-        return gson.fromJson(json, reqClass);
+
+        return gson.fromJson(json, op.getRequestClass());
     }
 
     private ServerResponse<?> routeToCoordinator(ClientRequest req, String username) {

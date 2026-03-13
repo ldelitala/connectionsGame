@@ -30,11 +30,11 @@ public class HistoryCoordinator {
     public HistoryResponse handle(HistoryRequest req, String username, PuzzleCoordinator puzzleCoordinator) {
         Operation op = req.getOperation();
         switch (op) {
-            case GET_PUZZLE_INFO:
+            case GET_PAST_PUZZLE_INFO:
                 PuzzleStateDTO state = puzzleCoordinator.getPersonalStatus(username, req.getPuzzleId());
                 return (state != null) ? HistoryResponse.ok(op, state) : HistoryResponse.error(op, "History record not found.");
 
-            case GET_PUZZLE_STATS:
+            case GET_PAST_PUZZLE_STATS:
                 PuzzleStatsDTO stats = puzzleCoordinator.getGlobalStats(req.getPuzzleId());
                 return (stats != null) ? HistoryResponse.ok(op, stats) : HistoryResponse.error(op, "Stats not available.");
 

@@ -31,15 +31,21 @@ public enum Operation {
     @SerializedName("submitProposal")
     SUBMIT_PROPOSAL(GameplayRequest.class, GameplayResponse.class, GuessResultDTO.class),
 
-    /** Request detailed information about a specific puzzle or the current puzzle. 
-     *  Server identifies type by checking 'gameId' field: null/missing -> GameplayRequest, present -> HistoryRequest. */
+    /** Request detailed info about the CURRENT puzzle. */
     @SerializedName("requestGameInfo")
-    GET_PUZZLE_INFO(null, GameplayResponse.class, PuzzleStateDTO.class),
+    GET_PUZZLE_INFO(GameplayRequest.class, GameplayResponse.class, PuzzleStateDTO.class),
 
-    /** Request global statistics for a specific puzzle. 
-     *  Server identifies type by checking 'gameId' field: null/missing -> GameplayRequest, present -> HistoryRequest. */
+    /** Request global stats for the CURRENT puzzle. */
     @SerializedName("requestGameStats")
-    GET_PUZZLE_STATS(null, GameplayResponse.class, PuzzleStatsDTO.class),
+    GET_PUZZLE_STATS(GameplayRequest.class, GameplayResponse.class, PuzzleStatsDTO.class),
+
+    /** Request detailed info about a PAST puzzle. */
+    @SerializedName("requestGameInfo")
+    GET_PAST_PUZZLE_INFO(HistoryRequest.class, HistoryResponse.class, PuzzleStateDTO.class),
+
+    /** Request global stats for a PAST puzzle. */
+    @SerializedName("requestGameStats")
+    GET_PAST_PUZZLE_STATS(HistoryRequest.class, HistoryResponse.class, PuzzleStatsDTO.class),
 
     /** Request personal statistics for the logged-in user. */
     @SerializedName("requestPlayerStats")
