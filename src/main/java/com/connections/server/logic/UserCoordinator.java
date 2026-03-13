@@ -74,4 +74,8 @@ public class UserCoordinator {
     public User getUser(String username) {
         return usersDAO.getUser(username);
     }
+
+    public boolean saveUser(User user) {
+        return usersDAO.saveUser(user);
+    }
 }

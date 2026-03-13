@@ -92,7 +92,17 @@ public class PuzzleCoordinator {
         participants.addAll(playerMistakes.keySet());
 
         for (String username : participants) {
-            results.put(username, createPlayerSnapshot(username));
+            PlayerResult res = createPlayerSnapshot(username);
+            results.put(username, res);
+            
+            // Record final stats for players who haven't finished (DNF)
+            if (!completedPlayers.contains(username)) {
+                User u = userCoordinator.getUser(username);
+                if (u != null) {
+                    u.recordLoss(res.getMistakes(), res.getPoints());
+                    userCoordinator.saveUser(u);
+                }
+            }
         }
 
         // Send to history coordinator for file persistence and leaderboard update
@@ -150,6 +160,7 @@ public class PuzzleCoordinator {
         if (u != null) {
             if (won) u.recordWin(res.getMistakes(), res.getPoints());
             else u.recordLoss(res.getMistakes(), res.getPoints());
+            userCoordinator.saveUser(u);
         }
     }
 

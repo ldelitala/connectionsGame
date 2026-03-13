@@ -1,58 +1,79 @@
 package com.connections.client.network;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 
 /**
- * Handles the low-level TCP connection.
- * Acts as a raw string tunnel: sends a JSON string and returns a JSON string.
+ * Simplified NIO NetworkGateway for synchronous request-response communication.
  */
 public class NetworkGateway implements AutoCloseable {
 
     private static final String ERR_SERVER_CLOSED = "The server closed the connection.";
+    private static final int BUFFER_SIZE = 4096;
 
-    private final Socket socket;
-    private final PrintWriter out;
-    private final BufferedReader in;
+    private final SocketChannel socketChannel;
+    private final ByteBuffer buffer;
 
-    /**
-     * Creates a new TCP connection to the specified server.
-     */
-    public NetworkGateway(String host, int port) throws UnknownHostException, IOException {
-        this.socket = new Socket(host, port);
-        try {
-            this.out = new PrintWriter(socket.getOutputStream(), true);
-            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        } catch (IOException e) {
-            socket.close();
-            throw e;
-        }
+    public NetworkGateway(String host, int port) throws IOException {
+        this.socketChannel = SocketChannel.open(new InetSocketAddress(host, port));
+        this.socketChannel.configureBlocking(true);
+        this.buffer = ByteBuffer.allocate(BUFFER_SIZE);
     }
 
     /**
-     * Sends a raw JSON string and returns the raw JSON response from the server.
-     *
-     * @param jsonRequest The JSON string to send.
-     * @return The raw JSON response string.
-     * @throws IOException If the connection is closed or a network error occurs.
+     * Sends a JSON request and waits for the response.
      */
     public String sendRequest(String jsonRequest) throws IOException {
-        out.println(jsonRequest);
-        String responseJson = in.readLine();
-        if (responseJson == null) {
-            throw new IOException(ERR_SERVER_CLOSED);
+        send(jsonRequest);
+        return receiveResponse();
+    }
+
+    private void send(String jsonRequest) throws IOException {
+        String payload = jsonRequest + "\n";
+        byte[] message = payload.getBytes(StandardCharsets.UTF_8);
+
+        buffer.clear();
+        buffer.put(message);
+        buffer.flip();
+
+        while (buffer.hasRemaining()) {
+            socketChannel.write(buffer);
         }
-        return responseJson;
+    }
+
+    private String receiveResponse() throws IOException {
+        ByteArrayOutputStream lineCollector = new ByteArrayOutputStream();
+
+        while (true) {
+            buffer.clear();
+            int bytesRead = socketChannel.read(buffer);
+
+            if (bytesRead == -1) {
+                // If we reach EOF without a newline, the response is invalid/incomplete
+                throw new IOException(ERR_SERVER_CLOSED + " (Incomplete response)");
+            }
+
+            buffer.flip();
+            while (buffer.hasRemaining()) {
+                byte b = buffer.get();
+                if (b == '\n') {
+                    return new String(lineCollector.toByteArray(), StandardCharsets.UTF_8).trim();
+                }
+                if (b != '\r') {
+                    lineCollector.write(b);
+                }
+            }
+        }
     }
 
     @Override
     public void close() throws IOException {
-        if (socket != null) {
-            socket.close();
+        if (socketChannel != null && socketChannel.isOpen()) {
+            socketChannel.close();
         }
     }
 }

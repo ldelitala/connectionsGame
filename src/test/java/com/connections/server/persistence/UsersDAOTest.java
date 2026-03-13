@@ -43,10 +43,35 @@ public class UsersDAOTest {
     @Test
     public void testPersistence() {
         usersDAO.register("charlie", "pass");
-        usersDAO.saveUserData();
         
         // Load again from same file
         UsersDAO otherDAO = new UsersDAO(persistenceFile);
         assertNotNull(otherDAO.authenticate("charlie", "pass"));
+    }
+
+    @Test
+    public void testStatsPersistence() {
+        usersDAO.register("dan", "pass");
+        User user = usersDAO.getUser("dan");
+        assertNotNull(user);
+        
+        user.recordWin(0, 10);
+        usersDAO.saveUser(user);
+        
+        // Reload and check stats
+        UsersDAO otherDAO = new UsersDAO(persistenceFile);
+        User reloaded = otherDAO.getUser("dan");
+        assertNotNull(reloaded);
+        assertEquals(1, reloaded.getWins());
+        assertEquals(10, reloaded.getTotalScore());
+    }
+
+    @Test
+    public void testUpdateCredentials() {
+        usersDAO.register("emma", "pass1");
+        assertTrue(usersDAO.updateCredentials("emma", "pass1", "emma_new", "pass2"));
+        
+        assertNull(usersDAO.authenticate("emma", "pass1"));
+        assertNotNull(usersDAO.authenticate("emma_new", "pass2"));
     }
 }
