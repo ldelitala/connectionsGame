@@ -1,5 +1,8 @@
 package com.connections.server.logic;
 
+import com.connections.common.protocol.Operation;
+import com.connections.common.protocol.client_requests.UserRequest;
+import com.connections.common.protocol.server_responses.UserResponse;
 import com.connections.server.network.UdpNotifier;
 import com.connections.server.models.User;
 import com.connections.server.persistence.UsersDAO;
@@ -25,52 +28,78 @@ public class UserCoordinator {
         this.historyCoordinator = historyCoordinator;
     }
 
-    public boolean register(String username, String password) {
-        boolean success = usersDAO.register(username, password);
-        if (success) historyCoordinator.refreshLeaderboard();
-        return success;
+    /**
+     * Centralized processing for user-related requests.
+     * 
+     * @param req the user request
+     * @param currentUsername the username currently associated with the session (if any)
+     * @return a specialized UserResponse
+     */
+    public UserResponse handle(UserRequest req, String currentUsername) {
+        Operation op = req.getOperation();
+        switch (op) {
+            case REGISTER:
+                return register(req.getUsername(), req.getPassword()) 
+                    ? UserResponse.ok(op, "Registered successfully.") 
+                    : UserResponse.error(op, "Username already exists.");
+
+            case LOGIN:
+                User user = login(req.getUsername(), req.getPassword(), "localhost", req.getUdpPort());
+                if (user != null) {
+                    return UserResponse.ok(op, "Login successful.");
+                }
+                return UserResponse.error(op, "Invalid credentials.");
+
+            case LOGOUT:
+                if (currentUsername != null) {
+                    logout(currentUsername);
+                    return UserResponse.ok(op, "Logout successful.");
+                }
+                return UserResponse.error(op, "Not logged in.");
+
+            case UPDATE_CREDENTIALS:
+                if (currentUsername == null) return UserResponse.forbidden(op, "Login required.");
+                boolean success = updateCredentials(currentUsername, req.getOldPsw(), 
+                                                   req.getNewName(), req.getNewPsw());
+                return success ? UserResponse.ok(op, "Credentials updated.") : UserResponse.error(op, "Update failed.");
+
+            default: return UserResponse.error(op, "Invalid user operation.");
+        }
     }
 
-    public User login(String username, String password, String host, int udpPort) {
-        User user = usersDAO.authenticate(username, password);
-        if (user != null) {
+    public synchronized boolean register(String username, String password) {
+        return usersDAO.register(username, password);
+    }
+
+    public synchronized User login(String username, String password, String host, int udpPort) {
+        User u = usersDAO.authenticate(username, password);
+        if (u != null) {
             onlineUsers.add(username);
             udpNotifier.registerClient(username, host, udpPort);
-            return user;
+            return u;
         }
         return null;
     }
 
-    public void logout(String username) {
+    public synchronized void logout(String username) {
         if (username != null) {
             onlineUsers.remove(username);
-            udpNotifier.removeClient(username);
+            udpNotifier.unregisterClient(username);
         }
     }
 
-    public boolean updateCredentials(String oldName, String oldPsw, String newName, String newPsw) {
+    public synchronized boolean updateCredentials(String oldName, String oldPsw, String newName, String newPsw) {
         boolean success = usersDAO.updateCredentials(oldName, oldPsw, newName, newPsw);
-        if (success) {
-            historyCoordinator.refreshLeaderboard();
-            if (newName != null && !newName.equals(oldName)) {
-                // If username changed, update the online status and notifier
-                if (onlineUsers.remove(oldName)) {
-                    onlineUsers.add(newName);
-                    udpNotifier.removeClient(oldName);
-                }
+        if (success && newName != null && !newName.equals(oldName)) {
+            if (onlineUsers.remove(oldName)) {
+                onlineUsers.add(newName);
             }
+            udpNotifier.updateClientKey(oldName, newName);
+            historyCoordinator.renameUser(oldName, newName);
         }
         return success;
     }
 
-    public boolean isOnline(String username) {
-        return onlineUsers.contains(username);
-    }
-
-    public Set<String> getOnlineUsers() {
-        return onlineUsers;
-    }
-    
     public User getUser(String username) {
         return usersDAO.getUser(username);
     }

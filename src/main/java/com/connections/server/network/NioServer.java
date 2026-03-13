@@ -89,7 +89,7 @@ public class NioServer {
         String message;
         while ((message = session.extractMessage()) != null) {
             // Offload processing to dispatcher (Thread Pool)
-            dispatcher.dispatch(message, session, () -> {
+            dispatcher.execute(message, session, () -> {
                 // Callback once response is ready: wake up selector to process write
                 key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
                 selector.wakeup();

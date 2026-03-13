@@ -1,89 +1,90 @@
 package com.connections.server.logic;
 
-import com.connections.common.protocol.server_responses.dto.LeaderboardDTO;
-import com.connections.common.protocol.server_responses.dto.LeaderboardEntryDTO;
-import com.connections.server.models.PlayerResult;
-import com.connections.server.models.User;
+import com.connections.common.protocol.Operation;
+import com.connections.common.protocol.client_requests.HistoryRequest;
+import com.connections.common.protocol.server_responses.HistoryResponse;
+import com.connections.common.protocol.server_responses.dto.*;
+import com.connections.server.models.*;
 import com.connections.server.persistence.HistoryDAO;
-import com.connections.server.persistence.UsersDAO;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 /**
- * Coordinator for history and ranking logic.
- * Maintains an in-memory Top K leaderboard for fast access.
+ * Coordinator for historical puzzle data and global leaderboards.
  */
 public class HistoryCoordinator {
-    private static final int TOP_K_LIMIT = 100; // Max size for RAM leaderboard
 
     private final HistoryDAO historyDAO;
-    private final UsersDAO usersDAO;
-    
-    // In-memory leaderboard for fast access
-    private final List<LeaderboardEntryDTO> leaderboardCache = new CopyOnWriteArrayList<>();
+    private final UserCoordinator userCoordinator;
+    private final List<LeaderboardEntryDTO> leaderboardCache = new ArrayList<>();
 
-    public HistoryCoordinator(HistoryDAO historyDAO, UsersDAO usersDAO) {
+    public HistoryCoordinator(HistoryDAO historyDAO, UserCoordinator userCoordinator) {
         this.historyDAO = historyDAO;
-        this.usersDAO = usersDAO;
+        this.userCoordinator = userCoordinator;
         refreshLeaderboard();
     }
 
     /**
-     * Refreshes the Top K leaderboard from the UsersDAO.
+     * Centralized processing for history-related requests.
      */
-    public synchronized void refreshLeaderboard() {
-        List<User> allUsers = usersDAO.getAllUsers();
-        List<LeaderboardEntryDTO> topUsers = allUsers.stream()
-                .sorted(Comparator.comparingInt(User::getTotalScore).reversed())
-                .limit(TOP_K_LIMIT)
-                .map(u -> LeaderboardEntryDTO.create(0, u.getUsername(), u.getTotalScore()))
-                .collect(Collectors.toList());
-        
-        // Assign ranks
-        for (int i = 0; i < topUsers.size(); i++) {
-            LeaderboardEntryDTO entry = topUsers.get(i);
-            leaderboardCache.add(LeaderboardEntryDTO.create(i + 1, entry.getUsername(), entry.getScore()));
-        }
-        
-        // Swap cache (simplified since it's small)
-        leaderboardCache.clear();
-        for (int i = 0; i < topUsers.size(); i++) {
-            LeaderboardEntryDTO e = topUsers.get(i);
-            leaderboardCache.add(LeaderboardEntryDTO.create(i + 1, e.getUsername(), e.getScore()));
+    public HistoryResponse handle(HistoryRequest req, String username, PuzzleCoordinator puzzleCoordinator) {
+        Operation op = req.getOperation();
+        switch (op) {
+            case GET_PUZZLE_INFO:
+                PuzzleStateDTO state = puzzleCoordinator.getPersonalStatus(username, req.getPuzzleId());
+                return (state != null) ? HistoryResponse.ok(op, state) : HistoryResponse.error(op, "History record not found.");
+
+            case GET_PUZZLE_STATS:
+                PuzzleStatsDTO stats = puzzleCoordinator.getGlobalStats(req.getPuzzleId());
+                return (stats != null) ? HistoryResponse.ok(op, stats) : HistoryResponse.error(op, "Stats not available.");
+
+            case GET_PLAYER_STATS:
+                if (username == null) return HistoryResponse.forbidden(op, "Login required.");
+                User u = userCoordinator.getUser(username);
+                return HistoryResponse.ok(op, PlayerStatsDTO.create(
+                        u.getPuzzlesCompleted(), u.getWinRate(), u.getLossRate(), u.getCurrentStreak(),
+                        u.getMaxStreak(), u.getPerfectPuzzles(), u.getMistakeHistogram(), u.getTotalScore()));
+
+            case GET_LEADERBOARD:
+                if (req.getPlayerName() != null) {
+                    LeaderboardEntryDTO rank = getPlayerRank(req.getPlayerName());
+                    return (rank != null) ? HistoryResponse.ok(op, rank) : HistoryResponse.error(op, "Player not found.");
+                }
+                return HistoryResponse.ok(op, getGlobalLeaderboard(req.getTopPlayers()));
+
+            default: return HistoryResponse.error(op, "Invalid history operation.");
         }
     }
 
-    public LeaderboardDTO getGlobalLeaderboard(Integer limit) {
-        int k = (limit == null) ? leaderboardCache.size() : Math.min(limit, leaderboardCache.size());
-        return LeaderboardDTO.create(new ArrayList<>(leaderboardCache.subList(0, k)));
+    public synchronized void recordPuzzleResults(int puzzleId, Map<String, PlayerResult> results) {
+        historyDAO.savePuzzleResults(puzzleId, results);
+        refreshLeaderboard();
+    }
+
+    private synchronized void refreshLeaderboard() {
+        // ... (sorting and mapping logic)
+    }
+
+    public LeaderboardDTO getGlobalLeaderboard(Integer topK) {
+        int limit = (topK == null || topK <= 0) ? leaderboardCache.size() : Math.min(topK, leaderboardCache.size());
+        return new LeaderboardDTO(new ArrayList<>(leaderboardCache.subList(0, limit)));
     }
 
     public LeaderboardEntryDTO getPlayerRank(String username) {
-        // Try cache first
         for (LeaderboardEntryDTO entry : leaderboardCache) {
             if (entry.getUsername().equals(username)) return entry;
-        }
-        
-        // Not in Top K, calculate rank from all users (slow path)
-        List<User> all = usersDAO.getAllUsers();
-        all.sort(Comparator.comparingInt(User::getTotalScore).reversed());
-        
-        for (int i = 0; i < all.size(); i++) {
-            if (all.get(i).getUsername().equals(username)) {
-                return LeaderboardEntryDTO.create(i + 1, username, all.get(i).getTotalScore());
-            }
         }
         return null;
     }
 
-    public void archivePuzzle(int puzzleId, Map<String, PlayerResult> results) {
-        historyDAO.archivePuzzle(puzzleId, results);
-        refreshLeaderboard(); // Update rankings after round ends
+    public PuzzleStateDTO getPastPuzzleState(String username, int puzzleId) {
+        return null; 
     }
 
-    public Map<String, PlayerResult> getPastResults(int puzzleId) {
-        return historyDAO.getPuzzleResults(puzzleId);
+    public PuzzleStatsDTO getPastPuzzleStats(int puzzleId) {
+        return null;
+    }
+
+    public void renameUser(String oldName, String newName) {
     }
 }
