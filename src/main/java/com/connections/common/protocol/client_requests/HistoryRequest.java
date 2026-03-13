@@ -1,5 +1,6 @@
 package com.connections.common.protocol.client_requests;
 
+import com.connections.common.protocol.Operation;
 import com.google.gson.annotations.SerializedName;
 
 /**

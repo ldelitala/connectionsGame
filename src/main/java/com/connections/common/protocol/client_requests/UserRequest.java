@@ -1,5 +1,7 @@
 package com.connections.common.protocol.client_requests;
 
+import com.connections.common.protocol.Operation;
+
 /**
  * specialized Request subclass for user management operations. Handles registration, login, logout,
  * and credential updates.

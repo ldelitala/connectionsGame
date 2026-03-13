@@ -1,6 +1,7 @@
 package com.connections.client.engine.state;
 
 import com.connections.client.engine.GameEngine;
+import com.connections.common.protocol.Operation;
 import com.connections.common.protocol.client_requests.UserRequest;
 import com.connections.common.protocol.server_responses.Status;
 import java.util.List;
@@ -21,12 +22,12 @@ public class LoggedOutState implements EngineState {
 
     @Override
     public void onRegister(String username, String password) {
-        engine.getExecutor().execute(UserRequest.register(username, password));
+        engine.execute(UserRequest.register(username, password));
     }
 
     @Override
     public void onLogin(String username, String password) {
-        Status status = engine.getExecutor().execute(UserRequest.login(username, password, engine.getUdpPort()));
+        Status status = engine.execute(UserRequest.login(username, password, engine.getUdpPort()));
         if (status == Status.OK) {
             engine.changeState(new LoggedInState(engine, username));
         }

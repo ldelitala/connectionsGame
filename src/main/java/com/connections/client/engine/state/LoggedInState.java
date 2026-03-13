@@ -1,6 +1,7 @@
 package com.connections.client.engine.state;
 
 import com.connections.client.engine.GameEngine;
+import com.connections.common.protocol.Operation;
 import com.connections.common.protocol.client_requests.*;
 import com.connections.common.protocol.server_responses.Status;
 import java.util.List;
@@ -30,7 +31,7 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onLogout() {
-        Status status = engine.getExecutor().execute(UserRequest.logout());
+        Status status = engine.execute(UserRequest.logout());
         if (status == Status.OK) {
             engine.changeState(new LoggedOutState(engine));
         }
@@ -42,7 +43,7 @@ public class LoggedInState implements EngineState {
             engine.getView().showMessage("No changes provided.");
             return;
         }
-        Status status = engine.getExecutor().execute(UserRequest.updateCredentials(username, oldPass, newName, newPass));
+        Status status = engine.execute(UserRequest.updateCredentials(username, oldPass, newName, newPass));
         if (status == Status.OK && newName != null && !newName.equals("-")) {
             this.username = newName;
         }
@@ -50,37 +51,37 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onGuess(List<String> words) {
-        engine.getExecutor().execute(GameplayRequest.submitProposal(words));
+        engine.execute(GameplayRequest.submitProposal(words));
     }
 
     @Override
     public void onRequestBoard() {
-        engine.getExecutor().execute(GameplayRequest.getCurrentInfo());
+        engine.execute(GameplayRequest.getCurrentInfo());
     }
 
     @Override
     public void onRequestStats() {
-        engine.getExecutor().execute(GameplayRequest.getCurrentStats());
+        engine.execute(GameplayRequest.getCurrentStats());
     }
 
     @Override
     public void onRequestPastInfo(int puzzleId) {
-        engine.getExecutor().execute(HistoryRequest.getPuzzleInfo(puzzleId));
+        engine.execute(HistoryRequest.getPuzzleInfo(puzzleId));
     }
 
     @Override
     public void onRequestGlobalStats(int puzzleId) {
-        engine.getExecutor().execute(HistoryRequest.getPuzzleStats(puzzleId));
+        engine.execute(HistoryRequest.getPuzzleStats(puzzleId));
     }
 
     @Override
     public void onRequestRanking(String username, Integer topK) {
-        engine.getExecutor().execute(HistoryRequest.getLeaderboard(username, topK));
+        engine.execute(HistoryRequest.getLeaderboard(username, topK));
     }
 
     @Override
     public void onRequestHistory() {
-        engine.getExecutor().execute(HistoryRequest.getPlayerStats());
+        engine.execute(HistoryRequest.getPlayerStats());
     }
 
     @Override
@@ -90,7 +91,7 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onExit() {
-        engine.getExecutor().execute(UserRequest.logout());
+        engine.execute(UserRequest.logout());
     }
 
     @Override

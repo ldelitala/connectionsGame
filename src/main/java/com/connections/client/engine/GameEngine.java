@@ -4,11 +4,20 @@ import com.connections.client.network.NetworkGateway;
 import com.connections.client.engine.state.*;
 import com.connections.client.ui.ClientView;
 import com.connections.client.ui.InputProvider;
+import com.connections.common.protocol.Operation;
+import com.connections.common.protocol.client_requests.ClientRequest;
+import com.connections.common.protocol.server_responses.ServerResponse;
+import com.connections.common.protocol.server_responses.Status;
+import com.connections.common.protocol.server_responses.dto.DTO;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
- * The Game Engine: The central reactive hub of the application. It reacts to explicit actions
- * received from an InputProvider.
+ * The Game Engine: The central reactive hub of the application.
  */
 public class GameEngine implements InputProvider.InputListener {
 
@@ -16,8 +25,8 @@ public class GameEngine implements InputProvider.InputListener {
     private final int udpPort;
     private final ClientView view;
     private final InputProvider inputProvider;
+    private final Gson gson = new Gson();
 
-    private final EngineExecutor executor;
     private EngineState currentState;
 
     public GameEngine(NetworkGateway gateway, int udpPort, ClientView view,
@@ -26,8 +35,45 @@ public class GameEngine implements InputProvider.InputListener {
         this.udpPort = udpPort;
         this.view = view;
         this.inputProvider = inputProvider;
-        this.executor = new EngineExecutor(gateway, view);
         this.currentState = new LoggedOutState(this);
+    }
+
+    /**
+     * Executes a network request synchronously, handles the server response,
+     * and automatically triggers UI rendering.
+     */
+    public Status execute(ClientRequest request) {
+        try {
+            String jsonReq = gson.toJson(request);
+            String jsonRes = gateway.sendRequest(jsonReq);
+
+            Operation op = request.getOperation();
+            Class<? extends ServerResponse> resClass = op.getResponseClass();
+            Class<? extends DTO> dtoClass = op.getResponseDtoClass();
+
+            Type type;
+            if (dtoClass == null) {
+                type = resClass;
+            } else {
+                type = TypeToken.getParameterized(resClass, dtoClass).getType();
+            }
+
+            ServerResponse<? extends DTO> response = gson.fromJson(jsonRes, type);
+            view.showResponse(response);
+
+            if (response.getStatus() == Status.OK && response.getData() != null) {
+                view.render(response.getData());
+            }
+
+            return response.getStatus();
+
+        } catch (IOException e) {
+            view.showError("Network error: " + e.getMessage());
+            return Status.ERROR;
+        } catch (Exception e) {
+            view.showError("Unexpected error during request processing: " + e.getMessage());
+            return Status.ERROR;
+        }
     }
 
     public void mainLoop() {
@@ -144,9 +190,5 @@ public class GameEngine implements InputProvider.InputListener {
 
     public ClientView getView() {
         return view;
-    }
-
-    public EngineExecutor getExecutor() {
-        return executor;
     }
 }

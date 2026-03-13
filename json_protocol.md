@@ -4,7 +4,7 @@ This document describes all JSON messages exchanged between the Client and the S
 
 ## 1. TCP Requests & Success Responses (status: "ok")
 
-All requests must contain an `"operation"` field.
+All requests must contain an `"operation"` field. All responses now include the corresponding `"operation"` field for self-description.
 
 ### Register
 **Request** (Object: `UserRequest`)
@@ -15,9 +15,10 @@ All requests must contain an `"operation"` field.
   "psw": "password"
 }
 ```
-**Response** (Object: `ServerResponse<DTO>`)
+**Response** (Object: `UserResponse`)
 ```json
 {
+  "operation": "register",
   "status": "ok",
   "message": "User registered successfully."
 }
@@ -33,9 +34,10 @@ All requests must contain an `"operation"` field.
   "udpPort": 8081
 }
 ```
-**Response** (Object: `ServerResponse<DTO>`)
+**Response** (Object: `UserResponse`)
 ```json
 {
+  "operation": "login",
   "status": "ok",
   "message": "Login successful."
 }
@@ -48,9 +50,10 @@ All requests must contain an `"operation"` field.
   "operation": "logout"
 }
 ```
-**Response** (Object: `ServerResponse<DTO>`)
+**Response** (Object: `UserResponse`)
 ```json
 {
+  "operation": "logout",
   "status": "ok",
   "message": "Logout successful."
 }
@@ -67,11 +70,10 @@ All requests must contain an `"operation"` field.
   "newPsw": "newPassword"
 }
 ```
-*Note: `newName` or `newPsw` can be null if not being changed.*
-
-**Response** (Object: `ServerResponse<DTO>`)
+**Response** (Object: `UserResponse`)
 ```json
 {
+  "operation": "updateCredentials",
   "status": "ok",
   "message": "Credentials updated successfully."
 }
@@ -85,11 +87,10 @@ All requests must contain an `"operation"` field.
   "words": ["CAT", "DOG", "FISH", "BIRD"]
 }
 ```
-*Note: Words are sent as a list. Server validates that length is exactly 4.*
-
-**Response** (Object: `ServerResponse<GuessResultDTO>`)
+**Response** (Object: `GameplayResponse<GuessResultDTO>`)
 ```json
 {
+  "operation": "submitProposal",
   "status": "ok",
   "data": {
     "status": "success",
@@ -99,18 +100,18 @@ All requests must contain an `"operation"` field.
   }
 }
 ```
-*Note: pointsDelta can be negative for wrong guesses (status: "wrong").*
 
 ### Get Puzzle Info (requestGameInfo)
 **Request** (Object: `GameplayRequest` or `HistoryRequest`)
 ```json
 { "operation": "requestGameInfo", "gameId": 123 }
 ```
-*Note: gameId can be null or -1 for the current puzzle.*
+*Note: server uses `gameId` to distinguish between active puzzle (null/missing) and history record.*
 
-**Response (Active Puzzle)** (Object: `ServerResponse<PuzzleStateDTO>`)
+**Response** (Object: `GameplayResponse<PuzzleStateDTO>` or `HistoryResponse<PuzzleStateDTO>`)
 ```json
 {
+  "operation": "requestGameInfo",
   "status": "ok",
   "data": {
     "gameId": 123,
@@ -126,58 +127,23 @@ All requests must contain an `"operation"` field.
 }
 ```
 
-**Response (Concluded Puzzle)** (Object: `ServerResponse<PuzzleStateDTO>`)
-```json
-{
-  "status": "ok",
-  "data": {
-    "gameId": 123,
-    "finished": true,
-    "allGroups": [
-        { "theme": "ANIMALS", "words": ["CAT", "DOG", "FISH", "BIRD"] },
-        { "theme": "COLORS", "words": ["RED", "GREEN", "BLUE", "YELLOW"] },
-        { "theme": "CITIES", "words": ["LONDON", "PARIS", "ROME", "BERLIN"] },
-        { "theme": "FOODS", "words": ["PIZZA", "PASTA", "BURGER", "SUSHI"] }
-    ],
-    "correctGroupsCount": 4,
-    "mistakes": 2,
-    "score": 12
-  }
-}
-```
-
 ### Get Puzzle Stats (requestGameStats)
 **Request** (Object: `GameplayRequest` or `HistoryRequest`)
 ```json
 { "operation": "requestGameStats", "gameId": 123 }
 ```
 
-**Response (Active Puzzle)** (Object: `ServerResponse<PuzzleStatsDTO>`)
+**Response** (Object: `GameplayResponse<PuzzleStatsDTO>` or `HistoryResponse<PuzzleStatsDTO>`)
 ```json
 {
+  "operation": "requestGameStats",
   "status": "ok",
   "data": {
     "gameId": 123,
     "finished": false,
-    "remainingTime": 30000,
     "activePlayers": 10,
     "finishedPlayers": 2,
     "wonPlayers": 1
-  }
-}
-```
-
-**Response (Concluded Puzzle)** (Object: `ServerResponse<PuzzleStatsDTO>`)
-```json
-{
-  "status": "ok",
-  "data": {
-    "gameId": 123,
-    "finished": true,
-    "totalParticipants": 25,
-    "finishedPlayers": 20,
-    "wonPlayers": 15,
-    "averageScore": 8.5
   }
 }
 ```
@@ -187,15 +153,15 @@ All requests must contain an `"operation"` field.
 ```json
 { "operation": "requestPlayerStats" }
 ```
-**Response** (Object: `ServerResponse<PlayerStatsDTO>`)
+**Response** (Object: `HistoryResponse<PlayerStatsDTO>`)
 ```json
 {
+  "operation": "requestPlayerStats",
   "status": "ok",
   "data": {
     "puzzlesCompleted": 10,
     "winRate": 80.0,
-    "totalScore": 150,
-    "averageScore": 15.0
+    "totalScore": 150
   }
 }
 ```
@@ -209,11 +175,10 @@ All requests must contain an `"operation"` field.
   "topPlayers": 10 
 }
 ```
-*Note: `playerName` and `topPlayers` are optional.*
-
-**Response** (Object: `ServerResponse<LeaderboardDTO>`)
+**Response** (Object: `HistoryResponse<LeaderboardDTO>`)
 ```json
 {
+  "operation": "requestLeaderboard",
   "status": "ok",
   "data": {
     "entries": [
@@ -228,21 +193,23 @@ All requests must contain an `"operation"` field.
 
 ## 2. Other Server Responses (error & forbidden)
 
+All error/forbidden responses now include the relevant `operation` field.
+
 ### Error Response
-Used when an operation fails due to invalid input, network issues, or internal errors.
-(Object: `ServerResponse<DTO>`)
+(Object: `UserResponse`, `GameplayResponse` or `HistoryResponse`)
 ```json
 {
+  "operation": "submitProposal",
   "status": "error",
   "message": "Invalid password."
 }
 ```
 
 ### Forbidden Response
-Used when a user tries to perform an action without proper authorization.
-(Object: `ServerResponse<DTO>`)
+(Object: `UserResponse`, `GameplayResponse` or `HistoryResponse`)
 ```json
 {
+  "operation": "requestPlayerStats",
   "status": "forbidden",
   "message": "Authentication required."
 }
@@ -252,7 +219,7 @@ Used when a user tries to perform an action without proper authorization.
 
 ## 3. UDP Notifications (Server -> Client)
 
-Sent asynchronously via UDP.
+Sent asynchronously via UDP. No changes to the structure.
 
 ### New Puzzle Started
 (Object: `NewPuzzleNotification`)
@@ -265,42 +232,20 @@ Sent asynchronously via UDP.
 ```
 
 ### Puzzle Ended (Global Summary)
-Broadcast to all clients when a puzzle concluded.
 (Object: `PuzzleEndNotification`)
 ```json
 {
   "type": "game_end",
-  "leaderboard": { 
-    "entries": [
-        { "rank": 1, "username": "user", "score": 100 }
-    ] 
-  },
-  "stats": { 
-    "gameId": 1, 
-    "finished": true,
-    "totalParticipants": 10,
-    "finishedPlayers": 8,
-    "wonPlayers": 5,
-    "averageScore": 12.5
-  }
+  "leaderboard": { ... },
+  "stats": { ... }
 }
 ```
 
 ### Personal Puzzle Summary
-Sent privately to each participant when their puzzle (or the global puzzle) ends.
 (Object: `PlayerPuzzleSummaryNotification`)
 ```json
 {
   "type": "player_summary",
-  "personalInfo": {
-    "gameId": 1,
-    "finished": true,
-    "mistakes": 2,
-    "score": 12,
-    "foundGroups": [
-        { "theme": "T1", "words": ["A", "B", "C", "D"] }
-    ],
-    "remainingWords": []
-  }
+  "personalInfo": { ... }
 }
 ```

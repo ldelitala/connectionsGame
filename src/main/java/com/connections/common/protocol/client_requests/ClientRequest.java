@@ -1,5 +1,7 @@
 package com.connections.common.protocol.client_requests;
 
+import com.connections.common.protocol.Operation;
+
 /**
  * Base class for all requests sent from the client to the server.
  */

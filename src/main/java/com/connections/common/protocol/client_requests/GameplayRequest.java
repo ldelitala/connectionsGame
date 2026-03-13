@@ -1,5 +1,6 @@
 package com.connections.common.protocol.client_requests;
 
+import com.connections.common.protocol.Operation;
 import java.util.List;
 
 /**

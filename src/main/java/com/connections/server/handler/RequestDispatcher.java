@@ -1,5 +1,6 @@
 package com.connections.server.handler;
 
+import com.connections.common.protocol.Operation;
 import com.connections.common.protocol.client_requests.*;
 import com.connections.common.protocol.server_responses.*;
 import com.connections.common.protocol.server_responses.dto.*;
@@ -17,7 +18,7 @@ import java.util.concurrent.Executors;
 
 /**
  * Dispatches incoming JSON requests to the appropriate business logic coordinators.
- * Processing is performed in a worker thread pool to keep the NIO Selector free.
+ * Uses a triple-dispatcher pattern to route requests and returns specialized response types.
  */
 public class RequestDispatcher {
     private final UserCoordinator userCoordinator;
@@ -36,117 +37,125 @@ public class RequestDispatcher {
         this.workerPool = Executors.newFixedThreadPool(poolSize);
     }
 
-    /**
-     * Dispatches a raw JSON message for processing.
-     */
     public void dispatch(String json, ClientSession session, Runnable onResponseReady) {
         workerPool.execute(() -> {
             ServerResponse<?> response;
+            Operation op = null;
             try {
                 JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
                 String opString = obj.get("operation").getAsString();
-                Operation op = Operation.valueOf(findOperationConstant(opString));
+                op = Operation.valueOf(findOperationConstant(opString));
 
-                response = process(op, json, session);
+                Class<? extends ClientRequest> reqClass = op.getRequestClass();
+                if (reqClass == null) {
+                    reqClass = obj.has("gameId") ? HistoryRequest.class : GameplayRequest.class;
+                }
+                
+                ClientRequest request = gson.fromJson(json, reqClass);
+                response = route(request, op, session);
 
             } catch (Exception e) {
-                response = ServerResponse.error("Internal server error: " + e.getMessage());
+                // If operation was identified, return a specialized error if possible
+                response = (op != null) 
+                    ? UserResponse.error(op, "Internal server error: " + e.getMessage())
+                    : UserResponse.error(Operation.REGISTER, "Critical protocol error: " + e.getMessage());
             }
 
-            // Serialize and enqueue for NIO write
             String responseJson = gson.toJson(response) + "\n";
             session.enqueueOutput(ByteBuffer.wrap(responseJson.getBytes(StandardCharsets.UTF_8)));
             onResponseReady.run();
         });
     }
 
-    private ServerResponse<?> process(Operation op, String json, ClientSession session) {
-        // Shared logic for all operations
+    private ServerResponse<?> route(ClientRequest request, Operation op, ClientSession session) {
+        if (request instanceof UserRequest) return handleUser((UserRequest) request, op, session);
+        if (request instanceof GameplayRequest) return handleGameplay((GameplayRequest) request, op, session);
+        if (request instanceof HistoryRequest) return handleHistory((HistoryRequest) request, op, session);
+        return UserResponse.error(op, "Unsupported request type.");
+    }
+
+    private ServerResponse<?> handleUser(UserRequest req, Operation op, ClientSession session) {
         switch (op) {
             case REGISTER:
-                UserRequest regReq = gson.fromJson(json, UserRequest.class);
-                return userCoordinator.register(regReq.getUsername(), regReq.getPassword()) 
-                    ? ServerResponse.ok("Registered successfully.") 
-                    : ServerResponse.error("Username already exists.");
+                return userCoordinator.register(req.getUsername(), req.getPassword()) 
+                    ? UserResponse.ok(op, "Registered successfully.") 
+                    : UserResponse.error(op, "Username already exists.");
 
             case LOGIN:
-                UserRequest loginReq = gson.fromJson(json, UserRequest.class);
-                User user = userCoordinator.login(loginReq.getUsername(), loginReq.getPassword(), 
-                                                 "localhost", loginReq.getUdpPort());
+                User user = userCoordinator.login(req.getUsername(), req.getPassword(), 
+                                                 "localhost", req.getUdpPort());
                 if (user != null) {
                     session.setUsername(user.getUsername());
-                    return ServerResponse.ok("Login successful.", null);
+                    return UserResponse.ok(op, "Login successful.");
                 }
-                return ServerResponse.error("Invalid credentials.");
+                return UserResponse.error(op, "Invalid credentials.");
 
             case LOGOUT:
                 if (session.getUsername() != null) {
                     userCoordinator.logout(session.getUsername());
                     session.setUsername(null);
-                    return ServerResponse.ok("Logout successful.");
+                    return UserResponse.ok(op, "Logout successful.");
                 }
-                return ServerResponse.error("Not logged in.");
+                return UserResponse.error(op, "Not logged in.");
 
             case UPDATE_CREDENTIALS:
-                if (session.getUsername() == null) return ServerResponse.forbidden("Login required.");
-                UserRequest updReq = gson.fromJson(json, UserRequest.class);
-                boolean success = userCoordinator.updateCredentials(updReq.getOldName(), updReq.getOldPsw(), 
-                                                                   updReq.getNewName(), updReq.getNewPsw());
-                if (success && updReq.getNewName() != null) session.setUsername(updReq.getNewName());
-                return success ? ServerResponse.ok("Credentials updated.") : ServerResponse.error("Update failed.");
+                if (session.getUsername() == null) return UserResponse.forbidden(op, "Login required.");
+                boolean success = userCoordinator.updateCredentials(req.getOldName(), req.getOldPsw(), 
+                                                                   req.getNewName(), req.getNewPsw());
+                if (success && req.getNewName() != null) session.setUsername(req.getNewName());
+                return success ? UserResponse.ok(op, "Credentials updated.") : UserResponse.error(op, "Update failed.");
 
-            case SUBMIT_PROPOSAL:
-                if (session.getUsername() == null) return ServerResponse.forbidden("Login required.");
-                GameplayRequest propReq = gson.fromJson(json, GameplayRequest.class);
-                GuessResultDTO result = puzzleCoordinator.handleProposal(session.getUsername(), propReq.getWords());
-                return (result != null) ? ServerResponse.ok("Guess processed.", result) : ServerResponse.error("Invalid or late guess.");
-
-            case GET_PUZZLE_INFO:
-                // Works for both GameplayRequest (implicit current) and HistoryRequest (explicit ID)
-                Integer infoId = extractPuzzleId(json);
-                if (infoId == null || infoId == -1) infoId = puzzleCoordinator.getCurrentPuzzle().getPuzzleId();
-                PuzzleStateDTO state = puzzleCoordinator.getPersonalStatus(session.getUsername(), infoId);
-                return (state != null) ? ServerResponse.ok("Puzzle info retrieved.", state) : ServerResponse.error("Puzzle not found or no participation recorded.");
-
-            case GET_PUZZLE_STATS:
-                Integer statsId = extractPuzzleId(json);
-                if (statsId == null || statsId == -1) statsId = puzzleCoordinator.getCurrentPuzzle().getPuzzleId();
-                PuzzleStatsDTO stats = puzzleCoordinator.getGlobalStats(statsId);
-                return (stats != null) ? ServerResponse.ok("Puzzle stats retrieved.", stats) : ServerResponse.error("Stats not available.");
-
-            case GET_PLAYER_STATS:
-                if (session.getUsername() == null) return ServerResponse.forbidden("Login required.");
-                User u = userCoordinator.getUser(session.getUsername());
-                return ServerResponse.ok("Player stats retrieved.", PlayerStatsDTO.create(
-                        u.getPuzzlesCompleted(),
-                        u.getWinRate(),
-                        u.getLossRate(),
-                        u.getCurrentStreak(),
-                        u.getMaxStreak(),
-                        u.getPerfectPuzzles(),
-                        u.getMistakeHistogram(),
-                        u.getTotalScore()
-                ));
-
-            case GET_LEADERBOARD:
-                HistoryRequest leadReq = gson.fromJson(json, HistoryRequest.class);
-                if (leadReq.getPlayerName() != null) {
-                    LeaderboardEntryDTO rank = historyCoordinator.getPlayerRank(leadReq.getPlayerName());
-                    return (rank != null) ? ServerResponse.ok("Rank retrieved.", rank) : ServerResponse.error("Player not found.");
-                }
-                return ServerResponse.ok("Leaderboard retrieved.", historyCoordinator.getGlobalLeaderboard(leadReq.getTopPlayers()));
-
-            default:
-                return ServerResponse.error("Unsupported operation.");
+            default: return UserResponse.error(op, "Invalid user operation.");
         }
     }
 
-    private Integer extractPuzzleId(String json) {
-        JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-        if (obj.has("gameId") && !obj.get("gameId").isJsonNull()) {
-            return obj.get("gameId").getAsInt();
+    private ServerResponse<?> handleGameplay(GameplayRequest req, Operation op, ClientSession session) {
+        if (session.getUsername() == null) return GameplayResponse.error(op, "Login required.");
+        
+        switch (op) {
+            case SUBMIT_PROPOSAL:
+                GuessResultDTO result = puzzleCoordinator.handleProposal(session.getUsername(), req.getWords());
+                return (result != null) ? GameplayResponse.ok(op, "Guess processed.", result) : GameplayResponse.error(op, "Invalid or late guess.");
+
+            case GET_PUZZLE_INFO:
+                PuzzleStateDTO state = puzzleCoordinator.getPersonalStatus(session.getUsername(), 
+                        puzzleCoordinator.getCurrentPuzzle().getPuzzleId());
+                return (state != null) ? GameplayResponse.ok(op, state) : GameplayResponse.error(op, "Puzzle not found.");
+
+            case GET_PUZZLE_STATS:
+                PuzzleStatsDTO stats = puzzleCoordinator.getGlobalStats(puzzleCoordinator.getCurrentPuzzle().getPuzzleId());
+                return (stats != null) ? GameplayResponse.ok(op, stats) : GameplayResponse.error(op, "Stats not available.");
+
+            default: return GameplayResponse.error(op, "Invalid gameplay operation.");
         }
-        return null;
+    }
+
+    private ServerResponse<?> handleHistory(HistoryRequest req, Operation op, ClientSession session) {
+        switch (op) {
+            case GET_PUZZLE_INFO:
+                PuzzleStateDTO state = puzzleCoordinator.getPersonalStatus(session.getUsername(), req.getPuzzleId());
+                return (state != null) ? HistoryResponse.ok(op, state) : HistoryResponse.error(op, "History record not found.");
+
+            case GET_PUZZLE_STATS:
+                PuzzleStatsDTO stats = puzzleCoordinator.getGlobalStats(req.getPuzzleId());
+                return (stats != null) ? HistoryResponse.ok(op, stats) : HistoryResponse.error(op, "Stats not available.");
+
+            case GET_PLAYER_STATS:
+                if (session.getUsername() == null) return HistoryResponse.error(op, "Login required.");
+                User u = userCoordinator.getUser(session.getUsername());
+                return HistoryResponse.ok(op, PlayerStatsDTO.create(
+                        u.getPuzzlesCompleted(), u.getWinRate(), u.getLossRate(), u.getCurrentStreak(),
+                        u.getMaxStreak(), u.getPerfectPuzzles(), u.getMistakeHistogram(), u.getTotalScore()));
+
+            case GET_LEADERBOARD:
+                if (req.getPlayerName() != null) {
+                    LeaderboardEntryDTO rank = historyCoordinator.getPlayerRank(req.getPlayerName());
+                    return (rank != null) ? HistoryResponse.ok(op, rank) : HistoryResponse.error(op, "Player not found.");
+                }
+                return HistoryResponse.ok(op, historyCoordinator.getGlobalLeaderboard(req.getTopPlayers()));
+
+            default: return HistoryResponse.error(op, "Invalid history operation.");
+        }
     }
 
     private String findOperationConstant(String serializedName) {
@@ -157,10 +166,10 @@ public class RequestDispatcher {
                 if (sn != null && sn.value().equals(serializedName)) return op.name();
             } catch (Exception ignored) {}
         }
-        return serializedName.toUpperCase(); // Fallback
+        return serializedName.toUpperCase();
     }
 
     public void handleDisconnect(String username) {
-        userCoordinator.logout(username);
+        if (username != null) userCoordinator.logout(username);
     }
 }
