@@ -38,49 +38,12 @@ public class GameEngine implements InputProvider.InputListener {
         this.currentState = new LoggedOutState(this);
     }
 
-    /**
-     * Executes a network request synchronously, handles the server response,
-     * and automatically triggers UI rendering.
-     */
-    public Status execute(ClientRequest request) {
-        try {
-            String jsonReq = gson.toJson(request);
-            String jsonRes = gateway.sendRequest(jsonReq);
-
-            Operation op = request.getOperation();
-            Class<? extends ServerResponse> resClass = op.getResponseClass();
-            Class<? extends DTO> dtoClass = op.getResponseDtoClass();
-
-            Type type;
-            if (dtoClass == null) {
-                type = resClass;
-            } else {
-                type = TypeToken.getParameterized(resClass, dtoClass).getType();
-            }
-
-            ServerResponse<? extends DTO> response = gson.fromJson(jsonRes, type);
-            view.showResponse(response);
-
-            if (response.getStatus() == Status.OK && response.getData() != null) {
-                view.render(response.getData());
-            }
-
-            return response.getStatus();
-
-        } catch (IOException e) {
-            view.showError("Network error: " + e.getMessage());
-            return Status.ERROR;
-        } catch (Exception e) {
-            view.showError("Unexpected error during request processing: " + e.getMessage());
-            return Status.ERROR;
-        }
-    }
-
     public void mainLoop() {
         view.renderPrompt(currentState.getPrompt());
         inputProvider.startListening(this);
         // This will loop until the provider signals to stop (e.g., onExit)
     }
+
 
     // --- Action Implementations (Delegating to State) ---
 
@@ -150,6 +113,16 @@ public class GameEngine implements InputProvider.InputListener {
         postAction();
     }
 
+
+    @Override
+    public void onExit() {
+        view.showMessage("Exiting Engine...");
+        currentState.onExit();
+        inputProvider.stop();
+    }
+
+    // other system-level actions hendled by the engine itself (e.g., help, error display) can be
+    // implemented here directly
     @Override
     public void onHelp() {
         view.showHelp(currentState instanceof LoggedInState);
@@ -164,13 +137,7 @@ public class GameEngine implements InputProvider.InputListener {
         }
     }
 
-    @Override
-    public void onExit() {
-        view.showMessage("Exiting Engine...");
-        currentState.onExit();
-        inputProvider.stop();
-    }
-
+    // --- Helper Methods ---
     private void postAction() {
         view.renderPrompt(currentState.getPrompt());
     }
@@ -178,6 +145,45 @@ public class GameEngine implements InputProvider.InputListener {
     public void changeState(EngineState newState) {
         this.currentState = newState;
     }
+
+    /**
+     * Executes a network request synchronously, handles the server response, and automatically
+     * triggers UI rendering.
+     */
+    public Status execute(ClientRequest request) {
+        try {
+            String jsonReq = gson.toJson(request);
+            String jsonRes = gateway.sendRequest(jsonReq);
+
+            Operation op = request.getOperation();
+            Class<? extends ServerResponse> resClass = op.getResponseClass();
+            Class<? extends DTO> dtoClass = op.getResponseDtoClass();
+
+            Type type;
+            if (dtoClass == null) {
+                type = resClass;
+            } else {
+                type = TypeToken.getParameterized(resClass, dtoClass).getType();
+            }
+
+            ServerResponse<? extends DTO> response = gson.fromJson(jsonRes, type);
+            view.showResponse(response);
+
+            if (response.getStatus() == Status.OK && response.getData() != null) {
+                view.render(response.getData());
+            }
+
+            return response.getStatus();
+
+        } catch (IOException e) {
+            view.showError("Network error: " + e.getMessage());
+            return Status.ERROR;
+        } catch (Exception e) {
+            view.showError("Unexpected error during request processing: " + e.getMessage());
+            return Status.ERROR;
+        }
+    }
+
 
     // --- Getters for Modules and Infrastructure ---
     public NetworkGateway getGateway() {
