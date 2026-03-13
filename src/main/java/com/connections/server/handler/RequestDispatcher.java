@@ -42,60 +42,56 @@ public class RequestDispatcher {
             ServerResponse<?> response;
             Operation op = null;
             try {
-                // 1. Pipeline: Deserialize -> Route -> Session Management
-                ClientRequest request = deserializeRequest(json);
-                op = request.getOperation();
+                // 1. Identify true operation (resolving ambiguity)
+                op = resolveOperation(json);
                 
-                response = routeToCoordinator(request, session.getUsername());
+                // 2. Deserialize to specialized class
+                ClientRequest request = gson.fromJson(json, op.getRequestClass());
                 
-                updateSessionState(session, request, response);
+                // 3. Route using the resolved operation
+                response = routeToCoordinator(request, op, session.getUsername());
+                
+                updateSessionState(session, request, op, response);
 
             } catch (Exception e) {
                 response = createErrorResponse(op, "Internal error: " + e.getMessage());
             }
 
-            // 2. Pipeline: Serialize -> Enqueue -> Callback
             session.enqueueOutput(serializeResponse(response));
             onResponseReady.run();
         });
     }
 
-    private ClientRequest deserializeRequest(String json) {
-        // Use a header object to avoid manual string keys like "operation" or "gameId"
+    private Operation resolveOperation(String json) {
         RequestHeader header = gson.fromJson(json, RequestHeader.class);
         Operation op = header.operation;
-        
-        if (op == null) throw new IllegalArgumentException("Unknown or missing operation");
+        if (op == null) throw new IllegalArgumentException("Unknown operation");
 
-        // Resolve ambiguity between ACTIVE and PAST puzzle requests
         if (header.gameId != null) {
-            if (op == Operation.GET_PUZZLE_INFO) op = Operation.GET_PAST_PUZZLE_INFO;
-            else if (op == Operation.GET_PUZZLE_STATS) op = Operation.GET_PAST_PUZZLE_STATS;
+            if (op == Operation.GET_PUZZLE_INFO) return Operation.GET_PAST_PUZZLE_INFO;
+            if (op == Operation.GET_PUZZLE_STATS) return Operation.GET_PAST_PUZZLE_STATS;
         }
-
-        return gson.fromJson(json, op.getRequestClass());
+        return op;
     }
 
-    private ServerResponse<?> routeToCoordinator(ClientRequest req, String username) {
+    private ServerResponse<?> routeToCoordinator(ClientRequest req, Operation op, String username) {
         if (req instanceof UserRequest) {
-            return userCoordinator.handle((UserRequest) req, username);
+            return userCoordinator.handle((UserRequest) req, op, username);
         } else if (req instanceof GameplayRequest) {
-            return puzzleCoordinator.handle((GameplayRequest) req, username);
+            return puzzleCoordinator.handle((GameplayRequest) req, op, username);
         } else if (req instanceof HistoryRequest) {
-            return historyCoordinator.handle((HistoryRequest) req, username, puzzleCoordinator);
+            return historyCoordinator.handle((HistoryRequest) req, op, username, puzzleCoordinator);
         }
-        return UserResponse.error(req.getOperation(), "Unsupported request type.");
+        return UserResponse.error(op, "Unsupported request type.");
     }
 
     private ByteBuffer serializeResponse(ServerResponse<?> response) {
         String json = gson.toJson(response) + "\n";
-        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
-        return ByteBuffer.wrap(bytes);
+        return ByteBuffer.wrap(json.getBytes(StandardCharsets.UTF_8));
     }
 
-    private void updateSessionState(ClientSession session, ClientRequest request, ServerResponse<?> response) {
+    private void updateSessionState(ClientSession session, ClientRequest request, Operation op, ServerResponse<?> response) {
         if (response.getStatus() == Status.OK) {
-            Operation op = request.getOperation();
             if (op == Operation.LOGIN) {
                 session.setUsername(((UserRequest)request).getUsername());
             } else if (op == Operation.LOGOUT) {
@@ -116,9 +112,6 @@ public class RequestDispatcher {
         return UserResponse.error(op, msg);
     }
 
-    /**
-     * Small DTO used to probe the operation type without full deserialization.
-     */
     private static class RequestHeader {
         Operation operation;
         @SerializedName("gameId") Integer gameId;

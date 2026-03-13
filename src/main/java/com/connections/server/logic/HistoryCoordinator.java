@@ -5,6 +5,7 @@ import com.connections.common.protocol.client_requests.HistoryRequest;
 import com.connections.common.protocol.server_responses.HistoryResponse;
 import com.connections.common.protocol.server_responses.dto.*;
 import com.connections.server.models.*;
+import com.connections.server.network.ClientSession;
 import com.connections.server.persistence.HistoryDAO;
 
 import java.util.*;
@@ -27,8 +28,7 @@ public class HistoryCoordinator {
     /**
      * Centralized processing for history-related requests.
      */
-    public HistoryResponse handle(HistoryRequest req, String username, PuzzleCoordinator puzzleCoordinator) {
-        Operation op = req.getOperation();
+    public HistoryResponse handle(HistoryRequest req, Operation op, String username, PuzzleCoordinator puzzleCoordinator) {
         switch (op) {
             case GET_PAST_PUZZLE_INFO:
                 PuzzleStateDTO state = puzzleCoordinator.getPersonalStatus(username, req.getPuzzleId());

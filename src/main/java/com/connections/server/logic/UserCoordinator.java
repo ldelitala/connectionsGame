@@ -30,13 +30,8 @@ public class UserCoordinator {
 
     /**
      * Centralized processing for user-related requests.
-     * 
-     * @param req the user request
-     * @param currentUsername the username currently associated with the session (if any)
-     * @return a specialized UserResponse
      */
-    public UserResponse handle(UserRequest req, String currentUsername) {
-        Operation op = req.getOperation();
+    public UserResponse handle(UserRequest req, Operation op, String currentUsername) {
         switch (op) {
             case REGISTER:
                 return register(req.getUsername(), req.getPassword()) 

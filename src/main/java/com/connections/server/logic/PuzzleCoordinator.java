@@ -40,9 +40,8 @@ public class PuzzleCoordinator {
     /**
      * Centralized processing for gameplay-related requests.
      */
-    public GameplayResponse handle(GameplayRequest req, String username) {
-        if (username == null) return GameplayResponse.forbidden(req.getOperation(), "Login required.");
-        Operation op = req.getOperation();
+    public GameplayResponse handle(GameplayRequest req, Operation op, String username) {
+        if (username == null) return GameplayResponse.forbidden(op, "Login required.");
         
         switch (op) {
             case SUBMIT_PROPOSAL:
