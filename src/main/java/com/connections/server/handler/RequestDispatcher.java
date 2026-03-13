@@ -10,12 +10,14 @@ import com.google.gson.annotations.SerializedName;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
  * High-performance Request Dispatcher.
- * Routes requests to specialized coordinators and handles session state.
+ * Routes requests using a functional routing table to avoid instanceof checks.
  */
 public class RequestDispatcher {
     private final UserCoordinator userCoordinator;
@@ -23,6 +25,9 @@ public class RequestDispatcher {
     private final HistoryCoordinator historyCoordinator;
     private final ExecutorService workerPool;
     private final Gson gson = new Gson();
+
+    /** Table mapping request classes to their respective handler logic. */
+    private final Map<Class<? extends ClientRequest>, RequestHandler> routingTable = new HashMap<>();
 
     public RequestDispatcher(UserCoordinator userCoordinator, 
                              PuzzleCoordinator puzzleCoordinator, 
@@ -32,6 +37,18 @@ public class RequestDispatcher {
         this.puzzleCoordinator = puzzleCoordinator;
         this.historyCoordinator = historyCoordinator;
         this.workerPool = Executors.newFixedThreadPool(poolSize);
+        initializeRoutingTable();
+    }
+
+    private void initializeRoutingTable() {
+        routingTable.put(UserRequest.class, (req, op, user) -> 
+            userCoordinator.handle((UserRequest) req, op, user));
+            
+        routingTable.put(GameplayRequest.class, (req, op, user) -> 
+            puzzleCoordinator.handle((GameplayRequest) req, op, user));
+            
+        routingTable.put(HistoryRequest.class, (req, op, user) -> 
+            historyCoordinator.handle((HistoryRequest) req, op, user, puzzleCoordinator));
     }
 
     /**
@@ -42,15 +59,10 @@ public class RequestDispatcher {
             ServerResponse<?> response;
             Operation op = null;
             try {
-                // 1. Identify true operation (resolving ambiguity)
                 op = resolveOperation(json);
-                
-                // 2. Deserialize to specialized class
                 ClientRequest request = gson.fromJson(json, op.getRequestClass());
                 
-                // 3. Route using the resolved operation
                 response = routeToCoordinator(request, op, session.getUsername());
-                
                 updateSessionState(session, request, op, response);
 
             } catch (Exception e) {
@@ -75,14 +87,11 @@ public class RequestDispatcher {
     }
 
     private ServerResponse<?> routeToCoordinator(ClientRequest req, Operation op, String username) {
-        if (req instanceof UserRequest) {
-            return userCoordinator.handle((UserRequest) req, op, username);
-        } else if (req instanceof GameplayRequest) {
-            return puzzleCoordinator.handle((GameplayRequest) req, op, username);
-        } else if (req instanceof HistoryRequest) {
-            return historyCoordinator.handle((HistoryRequest) req, op, username, puzzleCoordinator);
+        RequestHandler handler = routingTable.get(req.getClass());
+        if (handler == null) {
+            return UserResponse.error(op, "No coordinator registered for request type: " + req.getClass().getSimpleName());
         }
-        return UserResponse.error(op, "Unsupported request type.");
+        return handler.handle(req, op, username);
     }
 
     private ByteBuffer serializeResponse(ServerResponse<?> response) {
@@ -110,6 +119,14 @@ public class RequestDispatcher {
         if (resClass == GameplayResponse.class) return GameplayResponse.error(op, msg);
         if (resClass == HistoryResponse.class) return HistoryResponse.error(op, msg);
         return UserResponse.error(op, msg);
+    }
+
+    /**
+     * Functional interface for dynamic request routing.
+     */
+    @FunctionalInterface
+    private interface RequestHandler {
+        ServerResponse<?> handle(ClientRequest request, Operation op, String username);
     }
 
     private static class RequestHeader {
