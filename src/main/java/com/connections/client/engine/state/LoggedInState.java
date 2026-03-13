@@ -1,12 +1,12 @@
 package com.connections.client.engine.state;
 
 import com.connections.client.engine.GameEngine;
+import com.connections.common.protocol.client_requests.*;
 import com.connections.common.protocol.server_responses.Status;
 import java.util.List;
 
 /**
- * State for players who are authenticated. Actions are delegated to the appropriate Module which
- * maintains its own gateway.
+ * State for players who are authenticated.
  */
 public class LoggedInState implements EngineState {
 
@@ -30,7 +30,7 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onLogout() {
-        Status status = engine.getUserModule().handleLogout();
+        Status status = engine.getExecutor().execute(UserRequest.logout());
         if (status == Status.OK) {
             engine.changeState(new LoggedOutState(engine));
         }
@@ -38,45 +38,49 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onUpdateCredentials(String oldPass, String newName, String newPass) {
-        Status status = engine.getUserModule().handleUpdate(username, oldPass, newName, newPass);
-        if (status == Status.OK && newName != null) {
+        if (newName == null && newPass == null) {
+            engine.getView().showMessage("No changes provided.");
+            return;
+        }
+        Status status = engine.getExecutor().execute(UserRequest.updateCredentials(username, oldPass, newName, newPass));
+        if (status == Status.OK && newName != null && !newName.equals("-")) {
             this.username = newName;
         }
     }
 
     @Override
     public void onGuess(List<String> words) {
-        engine.getGameplayModule().handleGuess(words);
+        engine.getExecutor().execute(GameplayRequest.submitProposal(words));
     }
 
     @Override
     public void onRequestBoard() {
-        engine.getGameplayModule().handleStatus();
+        engine.getExecutor().execute(GameplayRequest.getCurrentInfo());
     }
 
     @Override
     public void onRequestStats() {
-        engine.getGameplayModule().handleStats();
+        engine.getExecutor().execute(GameplayRequest.getCurrentStats());
     }
 
     @Override
     public void onRequestPastInfo(int puzzleId) {
-        engine.getHistoryModule().handlePastInfo(puzzleId);
+        engine.getExecutor().execute(HistoryRequest.getPuzzleInfo(puzzleId));
     }
 
     @Override
     public void onRequestGlobalStats(int puzzleId) {
-        engine.getHistoryModule().handleGlobalStats(puzzleId);
+        engine.getExecutor().execute(HistoryRequest.getPuzzleStats(puzzleId));
     }
 
     @Override
     public void onRequestRanking(String username, Integer topK) {
-        engine.getHistoryModule().handleRanking(username, topK);
+        engine.getExecutor().execute(HistoryRequest.getLeaderboard(username, topK));
     }
 
     @Override
     public void onRequestHistory() {
-        engine.getHistoryModule().handleHistory();
+        engine.getExecutor().execute(HistoryRequest.getPlayerStats());
     }
 
     @Override
@@ -86,7 +90,7 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onExit() {
-        engine.getUserModule().handleLogout();
+        engine.getExecutor().execute(UserRequest.logout());
     }
 
     @Override

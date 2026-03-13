@@ -1,7 +1,6 @@
 package com.connections.client.engine;
 
 import com.connections.client.network.NetworkGateway;
-import com.connections.client.engine.modules.*;
 import com.connections.client.engine.state.*;
 import com.connections.client.ui.ClientView;
 import com.connections.client.ui.InputProvider;
@@ -18,10 +17,7 @@ public class GameEngine implements InputProvider.InputListener {
     private final ClientView view;
     private final InputProvider inputProvider;
 
-    private final UserModule userModule;
-    private final GameplayModule gameplayModule;
-    private final HistoryModule historyModule;
-
+    private final EngineExecutor executor;
     private EngineState currentState;
 
     public GameEngine(NetworkGateway gateway, int udpPort, ClientView view,
@@ -30,9 +26,7 @@ public class GameEngine implements InputProvider.InputListener {
         this.udpPort = udpPort;
         this.view = view;
         this.inputProvider = inputProvider;
-        this.userModule = new UserModule(view, gateway);
-        this.gameplayModule = new GameplayModule(view, gateway);
-        this.historyModule = new HistoryModule(view, gateway);
+        this.executor = new EngineExecutor(gateway, view);
         this.currentState = new LoggedOutState(this);
     }
 
@@ -152,15 +146,7 @@ public class GameEngine implements InputProvider.InputListener {
         return view;
     }
 
-    public UserModule getUserModule() {
-        return userModule;
-    }
-
-    public GameplayModule getGameplayModule() {
-        return gameplayModule;
-    }
-
-    public HistoryModule getHistoryModule() {
-        return historyModule;
+    public EngineExecutor getExecutor() {
+        return executor;
     }
 }

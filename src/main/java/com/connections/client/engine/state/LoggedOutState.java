@@ -1,12 +1,12 @@
 package com.connections.client.engine.state;
 
 import com.connections.client.engine.GameEngine;
+import com.connections.common.protocol.client_requests.UserRequest;
 import com.connections.common.protocol.server_responses.Status;
 import java.util.List;
 
 /**
- * State for players who are not authenticated. Actions are delegated to the UserModule which now
- * maintains its own gateway.
+ * State for players who are not authenticated.
  */
 public class LoggedOutState implements EngineState {
 
@@ -21,12 +21,12 @@ public class LoggedOutState implements EngineState {
 
     @Override
     public void onRegister(String username, String password) {
-        engine.getUserModule().handleRegister(username, password);
+        engine.getExecutor().execute(UserRequest.register(username, password));
     }
 
     @Override
     public void onLogin(String username, String password) {
-        Status status = engine.getUserModule().handleLogin(username, password, engine.getUdpPort());
+        Status status = engine.getExecutor().execute(UserRequest.login(username, password, engine.getUdpPort()));
         if (status == Status.OK) {
             engine.changeState(new LoggedInState(engine, username));
         }

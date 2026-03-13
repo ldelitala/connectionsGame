@@ -115,6 +115,19 @@ public class ConsoleView implements ClientView {
     }
 
     @Override
+    public synchronized void render(DTO data) {
+        if (data instanceof GuessResultDTO) showGuessResult((GuessResultDTO) data);
+        else if (data instanceof PuzzleStateDTO) showPuzzleInfo((PuzzleStateDTO) data);
+        else if (data instanceof PuzzleStatsDTO) showPuzzleStats((PuzzleStatsDTO) data);
+        else if (data instanceof PlayerStatsDTO) showPlayerStats((PlayerStatsDTO) data);
+        else if (data instanceof LeaderboardDTO) showLeaderboard((LeaderboardDTO) data);
+        else if (data instanceof LeaderboardEntryDTO) {
+            LeaderboardEntryDTO e = (LeaderboardEntryDTO) data;
+            System.out.println("Your rank: " + e.getRank() + " | Username: " + e.getUsername() + " | Score: " + e.getScore());
+        }
+    }
+
+    @Override
     public synchronized void showHelp(boolean loggedIn) {
         System.out.print(HELP_SYSTEM);
         System.out.print(loggedIn ? HELP_GAMEPLAY : HELP_AUTH);

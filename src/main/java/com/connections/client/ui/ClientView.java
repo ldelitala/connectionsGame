@@ -15,6 +15,9 @@ public interface ClientView {
     void showPuzzleStats(PuzzleStatsDTO stats);
     void showPlayerStats(PlayerStatsDTO stats);
     void showLeaderboard(LeaderboardDTO leaderboard);
+    
+    /** Dispatcher for DTO rendering based on type. */
+    void render(DTO data);
 
     /** Displays the help menu based on the current authentication state. */
     void showHelp(boolean loggedIn);
