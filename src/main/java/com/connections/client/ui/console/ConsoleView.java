@@ -2,13 +2,12 @@ package com.connections.client.ui.console;
 
 import com.connections.client.ui.ClientView;
 import com.connections.common.protocol.server_responses.dto.*;
-import com.connections.common.models.Category;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.notifications.*;
-import java.util.List;
 
 /**
- * CLI implementation of ClientView. Methods are synchronized to ensure atomic console output.
+ * CLI implementation of ClientView. Acts as a dispatcher that delegates actual painting to
+ * ConsoleRenderer.
  */
 public class ConsoleView implements ClientView {
 
@@ -18,12 +17,12 @@ public class ConsoleView implements ClientView {
                     "  help              : Show this list\n" +
                     "  exit              : Logout and close the application\n";
 
-    private static final String HELP_AUTH =
+    private static final String HELP_LOGGEDIN =
             "\n--- AUTHENTICATION ---\n" +
                     "  register <uP> <psw>: Create a new account\n" +
                     "  login <uP> <psw>   : Sign in to your account\n";
 
-    private static final String HELP_GAMEPLAY =
+    private static final String HELP_LOGGEDOUT =
             "\n--- GAMEPLAY COMMANDS ---\n" +
                     "  board             : Show current puzzle board\n" +
                     "  guess <w1 w2 w3 w4>: Submit a proposal (exactly 4 words)\n" +
@@ -40,127 +39,44 @@ public class ConsoleView implements ClientView {
                     "  logout            : Sign out of the session\n";
     // formatter:on
 
-    private static final int MS_TO_S_RATIO = 1000;
-    private static final int MAX_MISTAKES = 4;
-
     @Override
     public synchronized void showResponse(ServerResponse<?> response) {
         System.out.println("[" + response.getStatus() + "] " + response.getMessage());
     }
 
     @Override
-    public synchronized void showGuessResult(GuessResultDTO result) {
-        if ("success".equals(result.getStatus())) {
-            System.out.println("Correct! +" + result.getPointsDelta() + " points.");
-        } else {
-            System.out.println("Wrong! " + result.getPointsDelta() + " points.");
-        }
-        System.out.println("Remaining words: " + String.join(", ", result.getRemainingWords()));
-        System.out.println("New total score: " + result.getTotalPoints());
-    }
-
-    @Override
-    public synchronized void showPuzzleInfo(PuzzleStateDTO info) {
-        if (info.isFinished()) {
-            System.out.println("Puzzle is solved or expired. Use 'history' or 'info' for details.");
-            return;
-        }
-        System.out.println("--- Puzzle Board ---");
-        System.out.println("Time remaining: " + (info.getRemainingTime() / MS_TO_S_RATIO) + "s");
-        System.out.println(String.format("Mistakes made: %d/%d", info.getMistakes(), MAX_MISTAKES));
-
-        if (info.getFoundGroups() != null && !info.getFoundGroups().isEmpty()) {
-            System.out.println("Categories found:");
-            for (Category category : info.getFoundGroups()) {
-                System.out.println("  - " + category.getTheme() + ": "
-                        + String.join(", ", category.getWords()));
-            }
-        }
-
-        if (info.getRemainingWords() != null && !info.getRemainingWords().isEmpty()) {
-            System.out.println("Remaining words: " + String.join(", ", info.getRemainingWords()));
-        }
-        System.out.println("Current score: " + info.getScore());
-    }
-
-    @Override
-    public synchronized void showPuzzleStats(PuzzleStatsDTO stats) {
-        System.out.println("--- Global Puzzle Statistics ---");
-        System.out.println("Active players: " + stats.getActivePlayers());
-        System.out.println("Players finished: " + stats.getFinishedPlayers());
-        System.out.println("Winners: " + stats.getWonPlayers());
-        if (stats.getAverageScore() > 0) {
-            System.out.println("Average score: " + stats.getAverageScore());
-        }
-    }
-
-    @Override
-    public synchronized void showPlayerStats(PlayerStatsDTO stats) {
-        System.out.println("--- Your Career Statistics ---");
-        System.out.println("Puzzles completed: " + stats.getPuzzlesCompleted());
-        System.out.println("Win rate: " + String.format("%.2f%%", stats.getWinRate()));
-        System.out.println("Total score: " + stats.getTotalScore());
-        System.out.println("Average score: " + stats.getAverageScore());
-    }
-
-    @Override
-    public synchronized void showLeaderboard(LeaderboardDTO leaderboard) {
-        System.out.println("--- Global Leaderboard ---");
-        List<LeaderboardEntryDTO> entries = leaderboard.getEntries();
-        for (int i = 0; i < entries.size(); i++) {
-            LeaderboardEntryDTO entry = entries.get(i);
-            System.out.printf("%2d. %-15s | Score: %5d\n", (i + 1), entry.getUsername(),
-                    entry.getScore());
-        }
-    }
-
-    @Override
     public synchronized void render(DTO data) {
-        if (data instanceof GuessResultDTO) showGuessResult((GuessResultDTO) data);
-        else if (data instanceof PuzzleStateDTO) showPuzzleInfo((PuzzleStateDTO) data);
-        else if (data instanceof PuzzleStatsDTO) showPuzzleStats((PuzzleStatsDTO) data);
-        else if (data instanceof PlayerStatsDTO) showPlayerStats((PlayerStatsDTO) data);
-        else if (data instanceof LeaderboardDTO) showLeaderboard((LeaderboardDTO) data);
-        else if (data instanceof LeaderboardEntryDTO) {
-            LeaderboardEntryDTO e = (LeaderboardEntryDTO) data;
-            System.out.println("Your rank: " + e.getRank() + " | Username: " + e.getUsername() + " | Score: " + e.getScore());
-        }
+        if (data instanceof GuessResultDTO)
+            ConsoleRenderer.paintGuessResult((GuessResultDTO) data);
+        else if (data instanceof PuzzleStateDTO)
+            ConsoleRenderer.paintPuzzleInfo((PuzzleStateDTO) data);
+        else if (data instanceof PuzzleStatsDTO)
+            ConsoleRenderer.paintPuzzleStats((PuzzleStatsDTO) data);
+        else if (data instanceof PlayerStatsDTO)
+            ConsoleRenderer.paintPlayerStats((PlayerStatsDTO) data);
+        else if (data instanceof LeaderboardDTO)
+            ConsoleRenderer.paintLeaderboard((LeaderboardDTO) data);
+        else if (data instanceof LeaderboardEntryDTO)
+            ConsoleRenderer.paintRank((LeaderboardEntryDTO) data);
+    }
+
+    @Override
+    public synchronized void render(Notification n) {
+        if (n instanceof NewPuzzleNotification)
+            ConsoleRenderer.paintNewPuzzleNotify((NewPuzzleNotification) n);
+        else if (n instanceof PuzzleEndNotification)
+            ConsoleRenderer.paintPuzzleEndNotify((PuzzleEndNotification) n);
+        else if (n instanceof PlayerPuzzleSummaryNotification)
+            ConsoleRenderer.paintPlayerSummaryNotify((PlayerPuzzleSummaryNotification) n);
+
+        System.out.print("> "); // to ensure prompt is always on a new line after notifications
     }
 
     @Override
     public synchronized void showHelp(boolean loggedIn) {
         System.out.print(HELP_SYSTEM);
-        System.out.print(loggedIn ? HELP_GAMEPLAY : HELP_AUTH);
+        System.out.print(loggedIn ? HELP_LOGGEDOUT : HELP_LOGGEDIN);
         System.out.println();
-    }
-
-    @Override
-    public synchronized void onNewPuzzle(NewPuzzleNotification n) {
-        System.out.println("\n[NOTIFICATION] A new Puzzle has started! ID: " + n.getPuzzleId());
-        System.out.println("Words: " + String.join(", ", n.getWords()));
-        System.out.println("Type 'board' to view the puzzle board.");
-        System.out.print("> ");
-    }
-
-    @Override
-    public synchronized void onPuzzleEnd(PuzzleEndNotification n) {
-        System.out.println("\n[NOTIFICATION] The current Puzzle has ended.");
-        if (n.getStats() != null) {
-            showPuzzleStats(n.getStats());
-        }
-        if (n.getLeaderboard() != null) {
-            showLeaderboard(n.getLeaderboard());
-        }
-        System.out.print("> ");
-    }
-
-    @Override
-    public synchronized void onPlayerSummary(PlayerPuzzleSummaryNotification n) {
-        System.out.println("\n[NOTIFICATION] Personal summary for the concluded puzzle:");
-        if (n.getPersonalInfo() != null) {
-            showPuzzleInfo(n.getPersonalInfo());
-        }
-        System.out.print("> ");
     }
 
     @Override

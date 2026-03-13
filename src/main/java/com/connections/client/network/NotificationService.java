@@ -70,23 +70,14 @@ public class NotificationService extends Thread implements AutoCloseable {
             if (!obj.has(Notification.FIELD_TYPE))
                 return;
 
-            String type = obj.get(Notification.FIELD_TYPE).getAsString();
+            String typeId = obj.get(Notification.FIELD_TYPE).getAsString();
+            NotificationType type = NotificationType.fromId(typeId);
 
-            // Deserialization must target the specific subclass to populate all fields
-            switch (type) {
-                case NewPuzzleNotification.TYPE_ID:
-                    view.onNewPuzzle(gson.fromJson(json, NewPuzzleNotification.class));
-                    break;
-                case PuzzleEndNotification.TYPE_ID:
-                    view.onPuzzleEnd(gson.fromJson(json, PuzzleEndNotification.class));
-                    break;
-                case PlayerPuzzleSummaryNotification.TYPE_ID:
-                    view.onPlayerSummary(
-                            gson.fromJson(json, PlayerPuzzleSummaryNotification.class));
-                    break;
-                default:
-                    view.showError("Received unknown notification type: " + type);
-                    break;
+            if (type != null) {
+                Notification n = gson.fromJson(json, type.getNotificationClass());
+                view.render(n);
+            } else {
+                view.showError("Received unknown notification type: " + typeId);
             }
 
         } catch (Exception e) {
