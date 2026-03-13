@@ -6,8 +6,7 @@ import com.connections.common.protocol.server_responses.*;
 import com.connections.server.network.ClientSession;
 import com.connections.server.logic.*;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.annotations.SerializedName;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -48,7 +47,6 @@ public class RequestDispatcher {
                 op = request.getOperation();
                 
                 response = routeToCoordinator(request, session.getUsername());
-                
                 updateSessionState(session, request, response);
 
             } catch (Exception e) {
@@ -62,14 +60,18 @@ public class RequestDispatcher {
     }
 
     private ClientRequest deserializeRequest(String json) {
-        JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-        String opString = obj.get("operation").getAsString();
-        Operation op = Operation.valueOf(findOperationConstant(opString));
+        // Use a header object to avoid manual string keys like "operation" or "gameId"
+        RequestHeader header = gson.fromJson(json, RequestHeader.class);
+        Operation op = header.operation;
+        
+        if (op == null) throw new IllegalArgumentException("Unknown or missing operation");
 
         Class<? extends ClientRequest> reqClass = op.getRequestClass();
         if (reqClass == null) {
-            reqClass = obj.has("gameId") ? HistoryRequest.class : GameplayRequest.class;
+            // Logic for ambiguous requests (info/stats)
+            reqClass = (header.gameId != null) ? HistoryRequest.class : GameplayRequest.class;
         }
+        
         return gson.fromJson(json, reqClass);
     }
 
@@ -113,15 +115,12 @@ public class RequestDispatcher {
         return UserResponse.error(op, msg);
     }
 
-    private String findOperationConstant(String serializedName) {
-        for (Operation op : Operation.values()) {
-            try {
-                java.lang.reflect.Field field = Operation.class.getField(op.name());
-                com.google.gson.annotations.SerializedName sn = field.getAnnotation(com.google.gson.annotations.SerializedName.class);
-                if (sn != null && sn.value().equals(serializedName)) return op.name();
-            } catch (Exception ignored) {}
-        }
-        return serializedName.toUpperCase();
+    /**
+     * Small DTO used to probe the operation type without full deserialization.
+     */
+    private static class RequestHeader {
+        Operation operation;
+        @SerializedName("gameId") Integer gameId;
     }
 
     public void handleDisconnect(String username) {
