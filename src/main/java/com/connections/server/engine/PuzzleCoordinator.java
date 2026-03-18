@@ -1,5 +1,6 @@
 package com.connections.server.engine;
 
+import com.connections.common.models.Category;
 import com.connections.common.protocol.Operation;
 import com.connections.common.protocol.client_requests.GameplayRequest;
 import com.connections.common.protocol.server_responses.ServerResponse;
@@ -7,6 +8,7 @@ import com.connections.common.protocol.server_responses.dto.*;
 import com.connections.server.models.*;
 import com.connections.server.network.UdpNotifier;
 import com.connections.server.persistence.PuzzlesDAO;
+import com.connections.server.persistence.ServerStateDAO;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -21,6 +23,7 @@ public class PuzzleCoordinator {
     private final PuzzlesDAO puzzlesDAO;
     private final UserCoordinator userCoordinator;
     private final UdpNotifier udpNotifier;
+    private final ServerStateDAO stateDAO;
     private final long puzzleDurationMillis;
     private final BiConsumer<Integer, Map<String, PlayerResult>> onPuzzleEnd;
     
@@ -34,11 +37,13 @@ public class PuzzleCoordinator {
     private final Map<String, List<List<String>>> playerCorrectGuesses = new ConcurrentHashMap<>();
 
     public PuzzleCoordinator(PuzzlesDAO puzzlesDAO, UserCoordinator userCoordinator, 
-                             UdpNotifier udpNotifier, long puzzleDurationMillis,
+                             UdpNotifier udpNotifier, ServerStateDAO stateDAO,
+                             long puzzleDurationMillis,
                              BiConsumer<Integer, Map<String, PlayerResult>> onPuzzleEnd) {
         this.puzzlesDAO = puzzlesDAO;
         this.userCoordinator = userCoordinator;
         this.udpNotifier = udpNotifier;
+        this.stateDAO = stateDAO;
         this.puzzleDurationMillis = puzzleDurationMillis;
         this.onPuzzleEnd = onPuzzleEnd;
     }
@@ -75,14 +80,20 @@ public class PuzzleCoordinator {
         }
     }
 
-    private synchronized void loadNextPuzzle() {
-        this.currentPuzzle = puzzlesDAO.getRandomPuzzle();
+    synchronized void loadNextPuzzle() {
+        this.currentPuzzle = puzzlesDAO.getNextPuzzle();
         this.puzzleStartTime = System.currentTimeMillis();
         playerMistakes.clear();
         completedPlayers.clear();
         playerCorrectGuesses.clear();
         
+        // Persist the rotation state so we can resume after a restart
+        if (stateDAO != null) {
+            stateDAO.saveNextPuzzleIndex(puzzlesDAO.getNextPuzzleIndex());
+        }
+
         if (currentPuzzle != null) {
+            System.out.println("Starting new puzzle: " + currentPuzzle.getPuzzleId());
             udpNotifier.broadcastNewPuzzle(currentPuzzle.getPuzzleId(), currentPuzzle.getAllWords());
         }
     }
@@ -98,11 +109,36 @@ public class PuzzleCoordinator {
         String status;
 
         if (isCorrect) {
+            // Find canonical words from the puzzle definition for correct removal later
+            List<String> canonicalWords = words;
+            for (Category cat : currentPuzzle.getGroups()) {
+                if (cat.getWords().size() == words.size()) {
+                    boolean match = true;
+                    for (String w : words) {
+                        boolean foundInCat = false;
+                        for (String cw : cat.getWords()) {
+                            if (cw.equalsIgnoreCase(w)) { foundInCat = true; break; }
+                        }
+                        if (!foundInCat) { match = false; break; }
+                    }
+                    if (match) { canonicalWords = cat.getWords(); break; }
+                }
+            }
+
             List<List<String>> correctOnes = playerCorrectGuesses.computeIfAbsent(username, k -> new ArrayList<>());
             for (List<String> found : correctOnes) {
-                if (new HashSet<>(found).equals(new HashSet<>(words))) return null; 
+                // Case-insensitive duplicate check
+                boolean sameSet = true;
+                for (String f : found) {
+                    boolean foundInWords = false;
+                    for (String w : words) {
+                        if (w.equalsIgnoreCase(f)) { foundInWords = true; break; }
+                    }
+                    if (!foundInWords) { sameSet = false; break; }
+                }
+                if (sameSet) return null; 
             }
-            correctOnes.add(words);
+            correctOnes.add(canonicalWords); // Store canonical words (uppercase)
             pointsDelta = currentPuzzle.getPointsForWords(words);
             status = "success";
             
@@ -123,7 +159,20 @@ public class PuzzleCoordinator {
         }
 
         User u = userCoordinator.getUser(username);
-        return GuessResultDTO.create(status, pointsDelta, u != null ? u.getTotalScore() : 0, getRemainingWords(username));
+        int totalScore;
+        if (u != null) {
+            if (completedPlayers.contains(username)) {
+                // If finished, u.getTotalScore() already includes current puzzle points
+                totalScore = u.getTotalScore();
+            } else {
+                // If still playing, sum career + current session points
+                totalScore = u.getTotalScore() + createPlayerSnapshot(username).getPoints();
+            }
+        } else {
+            totalScore = createPlayerSnapshot(username).getPoints();
+        }
+        
+        return GuessResultDTO.create(status, pointsDelta, totalScore, getRemainingWords(username));
     }
 
     private void recordEndGameStats(String username, boolean won) {
@@ -174,6 +223,19 @@ public class PuzzleCoordinator {
         if (currentPuzzle != null && currentPuzzle.getPuzzleId() == puzzleId) {
             long remaining = Math.max(0, puzzleDurationMillis - (System.currentTimeMillis() - puzzleStartTime));
             User u = userCoordinator.getUser(username);
+            PlayerResult res = createPlayerSnapshot(username);
+            
+            int totalScore;
+            if (u != null) {
+                if (completedPlayers.contains(username)) {
+                    totalScore = u.getTotalScore();
+                } else {
+                    totalScore = u.getTotalScore() + res.getPoints();
+                }
+            } else {
+                totalScore = res.getPoints();
+            }
+
             return PuzzleStateDTO.create(
                 puzzleId, 
                 completedPlayers.contains(username),
@@ -181,7 +243,7 @@ public class PuzzleCoordinator {
                 currentPuzzle.getCategoriesForGroups(playerCorrectGuesses.getOrDefault(username, Collections.emptyList())),
                 getRemainingWords(username),
                 playerMistakes.getOrDefault(username, 0),
-                u != null ? u.getTotalScore() : 0
+                totalScore
             );
         }
         return null;
@@ -189,12 +251,19 @@ public class PuzzleCoordinator {
 
     public PuzzleStatsDTO getGlobalStats(int puzzleId) {
         if (currentPuzzle != null && currentPuzzle.getPuzzleId() == puzzleId) {
-            int active = playerMistakes.size() - completedPlayers.size();
+            Set<String> participants = new HashSet<>(playerMistakes.keySet());
+            participants.addAll(playerCorrectGuesses.keySet());
+            participants.addAll(completedPlayers);
+
+            int total = participants.size();
+            int finished = completedPlayers.size();
+            int active = total - finished;
+            
             long wonCount = completedPlayers.stream()
                 .filter(u -> playerCorrectGuesses.getOrDefault(u, Collections.emptyList()).size() >= 3)
                 .count();
             long remaining = Math.max(0, puzzleDurationMillis - (System.currentTimeMillis() - puzzleStartTime));
-            return PuzzleStatsDTO.active(puzzleId, remaining, active, completedPlayers.size(), (int)wonCount);
+            return PuzzleStatsDTO.active(puzzleId, remaining, active, finished, (int)wonCount);
         }
         return null;
     }

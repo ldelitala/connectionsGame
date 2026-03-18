@@ -22,6 +22,7 @@ public class ServerConfig {
     private static final String DEFAULT_PUZZLE_DATA_PATH = "Connections_Data.json";
     private static final String DEFAULT_USER_DATA_PATH = "data/users.json";
     private static final String DEFAULT_LOG_PATH = "data/games_log.json";
+    private static final String DEFAULT_STATE_PATH = "data/server_state.json";
     private static final String DEFAULT_PUZZLE_DURATION_MS = "300000"; // 5 minutes
 
     // Keys
@@ -31,6 +32,7 @@ public class ServerConfig {
     private static final String KEY_PUZZLE_DATA = "server.game_data_path";
     private static final String KEY_USER_DATA = "server.user_data_path";
     private static final String KEY_LOG_PATH = "server.log_path";
+    private static final String KEY_STATE_PATH = "server.state_path";
     private static final String KEY_PUZZLE_DURATION = "server.game_duration_ms";
 
     public ServerConfig() {
@@ -50,6 +52,7 @@ public class ServerConfig {
         props.setProperty(KEY_PUZZLE_DATA, DEFAULT_PUZZLE_DATA_PATH);
         props.setProperty(KEY_USER_DATA, DEFAULT_USER_DATA_PATH);
         props.setProperty(KEY_LOG_PATH, DEFAULT_LOG_PATH);
+        props.setProperty(KEY_STATE_PATH, DEFAULT_STATE_PATH);
         props.setProperty(KEY_PUZZLE_DURATION, DEFAULT_PUZZLE_DURATION_MS);
     }
 
@@ -102,6 +105,10 @@ public class ServerConfig {
 
     public String getLogPath() {
         return props.getProperty(KEY_LOG_PATH);
+    }
+
+    public String getStatePath() {
+        return props.getProperty(KEY_STATE_PATH);
     }
 
     public long getPuzzleDurationMillis() {

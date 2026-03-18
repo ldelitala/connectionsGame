@@ -42,6 +42,7 @@ public class ProtocolBridge {
             response = engine.resolve(request, op, session.getUsername());
 
         } catch (Exception e) {
+            e.printStackTrace();
             response = ServerResponse.error(op != null ? op : Operation.REGISTER, 
                                            "Internal error: " + e.getMessage());
         }

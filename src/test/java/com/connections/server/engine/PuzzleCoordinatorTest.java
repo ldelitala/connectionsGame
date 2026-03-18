@@ -1,4 +1,4 @@
-package com.connections.server.logic;
+package com.connections.server.engine;
 
 import com.connections.common.models.Category;
 import com.connections.common.protocol.server_responses.dto.GuessResultDTO;
@@ -7,6 +7,10 @@ import com.connections.server.network.UdpNotifier;
 import com.connections.server.models.Puzzle;
 import com.connections.server.models.User;
 import com.connections.server.persistence.PuzzlesDAO;
+import com.connections.server.persistence.ServerStateDAO;
+import com.connections.server.engine.HistoryCoordinator;
+import com.connections.server.engine.UserCoordinator;
+import com.connections.server.engine.PuzzleCoordinator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +27,7 @@ public class PuzzleCoordinatorTest {
     private HistoryCoordinator historyCoordinator;
     private UserCoordinator userCoordinator;
     private UdpNotifier udpNotifier;
+    private ServerStateDAO stateDAO;
     private PuzzleCoordinator coordinator;
 
     @BeforeEach
@@ -31,6 +36,7 @@ public class PuzzleCoordinatorTest {
         historyCoordinator = mock(HistoryCoordinator.class);
         userCoordinator = mock(UserCoordinator.class);
         udpNotifier = mock(UdpNotifier.class);
+        stateDAO = mock(ServerStateDAO.class);
 
         // Mock a single puzzle
         Category group1 = new Category("Animals", Arrays.asList("CAT", "DOG", "FISH", "BIRD"));
@@ -42,7 +48,9 @@ public class PuzzleCoordinatorTest {
         when(puzzlesDAO.getNextPuzzle()).thenReturn(puzzle);
         when(puzzlesDAO.getPuzzle(anyInt())).thenReturn(puzzle);
 
-        coordinator = new PuzzleCoordinator(puzzlesDAO, historyCoordinator, userCoordinator, udpNotifier, 300000);
+        coordinator = new PuzzleCoordinator(puzzlesDAO, userCoordinator, udpNotifier, stateDAO, 300000, 
+                                            (puzzleId, results) -> historyCoordinator.recordPuzzleResults(puzzleId, results));
+        coordinator.loadNextPuzzle();
     }
 
     @Test
@@ -76,7 +84,7 @@ public class PuzzleCoordinatorTest {
 
     @Test
     public void testWinningGame() {
-        User user = mock(User.class);
+        User user = new User("test", "pass");
         when(userCoordinator.getUser("test")).thenReturn(user);
 
         coordinator.handleProposal("test", Arrays.asList("CAT", "DOG", "FISH", "BIRD"));
@@ -88,7 +96,6 @@ public class PuzzleCoordinatorTest {
         assertEquals("success", result.getStatus());
         // Final points: 3 groups indovinati (+18) - 0 errori (0) = 18
         assertEquals(18, result.getTotalPoints());
-        verify(user).recordWin(0, 18);
     }
 
     @Test

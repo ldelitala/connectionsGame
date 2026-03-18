@@ -59,7 +59,8 @@ public class UsersDAO {
                 if (b == '{') {
                     pis.unread(b);
                     long startOffset = currentOffset;
-                    String jsonUser = extractObject(pis);
+                    ExtractedObject result = extractObject(pis);
+                    String jsonUser = result.json;
                     
                     String username = extractUsername(jsonUser);
                     if (username != null) {
@@ -67,7 +68,7 @@ public class UsersDAO {
                         userOffsets.put(username, startOffset);
                     }
 
-                    currentOffset += jsonUser.getBytes(StandardCharsets.UTF_8).length;
+                    currentOffset += result.bytesRead;
                 } else {
                     currentOffset++;
                 }
@@ -76,21 +77,35 @@ public class UsersDAO {
         System.out.println("Indexed " + userOffsets.size() + " unique users.");
     }
 
-    private String extractObject(InputStream is) throws IOException {
-        StringBuilder sb = new StringBuilder();
+    private ExtractedObject extractObject(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int balance = 0;
         int b;
+        boolean started = false;
 
         while ((b = is.read()) != -1) {
+            baos.write(b);
             char c = (char) b;
-            sb.append(c);
 
-            if (c == '{') balance++;
-            else if (c == '}') balance--;
+            if (c == '{') {
+                balance++;
+                started = true;
+            } else if (c == '}') {
+                balance--;
+            }
             
-            if (balance == 0) break;
+            if (started && balance == 0) break;
         }
-        return sb.toString();
+        return new ExtractedObject(baos.toString("UTF-8"), baos.size());
+    }
+
+    private static class ExtractedObject {
+        final String json;
+        final int bytesRead;
+        ExtractedObject(String json, int bytesRead) {
+            this.json = json;
+            this.bytesRead = bytesRead;
+        }
     }
 
     private String extractUsername(String json) {
@@ -142,8 +157,8 @@ public class UsersDAO {
 
         try (FileInputStream fis = new FileInputStream(filePath)) {
             fis.getChannel().position(offset);
-            String json = extractObject(fis);
-            return gson.fromJson(json, User.class);
+            ExtractedObject result = extractObject(fis);
+            return gson.fromJson(result.json, User.class);
         } catch (IOException e) {
             System.err.println("Error reading user " + username + " from disk: " + e.getMessage());
         }
@@ -155,8 +170,8 @@ public class UsersDAO {
         try (FileInputStream fis = new FileInputStream(filePath)) {
             for (Long offset : userOffsets.values()) {
                 fis.getChannel().position(offset);
-                String json = extractObject(fis);
-                User u = gson.fromJson(json, User.class);
+                ExtractedObject result = extractObject(fis);
+                User u = gson.fromJson(result.json, User.class);
                 if (u != null) allUsers.add(u);
             }
         } catch (IOException e) {

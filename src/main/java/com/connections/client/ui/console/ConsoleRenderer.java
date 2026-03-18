@@ -24,11 +24,27 @@ public class ConsoleRenderer {
 
     public static void paintPuzzleInfo(PuzzleStateDTO info) {
         if (info.isFinished()) {
-            System.out.println("Puzzle is solved or expired. Use 'history' or 'info' for details.");
+            System.out.println("--- Past Puzzle Board (ID: " + info.getPuzzleId() + ") ---");
+            System.out.println("Final Score: " + info.getScore());
+            System.out.println("Final Mistakes: " + info.getMistakes() + "/" + MAX_MISTAKES);
+            
+            if (info.getAllGroups() != null && !info.getAllGroups().isEmpty()) {
+                System.out.println("Puzzle Solution:");
+                for (com.connections.common.models.Category cat : info.getAllGroups()) {
+                    System.out.println("  [" + cat.getTheme() + "]: " + String.join(", ", cat.getWords()));
+                }
+            } else if (info.getFoundGroups() != null && !info.getFoundGroups().isEmpty()) {
+                System.out.println("Categories you found:");
+                for (String categoryName : info.getFoundGroups()) {
+                    System.out.println("  - " + categoryName);
+                }
+            }
             return;
         }
         System.out.println("--- Puzzle Board ---");
-        System.out.println("Time remaining: " + (info.getRemainingTime() / MS_TO_S_RATIO) + "s");
+        if (info.getRemainingTime() != null) {
+            System.out.println("Time remaining: " + (info.getRemainingTime() / MS_TO_S_RATIO) + "s");
+        }
         System.out.println(String.format("Mistakes made: %d/%d", info.getMistakes(), MAX_MISTAKES));
 
         if (info.getFoundGroups() != null && !info.getFoundGroups().isEmpty()) {
@@ -46,10 +62,10 @@ public class ConsoleRenderer {
 
     public static void paintPuzzleStats(PuzzleStatsDTO stats) {
         System.out.println("--- Global Puzzle Statistics ---");
-        System.out.println("Active players: " + stats.getActivePlayers());
-        System.out.println("Players finished: " + stats.getFinishedPlayers());
-        System.out.println("Winners: " + stats.getWonPlayers());
-        if (stats.getAverageScore() > 0) {
+        System.out.println("Active players: " + (stats.getActivePlayers() != null ? stats.getActivePlayers() : 0));
+        System.out.println("Players finished: " + (stats.getFinishedPlayers() != null ? stats.getFinishedPlayers() : 0));
+        System.out.println("Winners: " + (stats.getWonPlayers() != null ? stats.getWonPlayers() : 0));
+        if (stats.getAverageScore() != null && stats.getAverageScore() > 0) {
             System.out.println("Average score: " + stats.getAverageScore());
         }
     }
@@ -65,6 +81,10 @@ public class ConsoleRenderer {
     public static void paintLeaderboard(LeaderboardDTO leaderboard) {
         System.out.println("--- Global Leaderboard ---");
         List<LeaderboardEntryDTO> entries = leaderboard.getEntries();
+        if (entries == null || entries.isEmpty()) {
+            System.out.println("No entries found in leaderboard.");
+            return;
+        }
         for (int i = 0; i < entries.size(); i++) {
             LeaderboardEntryDTO entry = entries.get(i);
             System.out.printf("%2d. %-15s | Score: %5d\n", (i + 1), entry.getUsername(),

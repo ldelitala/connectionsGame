@@ -127,14 +127,22 @@ public enum Operation {
 
         Operation op = metadata.operation;
 
-        // Ambiguity resolution for past puzzles
-        // If gameId is present, we upgrade the operation to the "PAST" version
+        // Ambiguity resolution for info/stats
         if (metadata.gameId != null) {
+            // Presence of gameId -> Force PAST version if currently CURRENT
             if (op == Operation.GET_PUZZLE_INFO) {
                 return Operation.GET_PAST_PUZZLE_INFO;
             }
             if (op == Operation.GET_PUZZLE_STATS) {
                 return Operation.GET_PAST_PUZZLE_STATS;
+            }
+        } else {
+            // Absence of gameId -> Force CURRENT version if currently PAST
+            if (op == Operation.GET_PAST_PUZZLE_INFO) {
+                return Operation.GET_PUZZLE_INFO;
+            }
+            if (op == Operation.GET_PAST_PUZZLE_STATS) {
+                return Operation.GET_PUZZLE_STATS;
             }
         }
 

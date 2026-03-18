@@ -26,15 +26,22 @@ public class GameEngine {
         UsersDAO usersDAO = new UsersDAO(config.getUserDataPath());
         PuzzlesDAO puzzlesDAO = new PuzzlesDAO(config.getPuzzleDataPath());
         HistoryDAO historyDAO = new HistoryDAO(config.getLogPath());
+        ServerStateDAO stateDAO = new ServerStateDAO(config.getStatePath());
+
+        // Resume puzzle rotation from last saved state
+        int savedIndex = stateDAO.loadNextPuzzleIndex();
+        puzzlesDAO.setNextPuzzleIndex(savedIndex);
+        System.out.println("Resuming puzzle rotation from index: " + savedIndex);
 
         this.userCoordinator = new UserCoordinator(usersDAO, udpNotifier);
-        this.historyCoordinator = new HistoryCoordinator(historyDAO, usersDAO);
+        this.historyCoordinator = new HistoryCoordinator(historyDAO, usersDAO, puzzlesDAO);
 
         // PuzzleCoordinator -> History notification bridge
         this.puzzleCoordinator = new PuzzleCoordinator(
                 puzzlesDAO,
                 userCoordinator,
                 udpNotifier,
+                stateDAO,
                 config.getPuzzleDurationMillis(),
                 (puzzleId, results) -> historyCoordinator.recordPuzzleResults(puzzleId, results));
     }

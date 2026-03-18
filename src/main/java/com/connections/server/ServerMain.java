@@ -18,14 +18,12 @@ public class ServerMain {
         ServerConfig config = (args.length > 0) ? new ServerConfig(args[0]) : new ServerConfig();
 
         try {
-            // 1. Core Logic Engine (autonomous)
+
             GameEngine engine = new GameEngine(config);
             engine.start();
 
-            // 2. Protocol Bridge (Translation only)
             ProtocolBridge bridge = new ProtocolBridge(engine);
 
-            // 3. Network Core (Handles threads & I/O)
             NioServer server = new NioServer(config.getTcpPort(), bridge, config.getThreadPoolSize());
 
             System.out.println("Server ready. TCP Port: " + config.getTcpPort());

@@ -99,9 +99,11 @@ public class NioServer {
                 ByteBuffer response = bridge.process(finalMsg, session);
                 session.enqueueOutput(response);
                 
-                // Wake up selector to process write
-                key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-                selector.wakeup();
+                // Wake up selector to process write (if key is still valid)
+                if (key.isValid()) {
+                    key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                    selector.wakeup();
+                }
             });
         }
     }

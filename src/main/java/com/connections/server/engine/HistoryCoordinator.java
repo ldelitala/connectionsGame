@@ -1,11 +1,13 @@
 package com.connections.server.engine;
 
+import com.connections.common.models.Category;
 import com.connections.common.protocol.Operation;
 import com.connections.common.protocol.client_requests.HistoryRequest;
 import com.connections.common.protocol.server_responses.ServerResponse;
 import com.connections.common.protocol.server_responses.dto.*;
 import com.connections.server.models.*;
 import com.connections.server.persistence.HistoryDAO;
+import com.connections.server.persistence.PuzzlesDAO;
 import com.connections.server.persistence.UsersDAO;
 
 import java.util.*;
@@ -18,11 +20,13 @@ public class HistoryCoordinator {
 
     private final HistoryDAO historyDAO;
     private final UsersDAO usersDAO;
+    private final PuzzlesDAO puzzlesDAO;
     private final List<LeaderboardEntryDTO> leaderboardCache = new ArrayList<>();
 
-    public HistoryCoordinator(HistoryDAO historyDAO, UsersDAO usersDAO) {
+    public HistoryCoordinator(HistoryDAO historyDAO, UsersDAO usersDAO, PuzzlesDAO puzzlesDAO) {
         this.historyDAO = historyDAO;
         this.usersDAO = usersDAO;
+        this.puzzlesDAO = puzzlesDAO;
         refreshLeaderboard();
     }
 
@@ -32,11 +36,17 @@ public class HistoryCoordinator {
     public ServerResponse<?> handle(HistoryRequest req, Operation op, String username) {
         switch (op) {
             case GET_PAST_PUZZLE_INFO:
+                if (req.getPuzzleId() == null) {
+                    return ServerResponse.error(op, "Puzzle ID is required for historical info.");
+                }
                 PuzzleStateDTO pastInfo = getPastPuzzleState(username, req.getPuzzleId());
                 return (pastInfo != null) ? ServerResponse.ok(op, pastInfo) 
                                           : ServerResponse.error(op, "Historical puzzle info not found.");
 
             case GET_PAST_PUZZLE_STATS:
+                if (req.getPuzzleId() == null) {
+                    return ServerResponse.error(op, "Puzzle ID is required for historical stats.");
+                }
                 PuzzleStatsDTO pastStats = getPastPuzzleStats(req.getPuzzleId());
                 return (pastStats != null) ? ServerResponse.ok(op, pastStats) 
                                            : ServerResponse.error(op, "Historical puzzle stats not available.");
@@ -69,8 +79,15 @@ public class HistoryCoordinator {
     }
 
     private synchronized void refreshLeaderboard() {
-        // Logic to reconstruct the cache from UsersDAO/HistoryDAO...
-        // For now, it stays as a placeholder or uses basic sorting
+        List<User> users = usersDAO.getAllUsers();
+        // Sort by totalScore descending
+        users.sort((a, b) -> Integer.compare(b.getTotalScore(), a.getTotalScore()));
+        
+        leaderboardCache.clear();
+        for (int i = 0; i < users.size(); i++) {
+            User u = users.get(i);
+            leaderboardCache.add(LeaderboardEntryDTO.create(i + 1, u.getUsername(), u.getTotalScore()));
+        }
     }
 
     public LeaderboardDTO getGlobalLeaderboard(Integer topK) {
@@ -90,11 +107,11 @@ public class HistoryCoordinator {
         if (results == null) return null;
 
         PlayerResult playerRes = results.get(username);
-        // In a finished puzzle, we return the 'concluded' view of the state
-        // (This matches the requirements for concluded puzzles)
+        Puzzle pDef = puzzlesDAO.getPuzzle(puzzleId);
+        
         return PuzzleStateDTO.concluded(
             puzzleId,
-            null, // Could be populated with all categories if needed
+            pDef != null ? pDef.getGroups() : null,
             playerRes != null ? playerRes.getCorrectGroups() : 0,
             playerRes != null ? playerRes.getMistakes() : 0,
             playerRes != null ? playerRes.getPoints() : 0

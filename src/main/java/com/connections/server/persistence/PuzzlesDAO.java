@@ -46,7 +46,8 @@ public class PuzzlesDAO {
 
                     long startOffset = currentOffset;
 
-                    String jsonPuzzle = extractObject(pis);
+                    ExtractedObject result = extractObject(pis);
+                    String jsonPuzzle = result.json;
                     
                     Integer puzzleId = extractPuzzleId(jsonPuzzle);
                     if (puzzleId != null) {
@@ -54,7 +55,7 @@ public class PuzzlesDAO {
                         puzzleIds.add(puzzleId);
                     }
 
-                    currentOffset += jsonPuzzle.getBytes().length;
+                    currentOffset += result.bytesRead;
                 
                 } else {
                     currentOffset++;
@@ -66,27 +67,39 @@ public class PuzzlesDAO {
 
     /**
      * Reads until the braces are balanced to extract a full JSON object.
+     * Uses a byte-safe approach to ensure offsets remain accurate.
      */
-    private String extractObject(InputStream is) throws IOException {
-        StringBuilder sb = new StringBuilder();
+    private ExtractedObject extractObject(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int balance = 0;
         int b;
+        boolean started = false;
 
         while ((b = is.read()) != -1) {
+            baos.write(b);
             char c = (char) b;
-            sb.append(c);
 
-            if (c == '{')
+            if (c == '{') {
                 balance++;
-            
-            else if (c == '}')
+                started = true;
+            } else if (c == '}') {
                 balance--;
+            }
             
-            if (balance == 0)
+            if (started && balance == 0)
                 break;
         }
 
-        return sb.toString();
+        return new ExtractedObject(baos.toString("UTF-8"), baos.size());
+    }
+
+    private static class ExtractedObject {
+        final String json;
+        final int bytesRead;
+        ExtractedObject(String json, int bytesRead) {
+            this.json = json;
+            this.bytesRead = bytesRead;
+        }
     }
 
     private Integer extractPuzzleId(String json) {
@@ -119,6 +132,18 @@ public class PuzzlesDAO {
         return p;
     }
 
+    public synchronized int getNextPuzzleIndex() {
+        return nextPuzzleIndex;
+    }
+
+    public synchronized void setNextPuzzleIndex(int index) {
+        if (index >= 0 && index < puzzleIds.size()) {
+            this.nextPuzzleIndex = index;
+        } else {
+            this.nextPuzzleIndex = 0;
+        }
+    }
+
     /**
      * Reads a specific puzzle from disk using its byte offset.
      */
@@ -130,8 +155,8 @@ public class PuzzlesDAO {
 
             fis.getChannel().position(offset);
 
-            String puzzleJson = extractObject(fis);
-            return gson.fromJson(puzzleJson, Puzzle.class);
+            ExtractedObject result = extractObject(fis);
+            return gson.fromJson(result.json, Puzzle.class);
             
         } catch (IOException e) {
             System.err.println("Error reading puzzle " + puzzleId + " from disk: " + e.getMessage());

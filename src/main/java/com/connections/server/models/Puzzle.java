@@ -34,12 +34,27 @@ public class Puzzle {
         return allWords;
     }
 
-    /** Checks if the 4 words form a valid group in this puzzle. */
+    /** Checks if the 4 words form a valid group in this puzzle (case-insensitive). */
     public boolean isCorrectGroup(List<String> words) {
         for (Category category : groups) {
-            if (category.getWords().containsAll(words) && words.containsAll(category.getWords())) {
-                return true;
+            List<String> targetWords = category.getWords();
+            if (targetWords.size() != words.size()) continue;
+
+            boolean allFound = true;
+            for (String w : words) {
+                boolean found = false;
+                for (String t : targetWords) {
+                    if (t.equalsIgnoreCase(w)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    allFound = false;
+                    break;
+                }
             }
+            if (allFound) return true;
         }
         return false;
     }
