@@ -26,6 +26,14 @@ public class ServerMain {
 
             NioServer server = new NioServer(config.getTcpPort(), bridge, config.getThreadPoolSize());
 
+            // --- GRACEFUL SHUTDOWN HOOK ---
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                System.out.println("\n--- Shutdown signal received. Closing server... ---");
+                server.stop();
+                engine.stop();
+                System.out.println("--- Server stopped gracefully. ---");
+            }));
+
             System.out.println("Server ready. TCP Port: " + config.getTcpPort());
             server.start();
 

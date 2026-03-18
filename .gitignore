@@ -29,4 +29,8 @@ Thumbs.db
 # Project-specific
 data/users.json
 data/games_log.json
+data/server_state.json
 logs/
+venv/
+*.jar
+*.zip

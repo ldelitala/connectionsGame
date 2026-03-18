@@ -24,6 +24,7 @@ public class ServerConfig {
     private static final String DEFAULT_LOG_PATH = "data/games_log.json";
     private static final String DEFAULT_STATE_PATH = "data/server_state.json";
     private static final String DEFAULT_PUZZLE_DURATION_MS = "300000"; // 5 minutes
+    private static final String DEFAULT_PUZZLE_DELAY_MS = "10000"; // 10 seconds
 
     // Keys
     private static final String KEY_TCP_PORT = "server.tcp_port";
@@ -34,6 +35,7 @@ public class ServerConfig {
     private static final String KEY_LOG_PATH = "server.log_path";
     private static final String KEY_STATE_PATH = "server.state_path";
     private static final String KEY_PUZZLE_DURATION = "server.game_duration_ms";
+    private static final String KEY_PUZZLE_DELAY = "server.game_delay_ms";
 
     public ServerConfig() {
         this(DEFAULT_CONFIG_PATH);
@@ -54,6 +56,7 @@ public class ServerConfig {
         props.setProperty(KEY_LOG_PATH, DEFAULT_LOG_PATH);
         props.setProperty(KEY_STATE_PATH, DEFAULT_STATE_PATH);
         props.setProperty(KEY_PUZZLE_DURATION, DEFAULT_PUZZLE_DURATION_MS);
+        props.setProperty(KEY_PUZZLE_DELAY, DEFAULT_PUZZLE_DELAY_MS);
     }
 
     private void loadOrInitConfig() {
@@ -113,5 +116,9 @@ public class ServerConfig {
 
     public long getPuzzleDurationMillis() {
         return Long.parseLong(props.getProperty(KEY_PUZZLE_DURATION));
+    }
+
+    public long getPuzzleDelayMillis() {
+        return Long.parseLong(props.getProperty(KEY_PUZZLE_DELAY));
     }
 }

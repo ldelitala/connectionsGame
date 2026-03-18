@@ -1,7 +1,6 @@
 package com.connections.server.persistence;
 
 import com.connections.server.models.Puzzle;
-import com.google.gson.Gson;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,166 +8,96 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * High-performance DAO for Puzzles.
- * Uses byte-offset indexing and on-demand reading to minimize RAM usage.
+ * Manages access to puzzle data.
+ * Uses an offset-based index to handle potentially large JSON files without loading them fully into RAM.
  */
 public class PuzzlesDAO {
     private final String filePath;
-    private final Map<Integer, Long> index = new ConcurrentHashMap<>();
-    private final List<Integer> puzzleIds = new ArrayList<>();
-    private int nextPuzzleIndex = 0;
-    private final Gson gson = new Gson();
+    private final Map<Integer, Long> puzzleOffsets = new ConcurrentHashMap<>();
+    private final List<Integer> puzzleOrder = new ArrayList<>();
+    private int currentIndex = 0;
 
-    private static final Pattern GAME_ID_PATTERN = Pattern.compile("\"gameId\"\\s*:\\s*(\\d+)");
+    private static final Pattern ID_PATTERN = Pattern.compile("\"gameId\"\\s*:\\s*(\\d+)");
 
     public PuzzlesDAO(String filePath) {
         this.filePath = filePath;
-        try {
-            buildIndex();
-        } catch (IOException e) {
-            System.err.println("Critical error building puzzle index: " + e.getMessage());
-        }
+        buildIndex();
     }
 
-    /**
-     * Scans the JSON file and indexes the byte offset of each puzzle object.
-     */
-    private void buildIndex() throws IOException {
-        System.out.println("Building puzzle index from " + filePath + "...");
+    /** Scans the file to map game IDs to their byte positions. */
+    private void buildIndex() {
+        if (!JsonPersistence.isReadable(filePath)) return;
 
-        try (PushbackInputStream pis = new PushbackInputStream(new BufferedInputStream(new FileInputStream(filePath)), 1)) {
-            long currentOffset = 0;
+        try (PushbackInputStream pis = new PushbackInputStream(new BufferedInputStream(new FileInputStream(filePath)))) {
+            long offset = 0;
             int b;
-
             while ((b = pis.read()) != -1) {
                 if (b == '{') {
-                    pis.unread(b); // Put it back immediately
-
-                    long startOffset = currentOffset;
-
-                    ExtractedObject result = extractObject(pis);
-                    String jsonPuzzle = result.json;
-                    
-                    Integer puzzleId = extractPuzzleId(jsonPuzzle);
-                    if (puzzleId != null) {
-                        index.put(puzzleId, startOffset);
-                        puzzleIds.add(puzzleId);
+                    pis.unread(b);
+                    long start = offset;
+                    ExtractedData res = extractJson(pis);
+                    Integer id = parseId(res.json);
+                    if (id != null) {
+                        puzzleOffsets.put(id, start);
+                        puzzleOrder.add(id);
                     }
-
-                    currentOffset += result.bytesRead;
-                
+                    offset += res.bytesRead;
                 } else {
-                    currentOffset++;
+                    offset++;
                 }
             }
-        }
-        System.out.println("Indexed " + index.size() + " puzzles.");
-    }
-
-    /**
-     * Reads until the braces are balanced to extract a full JSON object.
-     * Uses a byte-safe approach to ensure offsets remain accurate.
-     */
-    private ExtractedObject extractObject(InputStream is) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        int balance = 0;
-        int b;
-        boolean started = false;
-
-        while ((b = is.read()) != -1) {
-            baos.write(b);
-            char c = (char) b;
-
-            if (c == '{') {
-                balance++;
-                started = true;
-            } else if (c == '}') {
-                balance--;
-            }
-            
-            if (started && balance == 0)
-                break;
-        }
-
-        return new ExtractedObject(baos.toString("UTF-8"), baos.size());
-    }
-
-    private static class ExtractedObject {
-        final String json;
-        final int bytesRead;
-        ExtractedObject(String json, int bytesRead) {
-            this.json = json;
-            this.bytesRead = bytesRead;
+            System.out.println("DAO: Indexed " + puzzleOffsets.size() + " puzzles.");
+        } catch (IOException e) {
+            System.err.println("DAO Error: Failed to index puzzles: " + e.getMessage());
         }
     }
 
-    private Integer extractPuzzleId(String json) {
-        Matcher matcher = GAME_ID_PATTERN.matcher(json);
-        if (matcher.find()) {
-            return Integer.parseInt(matcher.group(1));
-        }
-        return null;
+    private Integer parseId(String json) {
+        Matcher m = ID_PATTERN.matcher(json);
+        return m.find() ? Integer.parseInt(m.group(1)) : null;
     }
 
-    /** Returns a random puzzle from the database. */
-    public synchronized Puzzle getRandomPuzzle() {
-        if (puzzleIds.isEmpty()) return null;
-        int randomIndex = new Random().nextInt(puzzleIds.size());
-        return getPuzzle(puzzleIds.get(randomIndex));
-    }
-
-    /**
-     * Returns the next puzzle in the sequence, wrapping around if necessary.
-     */
     public synchronized Puzzle getNextPuzzle() {
-        if (puzzleIds.isEmpty()) return null;
-        
-        if (nextPuzzleIndex >= puzzleIds.size()) {
-            nextPuzzleIndex = 0;
-        }
-        
-        Puzzle p = getPuzzle(puzzleIds.get(nextPuzzleIndex));
-        nextPuzzleIndex++;
-        return p;
+        if (puzzleOrder.isEmpty()) return null;
+        if (currentIndex >= puzzleOrder.size()) currentIndex = 0;
+        return getPuzzle(puzzleOrder.get(currentIndex++));
     }
 
-    public synchronized int getNextPuzzleIndex() {
-        return nextPuzzleIndex;
-    }
-
-    public synchronized void setNextPuzzleIndex(int index) {
-        if (index >= 0 && index < puzzleIds.size()) {
-            this.nextPuzzleIndex = index;
-        } else {
-            this.nextPuzzleIndex = 0;
-        }
-    }
-
-    /**
-     * Reads a specific puzzle from disk using its byte offset.
-     */
-    public Puzzle getPuzzle(int puzzleId) {
-        Long offset = index.get(puzzleId);
+    public Puzzle getPuzzle(int id) {
+        Long offset = puzzleOffsets.get(id);
         if (offset == null) return null;
 
         try (FileInputStream fis = new FileInputStream(filePath)) {
-
             fis.getChannel().position(offset);
-
-            ExtractedObject result = extractObject(fis);
-            return gson.fromJson(result.json, Puzzle.class);
-            
+            return JsonPersistence.GSON.fromJson(extractJson(fis).json, Puzzle.class);
         } catch (IOException e) {
-            System.err.println("Error reading puzzle " + puzzleId + " from disk: " + e.getMessage());
+            System.err.println("DAO Error: Failed to read puzzle " + id);
+            return null;
         }
-        return null;
     }
 
-    public int getNumPuzzles() {
-        return puzzleIds.size();
+    /** Extracts a JSON object by balancing braces. */
+    private ExtractedData extractJson(InputStream is) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int balance = 0, b;
+        boolean started = false;
+        while ((b = is.read()) != -1) {
+            baos.write(b);
+            if (b == '{') { balance++; started = true; }
+            else if (b == '}') balance--;
+            if (started && balance == 0) break;
+        }
+        return new ExtractedData(baos.toString("UTF-8"), baos.size());
     }
 
-    public List<Integer> getAllPuzzleIds() {
-        return Collections.unmodifiableList(puzzleIds);
+    private static class ExtractedData {
+        final String json;
+        final int bytesRead;
+        ExtractedData(String j, int b) { this.json = j; this.bytesRead = b; }
     }
+
+    public synchronized void setNextPuzzleIndex(int idx) { this.currentIndex = (idx >= 0 && idx < puzzleOrder.size()) ? idx : 0; }
+    public synchronized int getNextPuzzleIndex() { return currentIndex; }
+    public int getNumPuzzles() { return puzzleOrder.size(); }
+    public List<Integer> getAllPuzzleIds() { return Collections.unmodifiableList(puzzleOrder); }
 }

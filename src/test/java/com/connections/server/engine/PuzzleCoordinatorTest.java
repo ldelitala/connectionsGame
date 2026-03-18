@@ -1,6 +1,10 @@
 package com.connections.server.engine;
 
 import com.connections.common.models.Category;
+import com.connections.common.protocol.Operation;
+import com.connections.common.protocol.client_requests.GameplayRequest;
+import com.connections.common.protocol.server_responses.ServerResponse;
+import com.connections.common.protocol.server_responses.Status;
 import com.connections.common.protocol.server_responses.dto.GuessResultDTO;
 import com.connections.common.protocol.server_responses.dto.PuzzleStateDTO;
 import com.connections.server.network.UdpNotifier;
@@ -48,7 +52,7 @@ public class PuzzleCoordinatorTest {
         when(puzzlesDAO.getNextPuzzle()).thenReturn(puzzle);
         when(puzzlesDAO.getPuzzle(anyInt())).thenReturn(puzzle);
 
-        coordinator = new PuzzleCoordinator(puzzlesDAO, userCoordinator, udpNotifier, stateDAO, 300000, 
+        coordinator = new PuzzleCoordinator(puzzlesDAO, userCoordinator, udpNotifier, stateDAO, 300000, 10000,
                                             (puzzleId, results) -> historyCoordinator.recordPuzzleResults(puzzleId, results));
         coordinator.loadNextPuzzle();
     }
@@ -114,5 +118,17 @@ public class PuzzleCoordinatorTest {
         assertEquals(12, remainingWords.size());
         assertFalse(remainingWords.contains("CAT"));
         assertTrue(remainingWords.contains("RED"));
+    }
+
+    @Test
+    public void testForbiddenDuringWait() {
+        // Finalize current puzzle to enter waiting state
+        coordinator.finalizePuzzle();
+        
+        // Try to get info during wait
+        ServerResponse<?> response = coordinator.handle(GameplayRequest.getCurrentInfo(), Operation.GET_PUZZLE_INFO, "test");
+        
+        assertEquals(Status.FORBIDDEN, response.getStatus());
+        assertTrue(response.getMessage().contains("Please wait"));
     }
 }

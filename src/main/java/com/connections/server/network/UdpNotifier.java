@@ -74,6 +74,15 @@ public class UdpNotifier {
         notifyUser(username, gson.toJson(n));
     }
 
+    /**
+     * Broadcasts a wait countdown notification during the inter-puzzle period.
+     * Uses WaitNotification from common package.
+     */
+    public void broadcastWaitCountdown(int secondsRemaining) {
+        WaitNotification n = WaitNotification.create(secondsRemaining);
+        broadcast(gson.toJson(n));
+    }
+
     // --- PRIVATE HELPERS ---
 
     private void broadcast(String message) {

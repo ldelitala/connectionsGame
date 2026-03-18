@@ -1,7 +1,6 @@
 package com.connections.client.engine.state;
 
 import com.connections.client.engine.GameEngine;
-import com.connections.common.protocol.Operation;
 import com.connections.common.protocol.client_requests.UserRequest;
 import com.connections.common.protocol.server_responses.Status;
 import java.util.List;
@@ -14,7 +13,6 @@ public class LoggedOutState implements EngineState {
     private static final String PLEASE_LOGIN = "Please log in to perform this action.";
 
     private final GameEngine engine;
-
 
     public LoggedOutState(GameEngine engine) {
         this.engine = engine;
@@ -84,7 +82,8 @@ public class LoggedOutState implements EngineState {
     }
 
     @Override
-    public void onExit() {}
+    public void onExit() {
+    }
 
     @Override
     public void onHelp() {

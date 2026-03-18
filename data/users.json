@@ -1,44 +1,6 @@
-{
-  "testuser": {
-    "username": "testuser",
-    "password": "testpass\\nexit",
-    "puzzlesCompleted": 0,
-    "wins": 0,
-    "losses": 0,
-    "currentStreak": 0,
-    "maxStreak": 0,
-    "perfectPuzzles": 0,
-    "mistakeHistogram": {
-      "0": 0,
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0
-    }
-  },
-  "testuser2": {
-    "username": "testuser2",
-    "password": "testpass2",
-    "puzzlesCompleted": 0,
-    "wins": 0,
-    "losses": 0,
-    "currentStreak": 0,
-    "maxStreak": 0,
-    "perfectPuzzles": 0,
-    "mistakeHistogram": {
-      "0": 0,
-      "1": 0,
-      "2": 0,
-      "3": 0,
-      "4": 0
-    }
-  }
-}{"username":"testuser_1773423865","password":"testpassword123","puzzlesCompleted":0,"wins":0,"losses":0,"totalScore":0,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0}}
-{"username":"testuser_1773424076","password":"testpassword123","puzzlesCompleted":0,"wins":0,"losses":0,"totalScore":0,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0}}
-{"username":"deli","password":"123","puzzlesCompleted":0,"wins":0,"losses":0,"totalScore":0,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0}}
-{"username":"deli","password":"123","puzzlesCompleted":1,"wins":0,"losses":1,"totalScore":-4,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":1}}
-{"username":"deli","password":"123","puzzlesCompleted":2,"wins":0,"losses":2,"totalScore":-8,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":2}}
-{"username":"deli","password":"123","puzzlesCompleted":3,"wins":0,"losses":3,"totalScore":-2,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":3}}
-{"username":"deli","password":"123","puzzlesCompleted":4,"wins":1,"losses":3,"totalScore":12,"currentStreak":1,"maxStreak":1,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":1,"2":0,"3":0,"4":0,"5":3}}
-{"username":"deli","password":"234","puzzlesCompleted":4,"wins":1,"losses":3,"totalScore":12,"currentStreak":1,"maxStreak":1,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":1,"2":0,"3":0,"4":0,"5":3}}
-{"username":"deli","password":"234","puzzlesCompleted":5,"wins":1,"losses":4,"totalScore":14,"currentStreak":0,"maxStreak":1,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":1,"2":0,"3":0,"4":0,"5":4}}
+{"username":"deli","password":"1234","puzzlesCompleted":0,"wins":0,"losses":0,"totalScore":0,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0}}
+{"username":"lollina","password":"3","puzzlesCompleted":0,"wins":0,"losses":0,"totalScore":0,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0}}
+{"username":"","password":"","puzzlesCompleted":0,"wins":0,"losses":0,"totalScore":0,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0}}
+{"username":"fio","password":"000","puzzlesCompleted":0,"wins":0,"losses":0,"totalScore":0,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0}}
+{"username":"fio","password":"000","puzzlesCompleted":1,"wins":0,"losses":1,"totalScore":2,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":1}}
+{"username":"fio","password":"000","puzzlesCompleted":2,"wins":1,"losses":1,"totalScore":20,"currentStreak":1,"maxStreak":1,"perfectPuzzles":1,"mistakeHistogram":{"0":1,"1":0,"2":0,"3":0,"4":0,"5":1}}

@@ -43,14 +43,20 @@ public class GameEngine {
                 udpNotifier,
                 stateDAO,
                 config.getPuzzleDurationMillis(),
+                config.getPuzzleDelayMillis(),
                 (puzzleId, results) -> historyCoordinator.recordPuzzleResults(puzzleId, results));
     }
+public void start() {
+    puzzleCoordinator.startRotation();
+}
 
-    public void start() {
-        puzzleCoordinator.startRotation();
-    }
+public void stop() {
+    System.out.println("Stopping Game Engine...");
+    puzzleCoordinator.stop();
+}
 
-    /**
+/**
+...
      * Resolves business logic for any given request and operation.
      */
     public ServerResponse<?> resolve(ClientRequest req, Operation op, String username) {

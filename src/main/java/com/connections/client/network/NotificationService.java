@@ -24,7 +24,14 @@ public class NotificationService extends Thread implements AutoCloseable {
     private final Gson gson = new Gson();
 
     public NotificationService(int port, ClientView view) throws SocketException {
-        this.socket = new DatagramSocket(port);
+        DatagramSocket s;
+        try {
+            s = new DatagramSocket(port);
+        } catch (SocketException e) {
+            // Fallback to any available port if requested is busy
+            s = new DatagramSocket(0);
+        }
+        this.socket = s;
         this.view = view;
         setDaemon(true);
         setName("NotificationService-Thread");

@@ -44,7 +44,6 @@ public class GameEngine implements InputProvider.InputListener {
         // This will loop until the provider signals to stop (e.g., onExit)
     }
 
-
     // --- Action Implementations (Delegating to State) ---
 
     @Override
@@ -113,7 +112,6 @@ public class GameEngine implements InputProvider.InputListener {
         postAction();
     }
 
-
     @Override
     public void onExit() {
         view.showMessage("Exiting Engine...");
@@ -121,7 +119,8 @@ public class GameEngine implements InputProvider.InputListener {
         inputProvider.stop();
     }
 
-    // other system-level actions hendled by the engine itself (e.g., help, error display) can be
+    // other system-level actions hendled by the engine itself (e.g., help, error
+    // display) can be
     // implemented here directly
     @Override
     public void onHelp() {
@@ -147,23 +146,26 @@ public class GameEngine implements InputProvider.InputListener {
     }
 
     /**
-     * Executes a network request synchronously, handles the server response, and automatically
+     * Executes a network request synchronously, handles the server response, and
+     * automatically
      * triggers UI rendering.
      */
     public Status execute(ClientRequest request) {
+        if (request == null || !request.isValid()) {
+            view.showError("Invalid request. Please check the required parameters.");
+            return Status.ERROR;
+        }
+
         try {
             String jsonReq = gson.toJson(request);
             String jsonRes = gateway.sendRequest(jsonReq);
 
             Operation op = request.getOperation();
-            Class<? extends ServerResponse> resClass = op.getResponseClass();
             Class<? extends DTO> dtoClass = op.getResponseDtoClass();
 
-            Type type;
-            if (dtoClass == null) {
-                type = resClass;
-            } else {
-                type = TypeToken.getParameterized(resClass, dtoClass).getType();
+            Type type = TypeToken.get(ServerResponse.class).getType();
+            if (dtoClass != null) {
+                type = TypeToken.getParameterized(ServerResponse.class, dtoClass).getType();
             }
 
             ServerResponse<? extends DTO> response = gson.fromJson(jsonRes, type);
@@ -184,8 +186,7 @@ public class GameEngine implements InputProvider.InputListener {
         }
     }
 
-
-    // --- Getters for Modules and Infrastructure ---
+    // --- Getters for states ---
     public NetworkGateway getGateway() {
         return gateway;
     }

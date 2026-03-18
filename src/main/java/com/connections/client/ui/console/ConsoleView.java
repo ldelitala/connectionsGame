@@ -41,7 +41,8 @@ public class ConsoleView implements ClientView {
 
     @Override
     public synchronized void showResponse(ServerResponse<?> response) {
-        System.out.println("[" + response.getStatus() + "] " + response.getMessage());
+        String color = (response.getStatus() == com.connections.common.protocol.server_responses.Status.OK) ? "\u001B[32m" : "\u001B[31m";
+        System.out.println(color + "[" + response.getStatus() + "] " + response.getMessage() + "\u001B[0m");
     }
 
     @Override
@@ -62,6 +63,11 @@ public class ConsoleView implements ClientView {
 
     @Override
     public synchronized void render(Notification n) {
+        if (n instanceof WaitNotification) {
+            ConsoleRenderer.paintWaitNotify((WaitNotification) n);
+            return; // No extra prompt for countdown
+        }
+
         if (n instanceof NewPuzzleNotification)
             ConsoleRenderer.paintNewPuzzleNotify((NewPuzzleNotification) n);
         else if (n instanceof PuzzleEndNotification)
@@ -69,11 +75,24 @@ public class ConsoleView implements ClientView {
         else if (n instanceof PlayerPuzzleSummaryNotification)
             ConsoleRenderer.paintPlayerSummaryNotify((PlayerPuzzleSummaryNotification) n);
 
-        System.out.print("> "); // to ensure prompt is always on a new line after notifications
+        System.out.print("\n> "); // to ensure prompt is always on a new line after notifications
     }
+
+    private static final String BANNER = 
+        "\u001B[33m" +
+        "  ____                            _   _                     \n" +
+        " / ___|___  _ __  _ __   ___  ___| |_(_) ___  _ __  ___     \n" +
+        "| |   / _ \\| '_ \\| '_ \\ / _ \\/ __| __| |/ _ \\| '_ \\/ __|    \n" +
+        "| |__| (_) | | | | | | |  __/ (__| |_| | (_) | | | \\__ \\    \n" +
+        " \\____\\___/|_| |_|_| |_|\\___|\\___|\\__|_|\\___/|_| |_|___/    \n" +
+        "\u001B[0m" +
+        "\u001B[36m" +
+        "                ~ The Java NIO Game ~                       \n" +
+        "\u001B[0m";
 
     @Override
     public synchronized void showHelp(boolean loggedIn) {
+        if (!loggedIn) System.out.println(BANNER);
         System.out.print(HELP_SYSTEM);
         System.out.print(loggedIn ? HELP_LOGGEDOUT : HELP_LOGGEDIN);
         System.out.println();
@@ -81,12 +100,12 @@ public class ConsoleView implements ClientView {
 
     @Override
     public synchronized void showError(String error) {
-        System.err.println("Error: " + error);
+        System.err.println("\u001B[31m" + "Error: " + error + "\u001B[0m");
     }
 
     @Override
     public synchronized void showMessage(String message) {
-        System.out.println(message);
+        System.out.println("\u001B[34m" + message + "\u001B[0m");
     }
 
     @Override

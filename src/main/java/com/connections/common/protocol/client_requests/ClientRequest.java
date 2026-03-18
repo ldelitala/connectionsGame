@@ -3,10 +3,13 @@ package com.connections.common.protocol.client_requests;
 import com.connections.common.protocol.Operation;
 
 /**
- * Base class for all requests sent from the client to the server.
+ * Represents the abstract base class for all request messages sent from a
+ * client to the server.
+ * Provides the foundational structure to encapsulate a specific protocol
+ * operation.
  */
 public abstract class ClientRequest {
-    
+
     private final Operation operation;
 
     protected ClientRequest(Operation operation) {
@@ -17,10 +20,6 @@ public abstract class ClientRequest {
         return operation;
     }
 
-    /**
-     * Validates the request parameters.
-     * Default implementation returns true.
-     */
     public boolean isValid() {
         return true;
     }

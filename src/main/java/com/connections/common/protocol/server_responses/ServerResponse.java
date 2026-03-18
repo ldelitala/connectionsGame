@@ -4,13 +4,14 @@ import com.connections.common.protocol.Operation;
 import com.connections.common.protocol.server_responses.dto.DTO;
 
 /**
- * Base class for all server responses.
- * Includes the operation ID to ensure responses are self-describing.
+ * Base class for all server responses. Includes the operation ID to ensure responses are
+ * self-describing. Encapsulates a status, message, and optional data payload (DTO) for flexible
+ * communication.
  * 
  * @param <T> The type of DTO contained in the response.
  */
 public class ServerResponse<T extends DTO> {
-    
+
     private final Operation operation;
     private final Status status;
     private final String message;
@@ -23,10 +24,21 @@ public class ServerResponse<T extends DTO> {
         this.data = data;
     }
 
-    public Operation getOperation() { return operation; }
-    public Status getStatus() { return status; }
-    public String getMessage() { return message; }
-    public T getData() { return data; }
+    public Operation getOperation() {
+        return operation;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public T getData() {
+        return data;
+    }
 
     // --- UNIVERSAL FACTORY METHODS ---
 
@@ -50,7 +62,7 @@ public class ServerResponse<T extends DTO> {
         return new ServerResponse<>(op, Status.ERROR, msg, null);
     }
 
-    /** Creates a forbidden (unauthorized) response with a custom message. */
+    /** Creates a response with a custom message for forbidden (unauthorized) operations. */
     public static <D extends DTO> ServerResponse<D> forbidden(Operation op, String msg) {
         return new ServerResponse<>(op, Status.FORBIDDEN, msg, null);
     }

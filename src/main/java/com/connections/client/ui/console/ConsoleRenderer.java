@@ -6,116 +6,184 @@ import java.util.List;
 
 /**
  * Static painters for CLI rendering. Separates the 'how' from the 'what'.
+ * Uses Unicode characters and ANSI colors for a high-quality experience.
+ * Java 8 compatible (uses manual string repetition instead of String.repeat).
  */
 public class ConsoleRenderer {
+
+    // --- ANSI COLORS ---
+    private static final String RESET = "\u001B[0m";
+    private static final String BOLD = "\u001B[1m";
+    private static final String RED = "\u001B[31m";
+    private static final String GREEN = "\u001B[32m";
+    private static final String YELLOW = "\u001B[33m";
+    private static final String BLUE = "\u001B[34m";
+    private static final String PURPLE = "\u001B[35m";
+    private static final String CYAN = "\u001B[36m";
+    private static final String ITALIC = "\u001B[3m";
+
+    // --- THEME COLORS (Original Game Palette) ---
+    private static final String[] THEME_COLORS = { YELLOW, GREEN, BLUE, PURPLE };
 
     private static final int MS_TO_S_RATIO = 1000;
     private static final int MAX_MISTAKES = 4;
 
     public static void paintGuessResult(GuessResultDTO result) {
+        System.out.println("\n" + BOLD + CYAN + "╔═══════════════════════════════════════════╗" + RESET);
         if ("success".equals(result.getStatus())) {
-            System.out.println("Correct! +" + result.getPointsDelta() + " points.");
+            System.out.println(BOLD + CYAN + "║" + GREEN + "  ★  CORRECT PROPOSAL!  ★                " + CYAN + "║" + RESET);
+            System.out.println(BOLD + CYAN + "║" + RESET + "  Awarded: " + BOLD + GREEN + "+" + result.getPointsDelta() + RESET + " points.                  " + BOLD + CYAN + "║" + RESET);
         } else {
-            System.out.println("Wrong! " + result.getPointsDelta() + " points.");
+            System.out.println(BOLD + CYAN + "║" + RED + "  ✘  WRONG COMBINATION!  ✘               " + CYAN + "║" + RESET);
+            System.out.println(BOLD + CYAN + "║" + RESET + "  Penalty: " + BOLD + RED + result.getPointsDelta() + RESET + " points.                   " + BOLD + CYAN + "║" + RESET);
         }
-        System.out.println("Remaining words: " + String.join(", ", result.getRemainingWords()));
-        System.out.println("New total score: " + result.getTotalPoints());
+        System.out.printf(BOLD + CYAN + "║" + RESET + "  New Total Score: " + BOLD + "%-23d" + RESET + BOLD + CYAN + "║\n", result.getTotalPoints());
+        System.out.println(BOLD + CYAN + "╚═══════════════════════════════════════════╝" + RESET);
+        
+        if (result.getRemainingWords() != null && !result.getRemainingWords().isEmpty()) {
+            paintGrid(result.getRemainingWords());
+        }
     }
 
     public static void paintPuzzleInfo(PuzzleStateDTO info) {
+        String header = String.format("---  ROUND ID: #%d  ---", info.getPuzzleId());
+        System.out.println("\n" + BOLD + BLUE + "┌" + repeat("─", 42) + "┐" + RESET);
+        System.out.println(BOLD + BLUE + "│" + RESET + BOLD + CYAN + center(header, 42) + RESET + BOLD + BLUE + "│" + RESET);
+        
         if (info.isFinished()) {
-            System.out.println("--- Past Puzzle Board (ID: " + info.getPuzzleId() + ") ---");
-            System.out.println("Final Score: " + info.getScore());
-            System.out.println("Final Mistakes: " + info.getMistakes() + "/" + MAX_MISTAKES);
-            
-            if (info.getAllGroups() != null && !info.getAllGroups().isEmpty()) {
-                System.out.println("Puzzle Solution:");
-                for (com.connections.common.models.Category cat : info.getAllGroups()) {
-                    System.out.println("  [" + cat.getTheme() + "]: " + String.join(", ", cat.getWords()));
-                }
-            } else if (info.getFoundGroups() != null && !info.getFoundGroups().isEmpty()) {
-                System.out.println("Categories you found:");
-                for (String categoryName : info.getFoundGroups()) {
-                    System.out.println("  - " + categoryName);
-                }
+            System.out.println(BOLD + BLUE + "│" + RESET + GREEN + center("★ ROUND COMPLETED ★", 42) + RESET + BOLD + BLUE + "│" + RESET);
+        } else {
+            if (info.getRemainingTime() != null) {
+                long sec = info.getRemainingTime() / MS_TO_S_RATIO;
+                String tColor = (sec < 60) ? RED : YELLOW;
+                System.out.println(BOLD + BLUE + "│" + RESET + " Time: " + BOLD + tColor + String.format("%3ds", sec) + RESET + repeat(" ", 32) + BOLD + BLUE + "│" + RESET);
             }
-            return;
+            int m = info.getMistakes();
+            System.out.print(BOLD + BLUE + "│" + RESET + " Errors: ");
+            for(int i=0; i<MAX_MISTAKES; i++) {
+                if (i < m) System.out.print(RED + "● " + RESET);
+                else System.out.print(GREEN + "○ " + RESET);
+            }
+            System.out.println(repeat(" ", 25) + BOLD + BLUE + "│" + RESET);
         }
-        System.out.println("--- Puzzle Board ---");
-        if (info.getRemainingTime() != null) {
-            System.out.println("Time remaining: " + (info.getRemainingTime() / MS_TO_S_RATIO) + "s");
-        }
-        System.out.println(String.format("Mistakes made: %d/%d", info.getMistakes(), MAX_MISTAKES));
+        System.out.println(BOLD + BLUE + "└" + repeat("─", 42) + "┘" + RESET);
 
+        // Found groups with theme colors
         if (info.getFoundGroups() != null && !info.getFoundGroups().isEmpty()) {
-            System.out.println("Categories found:");
-            for (String categoryName : info.getFoundGroups()) {
-                System.out.println("  - " + categoryName);
+            System.out.println(BOLD + "  SOLVED CATEGORIES:" + RESET);
+            for (int i = 0; i < info.getFoundGroups().size(); i++) {
+                String color = THEME_COLORS[i % THEME_COLORS.length];
+                System.out.println("  " + color + "■ " + RESET + BOLD + info.getFoundGroups().get(i) + RESET);
             }
         }
 
-        if (info.getRemainingWords() != null && !info.getRemainingWords().isEmpty()) {
-            System.out.println("Remaining words: " + String.join(", ", info.getRemainingWords()));
+        // Full solution
+        if (info.isFinished() && info.getAllGroups() != null && !info.getAllGroups().isEmpty()) {
+            System.out.println("\n" + BOLD + "  ROUND REVEALED:" + RESET);
+            for (int i = 0; i < info.getAllGroups().size(); i++) {
+                com.connections.common.models.Category cat = info.getAllGroups().get(i);
+                String color = THEME_COLORS[i % THEME_COLORS.length];
+                System.out.println("  " + color + "■ " + BOLD + "[" + cat.getTheme() + "]: " + RESET + color + String.join(", ", cat.getWords()) + RESET);
+            }
         }
-        System.out.println("Current score: " + info.getScore());
+
+        if (!info.isFinished() && info.getRemainingWords() != null && !info.getRemainingWords().isEmpty()) {
+            System.out.println();
+            paintGrid(info.getRemainingWords());
+        }
+    }
+
+    private static void paintGrid(List<String> words) {
+        System.out.println("  " + BOLD + "Available Words:" + RESET);
+        System.out.println("  ╔" + repeat("═", 12) + "╤" + repeat("═", 12) + "╤" + repeat("═", 12) + "╤" + repeat("═", 12) + "╗");
+        for (int i = 0; i < words.size(); i++) {
+            if (i % 4 == 0) System.out.print("  ║ ");
+            System.out.printf("%-10s " + (i%4==3 ? "║" : "│ "), words.get(i));
+            if (i % 4 == 3 && i < words.size() - 1) {
+                System.out.println("\n  ╟" + repeat("─", 12) + "┼" + repeat("─", 12) + "┼" + repeat("─", 12) + "┼" + repeat("─", 12) + "╢");
+            }
+        }
+        System.out.println("\n  ╚" + repeat("═", 12) + "╧" + repeat("═", 12) + "╧" + repeat("═", 12) + "╧" + repeat("═", 12) + "╝");
     }
 
     public static void paintPuzzleStats(PuzzleStatsDTO stats) {
-        System.out.println("--- Global Puzzle Statistics ---");
-        System.out.println("Active players: " + (stats.getActivePlayers() != null ? stats.getActivePlayers() : 0));
-        System.out.println("Players finished: " + (stats.getFinishedPlayers() != null ? stats.getFinishedPlayers() : 0));
-        System.out.println("Winners: " + (stats.getWonPlayers() != null ? stats.getWonPlayers() : 0));
-        if (stats.getAverageScore() != null && stats.getAverageScore() > 0) {
-            System.out.println("Average score: " + stats.getAverageScore());
-        }
+        System.out.println("\n" + BOLD + PURPLE + "  ╭" + repeat("─", 34) + "╮" + RESET);
+        System.out.println(BOLD + PURPLE + "  │      GLOBAL ROUND STATISTICS     │" + RESET);
+        System.out.println(BOLD + PURPLE + "  ├" + repeat("─", 34) + "┤" + RESET);
+        System.out.printf("  │  Playing now:   %-16d │\n", (stats.getActivePlayers() != null ? stats.getActivePlayers() : 0));
+        System.out.printf("  │  Completed:     %-16d │\n", (stats.getFinishedPlayers() != null ? stats.getFinishedPlayers() : 0));
+        System.out.printf("  │  Winners:       " + GREEN + "%-16d" + RESET + " │\n", (stats.getWonPlayers() != null ? stats.getWonPlayers() : 0));
+        System.out.println(BOLD + PURPLE + "  ╰" + repeat("─", 34) + "╯" + RESET);
     }
 
     public static void paintPlayerStats(PlayerStatsDTO stats) {
-        System.out.println("--- Your Career Statistics ---");
-        System.out.println("Puzzles completed: " + stats.getPuzzlesCompleted());
-        System.out.println("Win rate: " + String.format("%.2f%%", stats.getWinRate()));
-        System.out.println("Total score: " + stats.getTotalScore());
-        System.out.println("Average score: " + stats.getAverageScore());
+        System.out.println("\n" + BOLD + YELLOW + "  ┏" + repeat("━", 42) + "┓");
+        System.out.println("  ┃          YOUR CAREER PROGRESSION         ┃");
+        System.out.println("  ┣" + repeat("━", 42) + "┫");
+        System.out.printf("  ┃  Completed Rounds:  %-20d ┃\n", stats.getPuzzlesCompleted());
+        System.out.printf("  ┃  Victory Rate:      " + CYAN + "%-20s" + RESET + BOLD + YELLOW + " ┃\n", String.format("%.2f%%", stats.getWinRate()));
+        System.out.printf("  ┃  Total Points:      " + GREEN + "%-20d" + RESET + BOLD + YELLOW + " ┃\n", stats.getTotalScore());
+        System.out.printf("  ┃  Average Performance: %-18.2f ┃\n", stats.getAverageScore());
+        System.out.println("  ┗" + repeat("━", 42) + "┛" + RESET);
     }
 
     public static void paintLeaderboard(LeaderboardDTO leaderboard) {
-        System.out.println("--- Global Leaderboard ---");
+        System.out.println("\n" + BOLD + BLUE + "  ▛" + repeat("▀", 42) + "▜");
+        System.out.println("  ▌            GLOBAL HALL OF FAME           ▐");
+        System.out.println("  ▙" + repeat("▄", 42) + "▟");
         List<LeaderboardEntryDTO> entries = leaderboard.getEntries();
         if (entries == null || entries.isEmpty()) {
-            System.out.println("No entries found in leaderboard.");
-            return;
-        }
-        for (int i = 0; i < entries.size(); i++) {
-            LeaderboardEntryDTO entry = entries.get(i);
-            System.out.printf("%2d. %-15s | Score: %5d\n", (i + 1), entry.getUsername(),
-                    entry.getScore());
+            System.out.println("  (No legends recorded yet)");
+        } else {
+            for (int i = 0; i < entries.size(); i++) {
+                LeaderboardEntryDTO entry = entries.get(i);
+                String name = entry.getUsername();
+                if (name.length() > 20) name = name.substring(0, 17) + "...";
+                String color = (i < 3) ? YELLOW : RESET;
+                System.out.printf("   " + color + "%2d. %-22s %7d pts" + RESET + "\n", (i + 1), name, entry.getScore());
+            }
         }
     }
 
     public static void paintRank(LeaderboardEntryDTO e) {
-        System.out.println("Your rank: " + e.getRank() + " | Username: " + e.getUsername()
-                + " | Score: " + e.getScore());
+        System.out.println("\n" + BOLD + "  >> POSITION: " + YELLOW + "#" + e.getRank() + RESET + 
+                           " | NAME: " + CYAN + e.getUsername() + RESET + 
+                           " | POINTS: " + BOLD + e.getScore() + RESET);
     }
 
-    // --- Notification Painters ---
-
     public static void paintNewPuzzleNotify(NewPuzzleNotification n) {
-        System.out.println("\n[NOTIFICATION] A new Puzzle has started! ID: " + n.getPuzzleId());
-        System.out.println("Words: " + String.join(", ", n.getWords()));
-        System.out.println("Type 'board' to view the puzzle board.");
+        System.out.println("\n" + BOLD + YELLOW + "  🔔 [NEWS] ROUND #" + n.getPuzzleId() + " HAS COMMENCED!" + RESET);
+        paintGrid(n.getWords());
+        System.out.println(ITALIC + "  Enter 'board' to examine the grid." + RESET);
     }
 
     public static void paintPuzzleEndNotify(PuzzleEndNotification n) {
-        System.out.println("\n[NOTIFICATION] The current Puzzle has ended.");
-        if (n.getStats() != null)
-            paintPuzzleStats(n.getStats());
-        if (n.getLeaderboard() != null)
-            paintLeaderboard(n.getLeaderboard());
+        System.out.println("\n" + BOLD + RED + "  🏁 [NEWS] THE CURRENT ROUND HAS ENDED." + RESET);
+        if (n.getStats() != null) paintPuzzleStats(n.getStats());
     }
 
     public static void paintPlayerSummaryNotify(PlayerPuzzleSummaryNotification n) {
-        System.out.println("\n[NOTIFICATION] Personal summary for the concluded puzzle:");
-        if (n.getPersonalInfo() != null)
-            paintPuzzleInfo(n.getPersonalInfo());
+        System.out.println("\n" + BOLD + BLUE + "  📊 [PERSONAL] ROUND SUMMARY ARCHIVED:" + RESET);
+        if (n.getPersonalInfo() != null) paintPuzzleInfo(n.getPersonalInfo());
+    }
+
+    public static void paintWaitNotify(WaitNotification n) {
+        String color = (n.getSecondsRemaining() <= 3) ? RED : YELLOW;
+        System.out.print("\r" + BOLD + color + "  ⏳ NEXT ROUND IN: " + n.getSecondsRemaining() + "s   " + RESET);
+        System.out.flush();
+    }
+
+    private static String center(String text, int width) {
+        if (text.length() >= width) return text;
+        int left = (width - text.length()) / 2;
+        int right = width - text.length() - left;
+        return repeat(" ", left) + text + repeat(" ", right);
+    }
+
+    private static String repeat(String s, int count) {
+        if (count <= 0) return "";
+        StringBuilder sb = new StringBuilder(count * s.length());
+        for (int i = 0; i < count; i++) sb.append(s);
+        return sb.toString();
     }
 }

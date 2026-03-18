@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connections - Web UI</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <h1>Connections</h1>
+        <div id="user-info" class="hidden">
+            <span id="username-display"></span>
+            <button id="btn-logout" class="btn-small">Logout</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Login / Register Section -->
+        <section id="auth-section" class="active">
+            <div class="auth-box">
+                <h2>Welcome</h2>
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="Username" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Password">
+                </div>
+                <div class="auth-buttons">
+                    <button id="btn-login" class="btn-primary">Login</button>
+                    <button id="btn-register" class="btn-secondary">Register</button>
+                </div>
+                <p id="auth-message" class="message"></p>
+            </div>
+        </section>
+
+        <!-- Game Section -->
+        <section id="game-section" class="hidden">
+            <div class="game-header">
+                <p>Create four groups of four!</p>
+                <div class="status-bar">
+                    <span id="mistakes-display">Mistakes remaining: <span class="dots"></span></span>
+                    <span id="time-display"></span>
+                </div>
+            </div>
+
+            <div id="solved-groups-container"></div>
+            
+            <div id="board" class="grid">
+                <!-- Word items will be injected here -->
+            </div>
+
+            <div class="game-controls">
+                <button id="btn-shuffle" class="btn-action">Shuffle</button>
+                <button id="btn-deselect" class="btn-action">Deselect All</button>
+                <button id="btn-submit" class="btn-action primary" disabled>Submit</button>
+            </div>
+
+            <div id="game-message" class="message"></div>
+        </section>
+
+        <!-- Wait Section -->
+        <section id="wait-section" class="hidden">
+            <div class="wait-box">
+                <h2>Round Ended</h2>
+                <p id="wait-stats"></p>
+                <div class="countdown-circle">
+                    <span id="wait-countdown">--</span>
+                </div>
+                <p>Next puzzle starting soon...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Overlay / Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

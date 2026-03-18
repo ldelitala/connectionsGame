@@ -1,99 +1,68 @@
 package com.connections.server.persistence;
 
 import com.connections.server.models.PlayerResult;
-import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Data Access Object for historical puzzle results.
- * Optimized for low RAM usage by using a file offset index.
+ * Manages persistence for past puzzle results.
+ * Each entry is stored as a JSON line for efficient appending and indexing.
  */
 public class HistoryDAO {
     private final String filePath;
-    private final Gson gson = new Gson();
-    
-    // Map of puzzleId -> File Offset for fast lookups
     private final Map<Integer, Long> puzzleOffsets = new ConcurrentHashMap<>();
 
     public HistoryDAO(String filePath) {
         this.filePath = filePath;
+        JsonPersistence.ensureDirectory(filePath);
         buildIndex();
     }
 
     private void buildIndex() {
-        File file = new File(filePath);
-        if (!file.exists()) return;
+        if (!JsonPersistence.isReadable(filePath)) return;
 
-        System.out.println("Indexing puzzle history from " + filePath + "...");
-        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+        try (RandomAccessFile raf = new RandomAccessFile(filePath, "r")) {
             long pos = 0;
             String line;
             while ((line = raf.readLine()) != null) {
-                // Each line is a JSON object containing puzzleId
-                // Format expected: {"puzzleId": 1, "results": {...}}
                 if (line.contains("\"puzzleId\":")) {
-                    int puzzleId = extractPuzzleId(line);
-                    if (puzzleId != -1) {
-                        puzzleOffsets.put(puzzleId, pos);
-                    }
+                    int id = parseId(line);
+                    if (id != -1) puzzleOffsets.put(id, pos);
                 }
                 pos = raf.getFilePointer();
             }
-            System.out.println("Indexed " + puzzleOffsets.size() + " historical puzzles.");
+            System.out.println("DAO: Indexed " + puzzleOffsets.size() + " history records.");
         } catch (IOException e) {
-            System.err.println("Error indexing history: " + e.getMessage());
+            System.err.println("DAO Error: Failed to index history: " + e.getMessage());
         }
     }
 
-    private int extractPuzzleId(String json) {
-        // Simple regex-less extraction for performance
+    private int parseId(String json) {
         try {
             int start = json.indexOf("\"puzzleId\":") + 11;
             int end = json.indexOf(",", start);
             if (end == -1) end = json.indexOf("}", start);
             return Integer.parseInt(json.substring(start, end).trim());
-        } catch (Exception e) {
-            return -1;
-        }
+        } catch (Exception e) { return -1; }
     }
 
-    /** Alias for archivePuzzle for compatibility with coordinators. */
-    public void savePuzzleResults(int puzzleId, Map<String, PlayerResult> results) {
-        archivePuzzle(puzzleId, results);
-    }
-
-    /**
-     * Appends a puzzle's results to the log file.
-     */
     public synchronized void archivePuzzle(int puzzleId, Map<String, PlayerResult> results) {
-        File file = new File(filePath);
-        File parent = file.getParentFile();
-        if (parent != null && !parent.exists()) parent.mkdirs();
-
-        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
-            long offset = raf.length();
-            raf.seek(offset);
-            
-            // Wrap in a simple container for the log
-            PuzzleRecord record = new PuzzleRecord(puzzleId, results);
-            String json = gson.toJson(record) + "\n";
-            
-            raf.write(json.getBytes("UTF-8"));
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
+            long offset = new File(filePath).length();
+            writer.write(JsonPersistence.GSON.toJson(new Record(puzzleId, results)));
+            writer.newLine();
             puzzleOffsets.put(puzzleId, offset);
-            
         } catch (IOException e) {
-            System.err.println("Error archiving puzzle " + puzzleId + ": " + e.getMessage());
+            System.err.println("DAO Error: Failed to archive puzzle " + puzzleId);
         }
     }
 
-    /**
-     * Retrieves results for a specific past puzzle.
-     */
+    /** Alias for coordinator compatibility. */
+    public void savePuzzleResults(int id, Map<String, PlayerResult> res) { archivePuzzle(id, res); }
+
     public Map<String, PlayerResult> getPuzzleResults(int puzzleId) {
         Long offset = puzzleOffsets.get(puzzleId);
         if (offset == null) return null;
@@ -101,25 +70,18 @@ public class HistoryDAO {
         try (RandomAccessFile raf = new RandomAccessFile(filePath, "r")) {
             raf.seek(offset);
             String line = raf.readLine();
-            if (line == null) return null;
-            
-            Type type = new TypeToken<PuzzleRecord>() {}.getType();
-            PuzzleRecord record = gson.fromJson(line, type);
-            return record.results;
-            
+            Type type = new TypeToken<Record>() {}.getType();
+            Record r = JsonPersistence.GSON.fromJson(line, type);
+            return r != null ? r.results : null;
         } catch (IOException e) {
-            System.err.println("Error reading historical puzzle " + puzzleId + ": " + e.getMessage());
+            System.err.println("DAO Error: Failed to read history for puzzle " + puzzleId);
             return null;
         }
     }
 
-    private static class PuzzleRecord {
+    private static class Record {
         final int puzzleId;
         final Map<String, PlayerResult> results;
-
-        PuzzleRecord(int puzzleId, Map<String, PlayerResult> results) {
-            this.puzzleId = puzzleId;
-            this.results = results;
-        }
+        Record(int id, Map<String, PlayerResult> res) { this.puzzleId = id; this.results = res; }
     }
 }

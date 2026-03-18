@@ -3,8 +3,9 @@ package com.connections.common.protocol.server_responses.dto;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * DTO for global puzzle statistics (both active and concluded).
- * Follows the project's requirements for what info to return for active vs finished games.
+ * DTO for global puzzle statistics (both active and concluded). Follows the project's requirements
+ * for what info to return for active vs finished games. Uses factory methods to create instances
+ * for active vs concluded puzzles, ensuring that only relevant fields are populated for each case.
  */
 public class PuzzleStatsDTO implements DTO {
     @SerializedName("gameId")
@@ -44,8 +45,10 @@ public class PuzzleStatsDTO implements DTO {
      * @param winners number of players who won
      * @return a new PuzzleStatsDTO for the active puzzle
      */
-    public static PuzzleStatsDTO active(int puzzleId, long remainingTime, int active, int finished, int winners) {
-        return new PuzzleStatsDTO(puzzleId, false, remainingTime, active, finished, winners, null, null);
+    public static PuzzleStatsDTO active(int puzzleId, long remainingTime, int active, int finished,
+            int winners) {
+        return new PuzzleStatsDTO(puzzleId, false, remainingTime, active, finished, winners, null,
+                null);
     }
 
     /**
@@ -58,17 +61,42 @@ public class PuzzleStatsDTO implements DTO {
      * @param averageScore average score of all participants
      * @return a new PuzzleStatsDTO for a past puzzle
      */
-    public static PuzzleStatsDTO concluded(int puzzleId, int participants, int finished, int winners, double averageScore) {
-        return new PuzzleStatsDTO(puzzleId, true, null, null, finished, winners, participants, averageScore);
+    public static PuzzleStatsDTO concluded(int puzzleId, int participants, int finished,
+            int winners, double averageScore) {
+        return new PuzzleStatsDTO(puzzleId, true, null, null, finished, winners, participants,
+                averageScore);
     }
 
     // --- GETTERS ---
-    public int getPuzzleId() { return puzzleId; }
-    public boolean isFinished() { return finished; }
-    public Long getRemainingTime() { return remainingTime; }
-    public Integer getActivePlayers() { return activePlayers; }
-    public Integer getFinishedPlayers() { return finishedPlayers; }
-    public Integer getWonPlayers() { return wonPlayers; }
-    public Integer getTotalParticipants() { return totalParticipants; }
-    public Double getAverageScore() { return averageScore; }
+    public int getPuzzleId() {
+        return puzzleId;
+    }
+
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public Long getRemainingTime() {
+        return remainingTime;
+    }
+
+    public Integer getActivePlayers() {
+        return activePlayers;
+    }
+
+    public Integer getFinishedPlayers() {
+        return finishedPlayers;
+    }
+
+    public Integer getWonPlayers() {
+        return wonPlayers;
+    }
+
+    public Integer getTotalParticipants() {
+        return totalParticipants;
+    }
+
+    public Double getAverageScore() {
+        return averageScore;
+    }
 }

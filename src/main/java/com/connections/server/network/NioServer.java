@@ -67,6 +67,17 @@ public class NioServer {
                 }
             }
         }
+        cleanup();
+    }
+
+    private void cleanup() {
+        try {
+            if (selector != null) selector.close();
+            if (serverChannel != null) serverChannel.close();
+            System.out.println("NioServer resources cleaned up.");
+        } catch (IOException e) {
+            System.err.println("Error during server cleanup: " + e.getMessage());
+        }
     }
 
     private void handleAccept() throws IOException {
@@ -95,16 +106,21 @@ public class NioServer {
         while ((message = session.extractMessage()) != null) {
             final String finalMsg = message;
             // Offload business logic to worker pool
-            workerPool.execute(() -> {
-                ByteBuffer response = bridge.process(finalMsg, session);
-                session.enqueueOutput(response);
-                
-                // Wake up selector to process write (if key is still valid)
-                if (key.isValid()) {
-                    key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-                    selector.wakeup();
-                }
-            });
+            try {
+                workerPool.execute(() -> {
+                    ByteBuffer response = bridge.process(finalMsg, session);
+                    session.enqueueOutput(response);
+
+                    // Wake up selector to process write (if key is still valid)
+                    if (key.isValid()) {
+                        key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                        selector.wakeup();
+                    }
+                });
+            } catch (java.util.concurrent.RejectedExecutionException e) {
+                System.err.println("Server is shutting down. Discarding request from " + session.getUsername());
+                closeConnection(key);
+            }
         }
     }
 

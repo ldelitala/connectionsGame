@@ -7,15 +7,18 @@ import com.google.gson.annotations.SerializedName;
  * Centralizes the asynchronous protocol definition.
  */
 public enum NotificationType {
-    
+
     @SerializedName(NewPuzzleNotification.TYPE_ID)
     NEW_PUZZLE(NewPuzzleNotification.class),
-    
+
     @SerializedName(PuzzleEndNotification.TYPE_ID)
     PUZZLE_END(PuzzleEndNotification.class),
-    
+
     @SerializedName(PlayerPuzzleSummaryNotification.TYPE_ID)
-    PLAYER_SUMMARY(PlayerPuzzleSummaryNotification.class);
+    PLAYER_SUMMARY(PlayerPuzzleSummaryNotification.class),
+
+    @SerializedName(WaitNotification.TYPE_ID)
+    WAIT(WaitNotification.class);
 
     private final Class<? extends Notification> clazz;
 
@@ -36,15 +39,16 @@ public enum NotificationType {
      */
     public static NotificationType fromId(String typeId) {
         for (NotificationType nt : values()) {
-            if (nt.name().toLowerCase().replace("_", "").equals(typeId.replace("_", ""))) {
+            if (nt.name().toLowerCase().replace("_", "").equals(typeId.toLowerCase().replace("_", ""))) {
                 return nt;
             }
-            // Fallback checking the TYPE_ID constant indirectly via name matching 
-            // but we can be more explicit:
+
             try {
                 String constantId = (String) nt.getNotificationClass().getField("TYPE_ID").get(null);
-                if (constantId.equals(typeId)) return nt;
-            } catch (Exception ignored) {}
+                if (constantId.equals(typeId))
+                    return nt;
+            } catch (Exception ignored) {
+            }
         }
         return null;
     }

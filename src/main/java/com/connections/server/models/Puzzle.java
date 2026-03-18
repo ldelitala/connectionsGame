@@ -3,6 +3,7 @@ package com.connections.server.models;
 import com.connections.common.models.Category;
 import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,14 +32,18 @@ public class Puzzle {
         for (Category group : groups) {
             allWords.addAll(group.getWords());
         }
+        Collections.shuffle(allWords);
         return allWords;
     }
 
-    /** Checks if the 4 words form a valid group in this puzzle (case-insensitive). */
+    /**
+     * Checks if the 4 words form a valid group in this puzzle (case-insensitive).
+     */
     public boolean isCorrectGroup(List<String> words) {
         for (Category category : groups) {
             List<String> targetWords = category.getWords();
-            if (targetWords.size() != words.size()) continue;
+            if (targetWords.size() != words.size())
+                continue;
 
             boolean allFound = true;
             for (String w : words) {
@@ -54,7 +59,8 @@ public class Puzzle {
                     break;
                 }
             }
-            if (allFound) return true;
+            if (allFound)
+                return true;
         }
         return false;
     }

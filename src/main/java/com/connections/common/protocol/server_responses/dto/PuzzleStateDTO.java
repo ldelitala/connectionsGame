@@ -5,8 +5,10 @@ import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 /**
- * DTO for personal puzzle information (both current and past).
- * Follows the project's specific requirements for what info to return for active vs finished games.
+ * DTO for personal puzzle information (both current and past). Follows the project's specific
+ * requirements for what info to return for active vs finished games. Uses factory methods to create
+ * instances for active (in progress) vs concluded (past) puzzles, ensuring that only relevant
+ * fields are populated for each case.
  */
 public class PuzzleStateDTO implements DTO {
     @SerializedName("gameId")
@@ -45,15 +47,6 @@ public class PuzzleStateDTO implements DTO {
     public static PuzzleStateDTO active(int puzzleId, long remainingTime, List<String> foundGroups,
             List<String> remainingWords, int mistakes, int score) {
         return new PuzzleStateDTO(puzzleId, false, mistakes, score, remainingTime, foundGroups,
-                remainingWords, null, null);
-    }
-
-    /**
-     * Static factory method for general creation (used by coordinators).
-     */
-    public static PuzzleStateDTO create(int puzzleId, boolean finished, long remainingTime,
-            List<String> foundGroups, List<String> remainingWords, int mistakes, int score) {
-        return new PuzzleStateDTO(puzzleId, finished, mistakes, score, remainingTime, foundGroups,
                 remainingWords, null, null);
     }
 

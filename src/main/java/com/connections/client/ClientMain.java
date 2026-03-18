@@ -8,52 +8,39 @@ import com.connections.client.ui.console.*;
 import java.io.IOException;
 
 /**
- * Main entry point for the Client. Initializes configuration, sets up network communication, starts
- * the notification service, and launches the game engine. Handles exceptions gracefully and ensures
- * resources are cleaned up on shutdown.
+ * Main entry point for the Client.
  */
 public class ClientMain {
 
-    /**
-     * The application entry point.
-     * Parses command-line arguments for configuration, initializes core components,
-     * and enters the game loop.
-     *
-     * @param args Command-line arguments. The first argument can be a custom path to a properties file.
-     */
+    private static volatile GameEngine currentEngine;
+
     public static void main(String[] args) {
-
         ClientConfig config = (args.length > 0) ? new ClientConfig(args[0]) : new ClientConfig();
-
         ClientView view = new ConsoleView();
 
         view.showMessage("Welcome to Connections Engine!");
 
+        // --- SHUTDOWN HOOK ---
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (currentEngine != null) {
+                System.out.println("\n[System] Shutdown signal detected. Cleaning up...");
+                currentEngine.onExit();
+            }
+        }));
+
         try (
-
-                NetworkGateway gateway =
-                        new NetworkGateway(config.getServerHost(), config.getServerPort());
-
-                NotificationService notificationService =
-                        new NotificationService(config.getUdpPort(), view);
-
-                InputProvider inputProvider = new ConsoleInputProvider()
-
+            NetworkGateway gateway = new NetworkGateway(config.getServerHost(), config.getServerPort());
+            NotificationService notificationService = new NotificationService(config.getUdpPort(), view);
+            InputProvider inputProvider = new ConsoleInputProvider()
         ) {
-
-            view.showMessage(
-                    "Connected to server: " + config.getServerHost() +
-                            ":" + config.getServerPort());
+            view.showMessage("Connected to server: " + config.getServerHost() + ":" + config.getServerPort());
 
             notificationService.start();
             int actualUdpPort = notificationService.getLocalPort();
             view.showMessage("Notification service active on port " + actualUdpPort);
 
-
-            GameEngine engine = new GameEngine(gateway, actualUdpPort, view, inputProvider);
-
-            engine.mainLoop();
-
+            currentEngine = new GameEngine(gateway, actualUdpPort, view, inputProvider);
+            currentEngine.mainLoop();
 
         } catch (IOException e) {
             view.showError("Network error: " + e.getMessage());

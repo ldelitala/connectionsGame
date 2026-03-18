@@ -1,7 +1,6 @@
 package com.connections.client.engine.state;
 
 import com.connections.client.engine.GameEngine;
-import com.connections.common.protocol.Operation;
 import com.connections.common.protocol.client_requests.*;
 import com.connections.common.protocol.server_responses.Status;
 import java.util.List;
@@ -76,7 +75,13 @@ public class LoggedInState implements EngineState {
 
     @Override
     public void onRequestRanking(String username, Integer topK) {
-        engine.execute(HistoryRequest.getLeaderboard(username, topK));
+        if (topK != null) {
+            engine.execute(HistoryRequest.getLeaderboard(topK));
+        } else if (username != null && !username.trim().isEmpty()) {
+            engine.execute(HistoryRequest.getLeaderboard(username));
+        } else {
+            engine.execute(HistoryRequest.getLeaderboard());
+        }
     }
 
     @Override
