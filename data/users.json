@@ -4,3 +4,5 @@
 {"username":"fio","password":"000","puzzlesCompleted":0,"wins":0,"losses":0,"totalScore":0,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0}}
 {"username":"fio","password":"000","puzzlesCompleted":1,"wins":0,"losses":1,"totalScore":2,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":1}}
 {"username":"fio","password":"000","puzzlesCompleted":2,"wins":1,"losses":1,"totalScore":20,"currentStreak":1,"maxStreak":1,"perfectPuzzles":1,"mistakeHistogram":{"0":1,"1":0,"2":0,"3":0,"4":0,"5":1}}
+{"username":"delit","password":"123","puzzlesCompleted":0,"wins":0,"losses":0,"totalScore":0,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0}}
+{"username":"delit","password":"123","puzzlesCompleted":1,"wins":0,"losses":1,"totalScore":-4,"currentStreak":0,"maxStreak":0,"perfectPuzzles":0,"mistakeHistogram":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":1}}

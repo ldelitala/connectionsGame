@@ -3,9 +3,9 @@
 Project for the "Reti e Laboratorio III" course (A.A. 2025/26) at University of Pisa.
 
 ## Project Structure
-- `src/main/java/com/connections/server`: Server-side logic (NIO, Thread Pool).
-- `src/main/java/com/connections/client`: Client-side logic (CLI).
-- `src/main/java/com/connections/common`: Shared models, DTOs, and protocols.
+- `src/main/java/it/unipi/connections/server`: Server-side logic (NIO, Thread Pool).
+- `src/main/java/it/unipi/connections/client`: Client-side logic (CLI).
+- `src/main/java/it/unipi/connections/common`: Shared models, DTOs, and protocols.
 - `config/`: Application configuration files.
 - `data/`: Persistence files for user data and game logs.
 
@@ -21,11 +21,11 @@ mvn test
 ```
 To run the server:
 ```bash
-mvn exec:java -Dexec.mainClass="com.connections.server.ServerMain"
+mvn exec:java -Dexec.mainClass="it.unipi.connections.server.ServerMain"
 ```
 To run the client:
 ```bash
-mvn exec:java -Dexec.mainClass="com.connections.client.ClientMain"
+mvn exec:java -Dexec.mainClass="it.unipi.connections.client.ClientMain"
 ```
 
 ## Features

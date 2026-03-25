@@ -97,8 +97,8 @@ rm sources.txt
 
 ### Esecuzione (senza JAR)
 Dopo aver compilato:
-*   **Server:** `java -cp "bin:libs/gson.jar" com.connections.server.ServerMain`
-*   **Client:** `java -cp "bin:libs/gson.jar" com.connections.client.ClientMain`
+*   **Server:** `java -cp "bin:libs/gson.jar" it.unipi.connections.server.ServerMain`
+*   **Client:** `java -cp "bin:libs/gson.jar" it.unipi.connections.client.ClientMain`
 
 ### Esecuzione (tramite JAR)
 Se si desidera utilizzare i file JAR pre-compilati:

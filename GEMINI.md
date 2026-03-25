@@ -13,7 +13,7 @@
   - `games_log.json`: History of games played.
 
 ## Project Structure
-- `src/main/java/com/connections/`
+- `src/main/java/it/unipi/connections/`
   - `server/`: Decoupled Server logic.
     - `network/`: Infrastructure and I/O (`NioServer`, `ClientSession`, `UdpNotifier`).
     - `logic/`: Business logic coordinators (`UserCoordinator`, `PuzzleCoordinator`, `HistoryCoordinator`).
@@ -61,7 +61,7 @@
     - **NIO Core**: Implemented a robust `NioServer` with a `Selector` loop that offloads JSON processing to a fixed thread pool via `RequestDispatcher`.
 - **Terminology Alignment**: Finalized "game" (app) vs "puzzle" (round) terminology across all layers.
 - **DTO Batch Refactoring**:
-    - Moved all DTO files from `com.connections.common.dto` to `com.connections.common.protocol.server_responses.dto`.
+    - Moved all DTO files from `it.unipi.connections.common.dto` to `it.unipi.connections.common.protocol.server_responses.dto`.
 - **Testing & Quality**:
     - Reorganized test suite into specialized packages (`logic`, `persistence`).
     - Added `PuzzlesDAOPerformanceTest` for automated bottleneck detection.
